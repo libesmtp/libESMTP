@@ -23,6 +23,7 @@
    Error checking is minimal to non-existent, this is just a quick
    and dirty program to give a feel for using libESMTP.
  */
+#define _XOPEN_SOURCE 500
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -30,6 +31,7 @@
 #include <unistd.h>
 #include <getopt.h>
 #include <string.h>
+#include <fcntl.h>
 #include <signal.h>
 #include <errno.h>
 
@@ -41,7 +43,7 @@ struct option longopts[] =
     { "help", no_argument, NULL, '?', }, 
     { "host", required_argument, NULL, 'h', }, 
     { "monitor", no_argument, NULL, 'm', }, 
-    { "no-crlf", no_argument, NULL, 'c', }, 
+    { "crlf", no_argument, NULL, 'c', }, 
     { "notify", required_argument, NULL, 'n', }, 
     { "mdn", no_argument, NULL, 'd', }, 
     { "subject", required_argument, NULL, 's', }, 
@@ -142,7 +144,7 @@ main (int argc, char **argv)
      if/when this happens. */
   sa.sa_handler = SIG_IGN;
   sigemptyset (&sa.sa_mask);
-  sa.sa_flags = SA_NOMASK;
+  sa.sa_flags = 0;
   sigaction (SIGPIPE, &sa, NULL); 
 
   /* Set the host running the SMTP server.  LibESMTP has a default port
@@ -321,19 +323,22 @@ authinteract (auth_client_request_t request, char **result, int fields,
   char prompt[64];
   static char resp[64];
   char *p;
-  int i;
+  int i, n, tty;
 
   for (i = 0; i < fields; i++)
     {
-      sprintf (prompt, "%s%s: ", request[i].prompt,
-               (request[i].flags & AUTH_CLEARTEXT) ? " (not encrypted)" : "");
+      n = snprintf (prompt, sizeof prompt, "%s%s: ", request[i].prompt,
+		    (request[i].flags & AUTH_CLEARTEXT) ? " (not encrypted)"
+		    					: "");
       if (request[i].flags & AUTH_PASS)
 	result[i] = getpass (prompt);
       else
 	{
-	  fputs (prompt, stderr);
-	  fgets (resp, sizeof resp, stdin);
-	  p = strchr (resp, '\0');
+	  tty = open ("/dev/tty", O_RDWR);
+	  write (tty, prompt, n);
+	  n = read (tty, resp, sizeof resp);
+	  close (tty);
+	  p = resp + n;
 	  while (isspace (p[-1]))
 	    p--;
 	  *p = '\0';
@@ -369,7 +374,15 @@ usage (void)
          "\t-n,--notify=success|failure|delay|never -- request DSN\n"
          "\t-d,--mdn -- request MDN\n"
          "\t-m,--monitor -- watch the protocol session with the server\n"
-         "\t--help -- this message\n",
+         "\t-c,--crlf -- translate line endings from \\n to CR-LF\n"
+         "\t--help -- this message\n"
+         "\n"
+         "Specify the file argument as \"-\" to read standard input.\n"
+         "The input must be in RFC 822 format, that is, it must consist\n"
+         "of a sequence of message headers terminated by a blank line and\n"
+         "followed by the message body.  Lines must be terminated with the\n"
+         "canonic CR-LF sequence unless the --crlf flag is specified.\n"
+         "Total line length must not exceed 1000 characters.\n",
          stderr);
 }
 

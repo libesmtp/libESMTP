@@ -1,3 +1,12 @@
+* libESMTP 0.8.3 development release.	2000-07-06
+
+- See ChangeLog for details.
+
+  o Support for sendmail's XUSR extension.
+
+  o Fixed a bad bug which caused connections to the server to be dropped
+    depending on the amount of buffering provided by the server.
+
 * libESMTP 0.8.2 development release.	2000-06-26
 
 - See ChangeLog for details.

@@ -68,9 +68,6 @@
 /* Define if you have the `snprintf' function. */
 #undef HAVE_SNPRINTF
 
-/* Define if you have the `socket' function. */
-#undef HAVE_SOCKET
-
 /* Define if you have the <stdlib.h> header file. */
 #undef HAVE_STDLIB_H
 
@@ -150,6 +147,9 @@
 
 /* Build with support for SMTP STARTTLS extension */
 #undef USE_TLS
+
+/* Enable support for sendmail XUSR extension */
+#undef USE_XUSR
 
 /* Version number of package */
 #undef VERSION

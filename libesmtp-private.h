@@ -47,6 +47,7 @@
 #define EXT_8BITMIME		_BIT(8)	/* RFC 1652 */
 #define EXT_DELIVERBY		_BIT(9)	/* RFC 2852 */
 #define EXT_ETRN		_BIT(10)/* RFC 1985 */
+#define EXT_XUSR		_BIT(11)/* sendmail */
 
 struct smtp_session
   {
@@ -202,8 +203,9 @@ struct smtp_recipient
 					  (item)->next = NULL;		\
 					} while (0)
 
-/* FIXME: improve on this. */
-#define LIBESMTP_ASSERT(c)
+/* protocol.c */
+
+int initial_transaction_state (smtp_session_t session);
 
 /* errors.c */
 

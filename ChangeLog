@@ -1,3 +1,42 @@
+2001-07-06 	Brian Stafford	<brian@stafford.uklinux.net>
+      * examples/mail-file.c
+        Made --help more helpful.  Undocumented --no-crlf now renamed
+        to --crlf and documented.  When prompting for authentication
+        now reads /dev/tty instead of stdin.
+
+      * configure.ac
+        Check for -lsocket.
+
+      * protocol.c siobuf.c
+        Zero errno before calling certain functions.  Normally the value
+        of errno is only tested if the preceeding system call or function
+        wrapping the system call failed.  However, in a few cases, the
+        functions are called in a loop and the value of errno might
+        be tested after a successful return.  This meant that a test
+        on the value of errno might yield an invalid result, sometimes
+        causing the connection to the server to be incorrectly dropped.
+        Unfortunately this effect depended on the amount of data buffering
+        provided by the server!
+
+2001-06-29 	Brian Stafford	<brian@stafford.uklinux.net>
+      * protocol.c et al.
+	Added support for sendmail specific XUSR extension.  This informs
+	sendmail the message is a user submission instead of relay,
+	so it makes sense to issue the command.  Whether it actually
+	does anything ...
+
+      * siobuf.c
+	Fixed return from poll in raw_read and raw_write so that EINTR
+	is correctly handled.
+
+2001-06-26 	Brian Stafford	<brian@stafford.uklinux.net>
+      * auth-client.c
+	Fixed a signed/unsigned comparison that stops compilation
+	when using -Werror.
+
+2001-06-26 Version 0.8.2 released
+---------------------------------
+
 2001-06-26 	Brian Stafford	<brian@stafford.uklinux.net>
       * protocol.c siobuf.c
       	Resolved a problem related to blocking/non-blocking polling

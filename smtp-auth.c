@@ -177,24 +177,18 @@ rsp_auth (siobuf_t conn, smtp_session_t session)
 	     its own domain. */
 	  if (next_auth_mechanism (session))
 	    session->rsp_state = S_auth;
-	  else
 #ifdef USE_ETRN
-	    session->rsp_state = check_etrn (session) ? S_etrn : S_mail;
-#else
-	    session->rsp_state = S_mail;
+	  else if (check_etrn (session))
+	    session->rsp_state = S_etrn;
 #endif
+	  else
+	    session->rsp_state = initial_transaction_state (session);
         }
     }
   else if (code == 2)
     {
       session->authenticated = 1;
-      if (auth_get_ssf (session->auth_context) == 0)
-#ifdef USE_ETRN
-	session->rsp_state = check_etrn (session) ? S_etrn : S_mail;
-#else
-	session->rsp_state = S_mail;
-#endif
-      else
+      if (auth_get_ssf (session->auth_context) != 0)
         {
 	  /* Add SASL mechanism's encoder/decoder to siobuf.  This is
 	     done now, since subsequent commands and responses will be
@@ -207,6 +201,12 @@ rsp_auth (siobuf_t conn, smtp_session_t session)
 	  session->extensions = 0;		/* Turn off extensions */
 	  session->rsp_state = S_ehlo;		/* Restart protocol */
         }
+#ifdef USE_ETRN
+      else if (check_etrn (session))
+	session->rsp_state = S_etrn;
+#endif
+      else
+	session->rsp_state = initial_transaction_state (session);
     }
   else if (code == 3)
     session->rsp_state = S_auth2;

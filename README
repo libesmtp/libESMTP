@@ -37,7 +37,9 @@ Features
 --------
 
 Support for many SMTP extensions, notably PIPELINING (RFC 2920),
-DSN (RFC 2554) and AUTH (RFC 2554).
+DSN (RFC 2554) and AUTH (RFC 2554).  Also supported is the
+sendmail specific XUSR extension which informs sendmail that the
+message is an initial submission.
 
 SASL
 ----
@@ -67,8 +69,23 @@ Installation
 
 Please refer to INSTALL for generic installation instructions.  LibESMTP
 has a few options when configuring; ./configure --help will list them.
+
 Balsa users: be sure to use the --enable-require-all-recipients when running
 configure.
+
+configure may complain that it cannot find getaddrinfo and suggest using
+the --enable-gethostbyname option.  This is not enabled automatically
+since the gethostbyname (or getipnodebyname) is deprecated in favour of the
+getaddrinfo, which is easier to use, protocol independent, thread-safe and
+Posix standard.
+
+If this happens, you have a choice.  Either take the easy option and do
+as configure suggests or get a modern resolver library which implements
+getaddrinfo, e.g.  recent versions of ISC bind.  Support for gethostbyname
+is likely to be removed from libESMTP in the future.
+
+Please note that if your system provides getaddrinfo it will always be
+used.  Support for gethostbyname cannot be enabled in this case.
 
 Licence
 -------

@@ -65,7 +65,7 @@ struct auth_context
 	  (((p)->flags & AUTH_PLUGIN_##f) && !((a)->flags & AUTH_PLUGIN_##f))
 
 static const char *
-plugin_name (char *buf, int buflen, const char *str)
+plugin_name (char *buf, size_t buflen, const char *str)
 {
   char *p;
   static const char prefix[] = "sasl-";

@@ -756,6 +756,10 @@ cb_ehlo (smtp_session_t session, char *buf)
     }
   else if (strcasecmp (token, "ETRN") == 0)		/* RFC 1985 */
     session->extensions |= EXT_ETRN;
+#ifdef USE_XUSR
+  else if (strcasecmp (token, "XUSR") == 0)	/* sendmail (I feel ill) */
+    session->extensions |= EXT_XUSR;
+#endif
   return 1;
 }
 
@@ -845,10 +849,23 @@ rsp_ehlo (siobuf_t conn, smtp_session_t session)
     }
 
 #ifdef USE_ETRN
-  session->rsp_state = check_etrn (session) ? S_etrn : S_mail;
+  session->rsp_state = check_etrn (session)
+			  ? S_etrn : initial_transaction_state (session);
 #else
-  session->rsp_state = S_mail;
+  session->rsp_state = initial_transaction_state (session);
 #endif
+}
+
+/* Select the correct initial state after reading the EHLO response or
+   after DATA or RSET in the previous transaction.  */
+int
+initial_transaction_state (smtp_session_t session)
+{
+#ifdef USE_XUSR
+  if (session->extensions & EXT_XUSR)
+    return S_xusr;
+#endif
+  return S_mail;
 }
 
 /*****************************************************************************
@@ -904,7 +921,7 @@ rsp_helo (siobuf_t conn, smtp_session_t session)
   /* Unlike EHLO, the only next state can be Mail, since there are
      no extensions to check for message acceptability or options to set
      before proceeding. */
-  session->rsp_state = S_mail;
+  session->rsp_state = initial_transaction_state (session);
 }
 
 /*****************************************************************************
@@ -1013,7 +1030,7 @@ rsp_mail (siobuf_t conn, smtp_session_t session)
   if (code != 2)
     {
       if (next_message (session))
-	session->rsp_state = S_mail;
+	session->rsp_state = initial_transaction_state (session);
       else
 	session->rsp_state = S_quit;
     }
@@ -1300,14 +1317,16 @@ cmd_data2 (siobuf_t conn, smtp_session_t session)
 	      p = memchr (pline, '\n', header + len - pline);
 	      if (p == NULL)
 	        {
-	          errno = ERANGE;
-	          goto break_2;
+		  set_errno (ERANGE);
+		  session->cmd_state = session->rsp_state = -1;
+		  return;
 	        }
 	      if (pline[0] == '.')
 		sio_write (conn, ".", 1);
 	      sio_write (conn, pline, ++p - pline);
 	    }
 	}
+      errno = 0;
     }
 break_2:
   if (errno != 0)
@@ -1343,8 +1362,9 @@ break_2:
 	  p = memchr (pline, '\n', header + len - pline);
 	  if (p == NULL)
 	    {
-	      errno = ERANGE;
-	      goto break_2;
+	      set_errno (ERANGE);
+	      session->cmd_state = session->rsp_state = -1;
+	      return;
 	    }
 	  if (pline[0] == '.')
 	    sio_write (conn, ".", 1);
@@ -1369,6 +1389,7 @@ break_2:
       if (line[0] == '.')
 	sio_write (conn, ".", 1);
       sio_write (conn, line, len);
+      errno = 0;
     }
   if (errno != 0)
     {
@@ -1377,8 +1398,11 @@ break_2:
       return;
     }
 
-  /* Terminate the DATA command. */
+  /* Terminate the DATA command.  Explicitly flush the buffer here.
+     This would have happened in the protocol loop anyway but doing it
+     here makes the output of strace more intuitive. */
   sio_write (conn, ".\r\n", 3);
+  sio_flush (conn);
 
   sio_set_timeout (conn, 10 * 60 * 1000);
   session->cmd_state = -1;
@@ -1425,7 +1449,8 @@ rsp_data2 (siobuf_t conn, smtp_session_t session)
                           session->event_cb_arg, session->current_message);
 
   if (next_message (session))
-    session->rsp_state = (code == 2) ? S_mail : S_rset;
+    session->rsp_state = (code == 2) ? initial_transaction_state (session)
+                                     : S_rset;
   else
     session->rsp_state = S_quit;
 }
@@ -1439,7 +1464,7 @@ cmd_rset (siobuf_t conn, smtp_session_t session)
 {
   sio_write (conn, "RSET\r\n", 6);
   if (session->current_message != NULL)
-    session->cmd_state = S_mail;
+    session->cmd_state = initial_transaction_state (session);
   else
     session->cmd_state = S_quit;
 }
@@ -1455,7 +1480,7 @@ rsp_rset (siobuf_t conn, smtp_session_t session)
   read_smtp_response (conn, session, &status, NULL);
   reset_status (&status);
   if (session->current_message != NULL)
-    session->rsp_state = S_mail;
+    session->rsp_state = initial_transaction_state (session);
   else
     session->rsp_state = S_quit;
 }
@@ -1483,3 +1508,28 @@ rsp_quit (siobuf_t conn, smtp_session_t session)
   reset_status (&status);
   session->rsp_state = -1;
 }
+
+/*****************************************************************************
+ * Other crud.
+ *****************************************************************************/
+
+#ifdef USE_XUSR
+void
+cmd_xusr (siobuf_t conn, smtp_session_t session)
+{
+  sio_write (conn, "XUSR\r\n", 6);
+  session->cmd_state = -1;
+}
+
+void
+rsp_xusr (siobuf_t conn, smtp_session_t session)
+{
+  struct smtp_status status;
+
+  /* The XUSR command should always succeed?  */
+  memset (&status, 0, sizeof status);
+  read_smtp_response (conn, session, &status, NULL);
+  reset_status (&status);
+  session->rsp_state = S_mail;
+}
+#endif

@@ -168,12 +168,12 @@ rsp_starttls (siobuf_t conn, smtp_session_t session)
 	 required to accept mail for its own domain. */
       if (session->starttls_enabled == 2)
 	session->rsp_state = S_quit;
-      else
 #ifdef USE_ETRN
-	session->rsp_state = check_etrn (session) ? S_etrn : S_mail;
-#else
-	session->rsp_state = S_mail;
+      else if (check_etrn (session))
+	session->rsp_state = S_etrn;
 #endif
+      else
+	session->rsp_state = initial_transaction_state (session);
     }
 }
 

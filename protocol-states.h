@@ -34,6 +34,9 @@ S (auth2)
 #ifdef USE_ETRN
 S (etrn)
 #endif
+#ifdef USE_XUSR
+S (xusr)
+#endif
 S (mail)
 S (rcpt)
 S (data)

@@ -324,7 +324,7 @@ sio_write (struct siobuf *sio, const char *buf, int buflen)
 static void
 raw_write (struct siobuf *sio, const char *buf, int len)
 {
-  int n, total;
+  int n, total, status;
   struct pollfd pollfd;
 
   assert (sio != NULL && buf != NULL);
@@ -350,6 +350,7 @@ raw_write (struct siobuf *sio, const char *buf, int len)
            in poll() and errors */
 	pollfd.fd = sio->sdw;
 	pollfd.events = POLLOUT;
+	errno = 0;
 	while ((n = write (sio->sdw, buf + total, len - total)) < 0)
 	  {
 	    if (errno == EINTR)
@@ -358,9 +359,17 @@ raw_write (struct siobuf *sio, const char *buf, int len)
 	      return;
 
 	    pollfd.revents = 0;
-	    n = poll (&pollfd, 1, sio->milliseconds);
-	    if (n <= 0 || !(pollfd.revents & POLLOUT))
+	    while ((status = poll (&pollfd, 1, sio->milliseconds)) < 0)
+	      if (errno != EINTR)
+		return;
+	    if (status == 0)
+	      {
+	        errno = ETIMEDOUT;
+		return;
+	      }
+	    if (!(pollfd.revents & POLLOUT))
 	      return;
+	    errno = 0;
 	  }
       }
 }
@@ -429,7 +438,7 @@ sio_mark (struct siobuf *sio)
 static int
 raw_read (struct siobuf *sio, char *buf, int len)
 {
-  int n;
+  int n, status;
   struct pollfd pollfd;
 
   assert (sio != NULL && buf != NULL && len > 0);
@@ -452,6 +461,7 @@ raw_read (struct siobuf *sio, char *buf, int len)
     {
       pollfd.fd = sio->sdr;
       pollfd.events = POLLIN;
+      errno = 0;
       while ((n = read (sio->sdr, buf, len)) < 0)
 	{
 	  if (errno == EINTR)
@@ -460,9 +470,17 @@ raw_read (struct siobuf *sio, char *buf, int len)
 	    return 0;
 
 	  pollfd.revents = 0;
-	  n = poll (&pollfd, 1, sio->milliseconds);
-	  if (n <= 0 || !(pollfd.revents & POLLIN))
+	  while ((status = poll (&pollfd, 1, sio->milliseconds)) < 0)
+	    if (errno != EINTR)
+	      return 0;
+	  if (status == 0)
+	    {
+	      errno = ETIMEDOUT;
+	      return 0;
+	    }
+	  if (!(pollfd.revents & POLLIN))
 	    return 0;
+	  errno = 0;
 	}
     }
   return n;

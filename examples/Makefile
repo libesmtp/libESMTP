@@ -1,7 +1,7 @@
 
 OBJECTS = mail-file.o
 LIBESMTP = `libesmtp-config --libs`
-CFLAGS = -O2 -g -Wall `libesmtp-config --cflags`
+CFLAGS = -ansi -pedantic -O2 -g -Wall `libesmtp-config --cflags`
 
 all: mail-file-a mail-file-so
 

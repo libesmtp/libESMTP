@@ -159,7 +159,7 @@ cmd_etrn (siobuf_t conn, smtp_session_t session)
   if (session->cmd_etrn_node != NULL)
     session->cmd_state = S_etrn;
   else if (session->cmd_recipient != NULL)
-    session->cmd_state = S_mail;
+    session->cmd_state = initial_transaction_state (session);
   else
     session->cmd_state = S_quit;
 }
@@ -184,7 +184,7 @@ rsp_etrn (siobuf_t conn, smtp_session_t session)
   if (session->rsp_etrn_node != NULL)
     session->rsp_state = S_etrn;
   else if (session->rsp_recipient != NULL)
-    session->rsp_state = S_mail;
+    session->rsp_state = initial_transaction_state (session);
   else
     session->rsp_state = S_quit;
 }

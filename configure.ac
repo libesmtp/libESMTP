@@ -24,7 +24,7 @@ dnl Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 dnl 
 dnl #########################################################################
 
-AC_INIT([libesmtp],[0.8.2],[brian@stafford.uklinux.net])
+AC_INIT([libesmtp],[0.8.3],[brian@stafford.uklinux.net])
 AC_PREREQ(2.50)
 AM_INIT_AUTOMAKE(AC_PACKAGE_NAME,AC_PACKAGE_VERSION)
 AM_CONFIG_HEADER(config.h)
@@ -54,7 +54,7 @@ dnl Library versioning
 dnl #########################################################################
 
 LIB_CURRENT=5
-LIB_REVISION=3
+LIB_REVISION=4
 LIB_AGE=0
 AC_SUBST(LIB_CURRENT)
 AC_SUBST(LIB_REVISION)
@@ -144,6 +144,9 @@ dnl Check if getaddrinfo is available.  If not found and gethostbyname is
 dnl not enabled, print an error message.
 
 AC_SEARCH_LIBS(getaddrinfo, resolv bind nsl c_r cr,
+	       if test x$enable_gethostbyname != xno ; then
+		    AC_MSG_ERROR([getaddrinfo found but gethostbyname support was enabled])
+	       fi
                AC_DEFINE(HAVE_GETADDRINFO, 1,
 	                  [Build with support for RFC 2553/Posix getaddrinfo]),
 	       if test x$enable_gethostbyname != xyes ; then
@@ -225,6 +228,24 @@ else
 fi
 
 dnl #########################################################################
+dnl Enable XUSR
+dnl #########################################################################
+
+AC_ARG_ENABLE([xusr],
+              AC_HELP_STRING([--disable-xusr],
+                             [support for sendmail XUSR extension (default=yes)]),
+  	      ,
+  	      enable_xusr=yes)
+ 
+AC_MSG_CHECKING(whether to enable sendmail XUSR)
+if test x"$enable_xusr" = xyes ; then
+	AC_MSG_RESULT([yes])
+	AC_DEFINE(USE_XUSR,1,[Enable support for sendmail XUSR extension])
+else
+	AC_MSG_RESULT([no])
+fi
+
+dnl #########################################################################
 dnl Provide standard callbacks for reading messages (experimental)
 dnl #########################################################################
 
@@ -292,7 +313,8 @@ dnl #########################################################################
 dnl Checks for library functions.
 dnl #########################################################################
 
-AC_CHECK_FUNCS(snprintf socket strdup strndup strtol gethostname)
+AC_CHECK_FUNCS(snprintf strdup strndup strtol gethostname)
+AC_SEARCH_LIBS(socket, socket)
 
 dnl Conditional check for functions needed in threaded code
 
@@ -408,6 +430,7 @@ ACX_FEATURE([with],[auth-plugin-dir],[`eval echo $d`])
 ACX_FEATURE([enable],[pthreads])
 ACX_FEATURE([enable],[starttls])
 ACX_FEATURE([enable],[etrn])
+ACX_FEATURE([enable],[xusr])
 ACX_FEATURE([enable],[message-callbacks])
 ACX_FEATURE([enable],[require-all-recipients])
 ACX_FEATURE([enable],[debug])
