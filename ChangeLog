@@ -1,0 +1,513 @@
+2001-06-11 	Brian Stafford	<brian@stafford.uklinux.net>
+      * protocol.c smtp-api.c
+	DELIVERBY extension done - still to test.
+
+2001-06-09 	Brian Stafford	<brian@stafford.uklinux.net>
+      * message-callbacks.c libesmtp.h
+        Added standard callback functions for reading messages. libesmtp.h
+        provides macros to simplify using them.
+
+2001-06-07 	Brian Stafford	<brian@stafford.uklinux.net>
+      * message-source.c
+	Changed the declaration of the message callback to make it clearer
+	that the first argument in fact points to internal state allocated
+	by the callback.  Strings returned to code reading the message
+	are now const char *.
+
+2001-05-31 	Brian Stafford	<brian@stafford.uklinux.net>
+      * smtp-api.c protocol.c configure,in
+	Had another go at the smtp_require_all_recipients() API hack.
+	The original implementation hoped the SMTP server would report
+	failure on receiving a zero length message but this isn't
+	reliable.  This API must be explicitly enabled by ./configure.
+
+2001-05-28 	Brian Stafford	<brian@stafford.uklinux.net>
+      * smtp-auth.c
+        Make sure the client won't attempt to authenticate when already
+        authenticated.  This could happen if having authenticated and
+        enables a security layer, the server offers AUTH again.
+
+      * smtp-tls.c
+        Make sure the client won't attempt to negotiate TLS when already
+        using TLS.  Also don't use TLS if already authenticated.
+
+      * siobuf.c
+      	Make the code for non-blocking sockets + OpenSSL more robust.
+
+      * errors.c
+	Added default case for set_herrno().
+
+2001-05-25 	Brian Stafford	<brian@stafford.uklinux.net>
+      * smtp-auth.c
+      	On authentication failure the same mechanism was selected again
+      	instead of moving on to the next one.  This caused an infinite
+      	loop of failing AUTH exchanges.
+
+2001-05-24 	Brian Stafford	<brian@stafford.uklinux.net>
+      * libesmtp.spec.in
+      	Changed "-a 0" option in %setup macro to "-T -b 0"
+
+      * configure.in
+	Removed -Werror from --enable-more-warnings=yes as this can be
+	bothersome for punters.  Added --enable-more-warnings=picky to
+	stop gcc from using internal prototypes for builtin functions;
+	also turns on -Werror.
+
+      * protocol.c
+	free_ghbnctx() was called twice if connect() failed, potentially
+	causing a SIGSEGV.  This bug was introduced with support for
+	gethostbyname_r.
+
+2001-05-23 	Brian Stafford	<brian@stafford.uklinux.net>
+      * configure.in
+	Incremented library version and reset the age.  This is important
+	because the event callback semantics have changed.
+	Detect IPv6 sockaddr structure in <netinet/in.h>.
+
+      * protocol.c
+      	Added 8BITMIME support.  New API call smtp_8bitmime_set_body().
+      	Report extensions after final set is known.  STARTTLS or AUTH
+      	can change the set of extensions advertised by the server.
+        Typo meant the RET=FULL/HDRS parameter was printed as
+        SIZE=FULL/HDRS in MAIL FROM: (D'oh!)
+
+      * errors.c
+	Changed prototype for smtp_strerror() to allow use of strerror_r.
+
+2001-05-22 	Brian Stafford	<brian@stafford.uklinux.net>
+      * siobuf.c
+        Fixed calls to encode/decode callbacks and added explanation of
+        their semantics.  This eliminates potential for a buffer
+        overflow bug when decoding expands data read from the socket.
+
+      * libesmtp.spec.in
+	Fixed inconsistency between package name and tarball.
+	Use the bz2 version of the tarball as the source.
+
+      * Makefile.am
+      	Added libesmtp.spec to extra distribution files.
+
+      * gethostbyname.c
+	Added missing #include <string.h> (gcc builtin prototypes
+	again - grumble....)
+
+2001-05-21 	Brian Stafford	<brian@stafford.uklinux.net>
+      * siobuf.c
+      	Restructuring of reading/writing and polling to permit use
+      	of non-blocking IO.
+
+      * protocol.c
+	Revised protocol outer loop makes sure the protocol engine reads
+	data as soon as it becomes available and defers buffer flushes
+	until after pending data from the SMTP server has been read.  In
+	conjunction with non-blocking output this avoids a potential
+	deadlock described in RFC 2920 when PIPELINING is in use.
+
+2001-05-20 	Brian Stafford	<brian@stafford.uklinux.net>
+      * smtp-etrn.c
+	Added experimental support for the ETRN extension.
+
+      * protocol.c smtp-api.c
+      	Check for failure to create a message source and added code
+      	to actually destroy it thus plugging a memory leak.
+      	More thorough checking of some API function arguments.
+
+      * siobuf.c
+	Added sio_mark().  When the write buffer is flushed data written
+	beyond the mark is retained and the mark is deleted.
+
+      * protocol.c
+	Added new event types for flagging required extensions not
+	available or reporting extensions that provide information to
+	the application.
+	Command boundaries are marked in the write buffer.  This
+	prevents partial commands being sent to the SMTP server.
+
+2001-05-18 Version 0.7.1 released
+---------------------------------
+
+2001-05-18 	Brian Stafford	<brian@stafford.uklinux.net>
+      * protocol.c
+      	Added AF_INET6 support.
+
+2001-05-17 	Brian Stafford	<brian@stafford.uklinux.net>
+      * protocol.c gethostbyname.[ch] configure.in acinclude.m4
+	gethostbyname_r() now in its own file which provides a consistent
+	interface.  configure selects which version of the function to
+	compile for when building threaded code.
+
+      * configure.in auth-client.h libesmtp-config.in libesmtp.spec.in
+      	Directory for installing authentication plugins is now
+      	configurable.
+
+2001-05-15 	Brian Stafford	<brian@stafford.uklinux.net>
+      * libesmtp.spec.in
+	Added to simplify building RPM packages.
+
+2001-05-14 	Brian Stafford	<brian@stafford.uklinux.net>
+      * smtp-api.c
+      	Check that all messages have a callback to read the message
+      	headers and body.
+
+      * tokens.c
+	Check buffer length in read_atom().
+	Use of <ctype.h> eliminated.
+
+      * headers.c
+        init_header_table() checks for NULL pointers to avoid potential
+        SIGSEGVs.
+
+2001-05-13 	Brian Stafford	<brian@stafford.uklinux.net>
+      * rfc822date.c configure.in
+	Use localtime_r() or gmtime_r() when building a thread safe
+	library.
+
+      * concatenate.[ch]
+      	Fixed incorrect shortfall caclulation in concatenate()
+      	potentially leading to buffer overrun.
+      	Generally tidied up code.
+
+      * auth-client.c
+      	auth_response() fails if (*context->client->init)() fails.
+
+      * base64.c
+	b64_encode() now checks the destination buffer length.
+
+2001-05-11 	Brian Stafford	<brian@stafford.uklinux.net>
+      * libesmtp-config.in Makefile.am
+      	Added config script to simplify compiling and linking.
+
+      * protocol.c configure.in
+      	Use gethostbyname_r() when building a thread safe library.
+
+2001-05-09 	Brian Stafford	<brian@stafford.uklinux.net>
+      * Makefile.am configure.in
+	libltdl is now part of the tarball and is installed if not
+	already present.
+
+      * protocol.c
+      	do_session() will now make use of all the addresses returned
+      	by gethostbyname().  This allows the DNS admin for the domain
+      	to specify a number of MTAs which handle mail submission.
+	Failures trying to connect or when processing the greeting or
+	a response to the EHLO/HELO commands will cause a fallback server
+	to be tried.  The name server will round robin the responses
+	balancing the load among the servers.
+      	When reading the server greeting accept only 220 otherwise the
+      	connection may have been made to a non-SMTP service.
+
+2001-05-06 Version 0.7.0 released
+---------------------------------
+
+2001-05-06 	Brian Stafford	<brian@stafford.uklinux.net>
+      * protocol.c
+	session->auth_mechanisms was incorrectly freed in do_session().
+	This should have been done using destroy_auth_mechanisms().
+	Moved initialisation of the session variables to the start
+	of do_session().  This allows checks for some error conditions
+	to be done before attempting to connect to the SMTP server.
+	Updated code to select messages and recipients.  This is to
+	permit calling smtp_start_session() more than once on a given
+	session.  Second and subsequent calls should only deliver to
+	recipients not successful in a previous SMTP session.  Removed
+	a few FIXME comments that no longer apply.
+
+      * smtp-api.c
+        smtp_recipient_reset_status() clears the 'complete' flag so that
+        the recipient will be retried on a subsequent smtp_start_session().
+        Added a new API smtp_recipient_check_complete().  This is true if
+        a subsequent call to smtp_start_session() would *not* attempt to
+        post the message to this recipient.
+        smtp_destroy_session() now frees memory allocated for remote
+        server hostname.
+
+      * protocol.c libesmtp-private.h smtp-api.c
+        Renamed 'sent' in smtp_recipient_t structure to 'complete'.
+        Not all completed recipients might have been sent.
+
+      * protocol.c headers.c smtp-api.c
+        Only call gethostname() once and save the result.  Also added
+        new API smtp_set_hostname() to allow the application to change
+        the default.
+
+2001-05-03 	Brian Stafford	<brian@stafford.uklinux.net>
+      * crammd5/Makefile.am crammd5/hmacmd5.[ch]
+      	Renamed files to avoid name conflict with Cyrus SASL
+      	include/ directory.
+
+      * base64.c message-source.c
+	Added missing #include <string.h>, egcs-2.91.66 didn't
+	spot the missing prototypes.
+
+      * examples/mail-file.c
+        Ignore SIGPIPE.  Means the application isn't killed accidentally
+        when something times out during the protocol session.
+
+2001-05-02 	Brian Stafford	<brian@stafford.uklinux.net>
+      * sasl-tls.c protocol.c
+      	Added experimental support for STARTTLS
+
+2001-04-31 	Brian Stafford	<brian@stafford.uklinux.net>
+      * cram-md5/Makefile.am
+	hmac-md5.h was missing from the list of sources and hence was
+	not in the tarball.
+
+2001-04-29 Version 0.6.1 released
+--------------------------------
+
+2001-04-30 	Brian Stafford	<brian@stafford.uklinux.net>
+      * auth-client.c
+	Fixed incorrect SSF comparison for authentication modules
+	that were already loaded.
+
+2001-04-29 Version 0.6a released
+--------------------------------
+
+2001-04-28 	Brian Stafford	<brian@stafford.uklinux.net>
+      * configure.in smtp-api.c example/mail-file.c
+	Corrected inconsistently named API from smtp_set_auth_context()
+	to smtp_auth_set_context().
+
+2001-04-25 Version 0.6 released
+--------------------------------
+
+2001-04-25 	Brian Stafford	<brian@stafford.uklinux.net>
+      * configure.in Makefile.am */Makefile.am
+	Added detection of MD5 routines in OpenSSL, to enable
+	the CRAM-MD5 SASL mechanism.
+
+2001-04-25 	Brian Stafford	<brian@stafford.uklinux.net>
+      * protocol.c
+	Corrected parsing bug in parse_status_triplet().
+
+2001-04-16 	Brian Stafford	<brian@stafford.uklinux.net>
+      * api.h
+	Added new header file.  This currently contains macros
+	to aid argument checking for API functions.
+
+      * libesmtp.h
+	Changed name of API function argument check macro.
+
+      * most files
+      	Wrapped #include <config.h> with #ifdef HAVE_CONFIG_H
+
+2001-04-11 	Brian Stafford	<brian@stafford.uklinux.net>
+      * rfc822date.c
+	Make sure the absolute value of minutes is used when
+      	formatting the date.
+
+      * protocol.c
+	Fixed potential segfault when DATA fails before transferring
+	a message.
+
+      * smtp-auth.c
+        Support for client authentication plugins now working.
+
+      * protocol.c
+	Support for SMTP AUTH extension.
+
+2001-04-05 	Brian Stafford	<brian@stafford.uklinux.net>
+      * protocol.c smtp-auth.c
+	Removed 'want_enhanced' argument from read_smtp_response()
+	since it was unnecessary.
+	Added preliminary support for SMTP AUTH extension.
+
+2001-04-04 	Brian Stafford	<brian@stafford.uklinux.net>
+      * Many files
+	Changes to accomodate stricter error checking options
+	to gcc.
+
+2001-04-03 	Brian Stafford	<brian@stafford.uklinux.net>
+      * siobuf.c protocol.c
+	Changed CONFIG_TLS to USE_TLS (not that it matters yet)
+	Changed HAVE_LIBSASL to USE_SASL
+	Mostly for consistency with autoconf convention.
+
+      * configure.in
+	Checks for pthreads and SASL.
+
+2001-03-21 	Brian Stafford	<brian@stafford.uklinux.net>
+      * smtp-api.c
+      	Fixed up some missing error reporting.
+
+2001-03-15 	Brian Stafford	<brian@stafford.uklinux.net>
+      * protocol.c
+      	Now sets timeouts reccommended in RFC 1123 when waiting for
+      	server responses.
+
+      * errors.c libesmtp.h
+      	Changed prefix from ES_ to SMTP_ERR_.  Edits to other files
+      	to accommodate the change.
+
+2001-03-14 	Brian Stafford	<brian@stafford.uklinux.net>
+      * protocol.c libesmtp.h
+        Added first lot of event monitoring callbacks.  Simplified the
+        declaration for the callback function.  The callback is called
+        with different arguments depending on the actual event.
+
+2001-03-09 	Brian Stafford	<brian@stafford.uklinux.net>
+      * tokens.c tokens.h protocol.c
+	Added const to a few things that should have had it.  Fixed a
+	corresponding declaration in protocol.c.
+
+      * smtp-auth.c
+      	Basis of the implementation of the SMTP AUTH command.  This is
+      	not complete or tested yet, pending the decision about how to
+      	best implement SASL.
+
+      * siobuf.c siobuf.h
+      	Added callback functions which encode or decode data just before
+      	writing or after reading data between the buffers and the
+      	socket.  This is for use by SASL security layers.
+
+2001-03-07 	Brian Stafford	<brian@stafford.uklinux.net>
+      * concatenate.c concatenate.h
+	Added minimum_length parameter to cat_{init,reset}().
+
+2001-03-07 	Brian Stafford	<brian@stafford.uklinux.net>
+      * siobuf.c siobuf.h protocol.c
+	Allow for seperate read and write file descriptors in
+	sio_attach().  This is for when support for opening a pipe to
+	a program running an SMTP server on its stdin/stdout is added.
+
+      * siobuf.c siobuf.h
+      	Fixed the #ifdef _buffer_h lines to #ifdef _siobuf_h (the perils
+      	of cut and paste editing).
+
+      	Added typedefs for the sio callback functions.
+
+      	Added encoder/decoder callbacks for use with security layer parts
+      	of SASL.  CONFIG_SASL stuff now gone.
+
+2001-03-02 	Brian Stafford	<brian@stafford.uklinux.net>
+      * headers.c
+        Implemented the rest of destroy_header_table().
+
+2001-02-27 Version 0.5 released
+--------------------------------
+
+2001-02-26 	Brian Stafford	<brian@stafford.uklinux.net>
+      * protocol.c
+      	Now issue RSET before MAIL FROM: if a failure response is
+      	received to the DATA command.
+
+      	Fixed possible segfaults when resetting the status in rsp_rest()
+      	and rsp_quit().
+
+      * headers.c
+        Partially implemented destroy_header_table().
+
+      * smtp-api.c
+        Now calls destroy_header_table().
+
+      * htable.c
+	Allow callback in h_destroy() to be NULL.
+
+2001-02-26 Version 0.4 released
+--------------------------------
+
+2001-02-25 	Brian Stafford	<brian@stafford.uklinux.net>
+      * protocol.c
+        Second state for the DATA command now does not transfer the
+        message if there were no valid recipients.
+
+2001-02-22 	Brian Stafford	<brian@stafford.uklinux.net>
+      * smtp-api.c
+        Added APIs to get/set application data in each of the opaque
+        structures.
+
+	Added protocol event callback API but only for a place holder.
+	This will be used by applications which want to monitor the
+	progress of the session and status changes as they happen.
+	This is different from the protocol monitor which dumps the
+	actual data transferred on or close to the wire.
+
+      * headers.c
+      	Added code to handle Sender:
+
+      	Fixed From: printing; continuation lines had no leading whitespace.
+
+      	In smtp_set_header_option() once Hdr_PROHIBIT is set, it cannot
+      	be unset.  Prohibit cannot be set for headers already set.
+
+	Added smtp_set_resent_headers() but only for a place holder.
+
+      * protocol.c
+        Correct parsing of enhanced status codes.  These are only present
+        for 2xx, 4xx and 5xx SMTP status codes.
+
+2001-02-18 Version 0.3 released
+--------------------------------
+
+2001-02-19 	Brian Stafford	<brian@stafford.uklinux.net>
+      * protocol.c smtp-api.c
+        Port number in session structure stored in host byte order
+        instead of network byte order.  This makes the port number easier
+        to read in gdb.
+
+      * protocol.c
+	Removed white space which crept into the MAIL FROM: and RCPT TO:
+	commands.  All the servers tested with to date have accepted
+	this but it wasn't in RFC 821.
+
+      * headers.c
+	Fixed From: and Disposition-Notification-To: headers to allow
+	multiple mailboxes as per RFC 822.
+
+	Corrected syntax for default Message-Id: generation.  This
+	should have been "addr-spec" per RFC 822 but didn't have an @.
+
+      * examples/mail-file.c
+      	Corrected typo that stopped --reverse-path from working.
+
+2001-02-18 Version 0.2 released
+--------------------------------
+      Core libESMTP API now complete.
+
+2001-02-18	Brian Stafford	<brian@stafford.uklinux.net>
+      * examples/mail-file.c
+      	Updated to tweak a few more APIs in libESMTP.
+      	The example now has a very basic Makefile.
+
+2001-02-17	Brian Stafford	<brian@stafford.uklinux.net>
+      * protocol.c
+        Changed use of strchr() to memchr() since strings read by the
+        message callback and header functions are *not* \0 terminated.
+
+      * headers.c
+	Changed beyond all recognition. :-)
+	Declaration of smtp_set_header_option() has changed.
+
+      * New files added to support RFC 822 header processing.
+
+2001-02-08	Brian Stafford	<brian@stafford.uklinux.net>
+      * siobuf.c
+      	Some additional error checking; extra thoroughness checking the
+      	return value of write().
+
+      * siobuf.c
+      * protocol.c
+      	Added the protocol monitor callback mechanism.
+
+      * libesmtp.h
+      * libesmtp-private.h
+      * smtp-api.c
+	Minor changes to the monitor callback declaration and session
+	structure for the protocol monitor.
+
+2001-02-04 Version 0.1a released
+--------------------------------
+
+2001-04-04	Brian Stafford	<brian@stafford.uklinux.net>
+
+      * message-source.c
+        Fixed a bad bug that could cause an infinite loop if a message
+        was not properly terminated with a \n
+
+2001-02-04 Version 0.1 released
+-------------------------------
+
+2001-02-04	Brian Stafford	<brian@stafford.uklinux.net>
+
+      * Initial Release
+

@@ -1,0 +1,25 @@
+* libESMTP 0.8.0 development release.	2000-06-12
+
+- See ChangeLog for details.
+
+The libESMTP feature set and API for version 1.0 is more or less complete.
+There have been minor changes to the arguments or semantics of some of
+the API functions, particularly wrt. the callback functions.  Applications
+using previous libESMTP versions will need to be recompiled or relinked.
+
+From this point on no new features will be added and, as far as possible,
+API changes will be resisted.  Having said that, the range of error codes
+will likely be expanded.  Effort will now be directed at bug fixes and
+improving the documentation and web site, though this is likely to be a
+slow process.
+
+Many of the supported SMTP extensions have had only superficial testing
+mainly due to lack of access to servers supporting them.  Developers using
+libESMTP are encouraged to test extensions against servers to which they
+have access and to submit bug reports to <brian@stafford.uklinux.net>.
+
+The libESMTP web site will be updated in the near future to set up
+(finally!)  mailing lists and bug tracking.  In addition the web site will
+link to projects using libESMTP.  If you would like a mention for your
+project, drop a line to <brian@stafford.uklinux.net> with the details.
+

@@ -1,0 +1,267 @@
+/*
+ *  This file is part of libESMTP, a library for submission of RFC 822
+ *  formatted electronic mail messages using the SMTP protocol described
+ *  in RFC 821.
+ *
+ *  Copyright (C) 2001  Brian Stafford  <brian@stafford.uklinux.net>
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 2.1 of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Lesser General Public
+ *  License along with this library; if not, write to the Free Software
+ *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
+#ifdef USE_SASL
+/* Support for the SMTP AUTH verb.
+ */
+#include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
+#include <stdarg.h>
+#include <unistd.h>
+#include <errno.h>
+
+#include "auth-client.h"
+#include "libesmtp-private.h"
+#include "api.h"
+
+#include "message-source.h"
+#include "siobuf.h"
+#include "tokens.h"
+#include "base64.h"
+#include "protocol.h"
+
+int
+smtp_auth_set_context (smtp_session_t session, auth_context_t context)
+{
+  SMTPAPI_CHECK_ARGS (session != NULL, 0);
+
+  session->auth_context = context;
+  return 1;
+}
+
+struct mechanism
+  {
+    struct mechanism *next;
+    const char *name;
+  };
+
+void
+destroy_auth_mechanisms (smtp_session_t session)
+{
+  struct mechanism *mech, *next;
+
+  for (mech = session->auth_mechanisms; mech != NULL; mech = next)
+    {
+      next = mech->next;
+      free ((void *) mech->name);
+      free (mech);
+    }
+  session->current_mechanism = session->auth_mechanisms = NULL;
+}
+
+void
+set_auth_mechanisms (smtp_session_t session, const char *mechanisms)
+{
+  char buf[64];
+  struct mechanism *mech;
+
+  destroy_auth_mechanisms (session);
+  while (read_atom (skipblank (mechanisms), &mechanisms, buf, sizeof buf))
+    {
+      mech = malloc (sizeof (struct mechanism));
+      mech->name = strdup (buf);
+      APPEND_LIST (session->auth_mechanisms, session->current_mechanism, mech);
+    }
+  session->current_mechanism = session->auth_mechanisms;
+}
+
+int
+select_auth_mechanism (smtp_session_t session)
+{
+  if (session->authenticated)
+    return 0;
+  if (session->auth_context == NULL)
+    return 0;
+  if (!auth_client_enabled (session->auth_context))
+    return 0;
+  for (; session->current_mechanism != NULL;
+       session->current_mechanism = session->current_mechanism->next)
+    if (auth_set_mechanism (session->auth_context,
+			    session->current_mechanism->name))
+      return 1;
+  return 0;
+}
+
+static int
+next_auth_mechanism (smtp_session_t session)
+{
+  while ((session->current_mechanism = session->current_mechanism->next) != NULL)
+    if (auth_set_mechanism (session->auth_context,
+			    session->current_mechanism->name))
+      return 1;
+  return 0;
+}
+
+void
+cmd_auth (siobuf_t conn, smtp_session_t session)
+{
+  char buf[2048];
+  const char *response;
+  int len;
+
+  sio_printf (conn, "AUTH %s", session->current_mechanism->name);
+
+  /* Ask SASL for the initial response (if there is one). */
+  response = auth_response (session->auth_context, NULL, &len);
+  if (response != NULL)
+    {
+      /* Encode the response and send it back to the server */
+      len = b64_encode (buf, sizeof buf, response, len);
+      if (len > 0)
+	{
+	  sio_write (conn, " ", 1);
+	  sio_write (conn, buf, len);
+	}
+    }
+
+  sio_write (conn, "\r\n", 2);
+  session->cmd_state = -1;
+}
+
+void
+rsp_auth (siobuf_t conn, smtp_session_t session)
+{
+  int code;
+
+  code = read_smtp_response (conn, session, &session->mta_status, NULL);
+  if (code == 4 || code == 5)
+    {
+      /* If auth mechanism is too weak or encryption is required, give up.
+         Otherwise try the next mechanism.  */
+      if (session->mta_status.code == 534 || session->mta_status.code == 538)
+	session->rsp_state = S_quit;
+      else
+        {
+	  /* If another mechanism cannot be selected, move on to the
+	     mail command since the MTA is required to accept mail for
+	     its own domain. */
+	  if (next_auth_mechanism (session))
+	    session->rsp_state = S_auth;
+	  else
+#ifdef USE_ETRN
+	    session->rsp_state = check_etrn (session) ? S_etrn : S_mail;
+#else
+	    session->rsp_state = S_mail;
+#endif
+        }
+    }
+  else if (code == 2)
+    {
+      session->authenticated = 1;
+      if (auth_get_ssf (session->auth_context) == 0)
+#ifdef USE_ETRN
+	session->rsp_state = check_etrn (session) ? S_etrn : S_mail;
+#else
+	session->rsp_state = S_mail;
+#endif
+      else
+        {
+	  /* Add SASL mechanism's encoder/decoder to siobuf.  This is
+	     done now, since subsequent commands and responses will be
+	     encoded and remain so until the connection to the server
+	     is closed.  Auth_encode/decode() call through to the
+	     mechanism's coders. */
+	  sio_set_securitycb (conn, auth_encode, auth_decode,
+	  		      session->auth_context);
+	  session->auth_context = NULL;		/* Don't permit AUTH */
+	  session->extensions = 0;		/* Turn off extensions */
+	  session->rsp_state = S_ehlo;		/* Restart protocol */
+        }
+    }
+  else if (code == 3)
+    session->rsp_state = S_auth2;
+  /* else errors */
+}
+
+void
+cmd_auth2 (siobuf_t conn, smtp_session_t session)
+{
+  char buf[2048];
+  const char *response;
+  int len;
+
+  /* Decode the text from the server to get the challenge. */
+  len = b64_decode (buf, sizeof buf, session->mta_status.text, -1);
+  if (len >= 0)
+    {
+      /* Send it through SASL and get the response. */
+      response = auth_response (session->auth_context, buf, &len);
+
+      /* Encode the response and send it back to the server */
+      len = (response != NULL) ? b64_encode (buf, sizeof buf, response, len)
+			       : -1;
+    }
+
+  /* Abort the AUTH command if base 64 encode/decode fails. */
+  if (len < 0)
+    sio_write (conn, "*\r\n", 3);
+  else
+    {
+      sio_write (conn, buf, len);
+      sio_write (conn, "\r\n", 2);
+    }
+  session->cmd_state = -1;
+}
+
+void
+rsp_auth2 (siobuf_t conn, smtp_session_t session)
+{
+  rsp_auth (conn, session);
+}
+
+#else
+
+/* Define stubs for some of the SMTP AUTH support. */
+#include <stdlib.h>
+#include "auth-client.h"
+#include "libesmtp-private.h"
+
+int
+smtp_auth_set_context (smtp_session_t session, auth_context_t context)
+{
+  SMTPAPI_CHECK_ARGS (session != NULL, 0);
+
+  return 0;
+}
+
+void
+set_auth_mechanisms (smtp_session_t session, const char *mechanisms)
+{
+}
+
+int
+select_auth_mechanism (smtp_session_t session)
+{
+  return 0;
+}
+
+void
+destroy_auth_mechanisms (smtp_session_t session)
+{
+}
+
+#endif

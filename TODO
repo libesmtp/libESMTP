@@ -1,0 +1,22 @@
+  o Generate libesmtp.h from libesmtp.h.in - this will allow the optional
+    API declarations to be configured out of the installed header.
+
+  o Finish the TLS code.  
+    * client certificate handling.
+    * load trusted CAs.
+    * hook to SASL EXTERNAL authentication mechanism.
+    * report server certificate details (esp fingerprint) to application
+    * report cipher in use to application.
+    * API to specify minimum acceptable security levels.
+
+  o Make header code do line folding at white spaces.
+
+  o Add sendmail replacement.  Just implement enough to take a message and
+    send it to an SMTP server.
+
+  o Review API.
+
+  o Review error reporting.
+
+  o Loadsa documentation.
+

@@ -1,0 +1,141 @@
+Memory Leaks
+============
+
+Investigate and fix.
+
+Threads
+=======
+
+Add mutexes to allow multiple threads to access data structures where
+reasonable.  It would make sense for smtp_start_session() to be able to
+run in a different thread from the rest of the program.  Having said that,
+libESMTP should be safe in a multithreaded program so long as only one
+thread accesses one session_t and its children at a time.  There are no
+global variables so different threads could work on different sessions
+simultaneously.
+
+Headers
+=======
+
+When a header is set and is overriding a header in the message, make sure
+a value set in the API is used only once.  For example the api defines
+"X-My-Header: Hello World" but the message has two instances of X-My-Header:
+The resulting message should have only one X-My-Header.
+
+Implement Disposition-Notification-Options: not very urgent.
+
+There are interactions between headers which are not yet properly handled.
+E.g. if no To, but Cc *is* supplied.
+
+Also Resent-*: headers interact with their counterparts.  Forwarding
+messages might get confused concerning the Date, Resent-Date and originator
+recipient fields.  Suspect that a special option to the header processing
+is needed to convert various fields to resent- versions is needed.
+
+Sender: is required if there are multiple values to From:
+
+Bcc Mode
+========
+
+Bcc: headers.  These might benefit from some fancy processing.  Could have
+a bcc mode which has two sets of message recipients.  Message is sent twice
+with the Bcc header enforced to the Bcc recipients and stripped when sent
+to other recipients.
+
+Quoting
+=======
+
+In concatenate.c:  Add a version of concatentate() that takes an extra argument
+which determines the quoting rules for the string being copied to the buffer.
+At present, the application must be careful to supply only characters which are
+legal when not quoted which is obviously v. unsatisfactory.
+
+When supplying a phrase or a mailbox, different quoting conventions apply
+do different syntatic elements of the phrase and maibox.  A better solution
+might be to provide new APIs which quote and combines individual syntatic
+elements into a single string which is then passed to the API.
+
+Auth
+====
+
+Need to support client side for
+   	EXTERNAL	RFC 2222 sect 7.4	(done - untested)
+	CRAM-MD5	RFC 2195		(done - untested)
+	PLAIN		RFC 2595		(done - untested)
+	LOGIN		undocumented		(done - minimal testing)
+	ANONYMOUS	RFC 2245
+	OTP		RFC 2444
+	SecurID		RFC 2808
+	DIGEST-MD5	RFC 2831
+	Kerberos	RFC 2222 sect 7.1
+	GSSAPI		RFC 2222 sect 7.2
+
+Protocol Options
+================
+
+Add the ability Enable/Disable SMTP extensions.  Not sure about the value
+of doing this, except maybe for coping with buggy servers.
+
+TLS/SSL
+=======
+
+Since S/MIME or PGP/MIME is the only real way to protect the message,
+what does STARTTLS achieve?  No real point authenticating the client
+to the server in general mail relay.
+
+Mail submission: is a client certificate useful?
+E.g. the server can authenticate the user based on the client certificate.
+However, server could ignore or not request the client certificate and
+use AUTH over the encrypted connection.
+
+Server certificate: should the client verify the server certificate or
+the CA?  What is gained by doing so?
+
+Provides protection against passive attack.
+
+Actually, for the case of mail submission, TLS might be quite useful.
+Consider the case of someone from an organisation who is out on the road.
+The only MTA they might have access to that will accept mail for relay
+is their own organisation's submission server.  This first hop may pass
+a significant number of routers which could potentially eavesdrop on
+the message.  The submission server might be responsible for signing
+and encrypting messages on the grounds that it is normally accepting
+connections from behind a firewall.  This is feasible using S/MIME or
+PGP MIME.  Without encrypting the first hop, this confidentiality measure
+is lost.  Client certificate is likely to be required in this scenario too.
+
+Errors while reading the message
+================================
+
+Once the DATA or BDAT command is issued, there is no way to tell the server
+an error occurred when reading the message in the client. The only
+available course of action is to drop the connection.  Return from the
+cmd_data/rsp_data function and set next state to -1 to exit without quitting.
+Do not terminate the DATA command with a '.' on its own line.
+
+How about an SMTP extension to allow a client to recover failed data transfer
+gracefully???
+
+E.g.
+C: EHLO ...
+S: 250-COMMIT
+....
+
+
+C: MAIL FROM:<...> COMMIT=YES	[default]
+
+C: MAIL FROM:<...> COMMIT=NO 	[Request MTA to receive data but do not
+				 queue for delivery.  If COMMIT NO is
+			         issued or QUIT uncommitted messages are
+			         deleted without queueing.]
+C: DATA
+S: 320 Go ahead
+data transfer...
+.
+S: 250 Data received - use COMMIT to queue message
+...
+C: COMMIT
+
+COMMIT [YES]
+All uncommitted messages are queued.  If no uncommitted return 503 bad sequence of commands.
+

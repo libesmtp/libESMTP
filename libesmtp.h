@@ -1,0 +1,272 @@
+#ifndef _libesmtp_h
+#define _libesmtp_h
+/*
+ *  This file is part of libESMTP, a library for submission of RFC 822
+ *  formatted electronic mail messages using the SMTP protocol described
+ *  in RFC 821.
+ *
+ *  Copyright (C) 2001  Brian Stafford  <brian@stafford.uklinux.net>
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 2.1 of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Lesser General Public
+ *  License along with this library; if not, write to the Free Software
+ *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+
+/*  *********************************************************************
+ *  ***************************** IMPORTANT *****************************
+ *  *********************************************************************
+ *
+ *  This API is intended for use as an ESMTP client within a Mail User
+ *  Agent (MUA) or other program that wishes to submit mail to a
+ *  preconfigured Mail Transport Agent (MTA).
+ *
+ *  ***** IT IS NOT INTENDED FOR USE IN CODE THAT IMPLEMENTS AN MTA *****
+ *
+ *  In particular, the CNAME, MX and A/AAAA lookup rules an MTA must
+ *  use to locate the next hop MTA are not implemented.
+ */
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+typedef struct smtp_session *smtp_session_t;
+typedef struct smtp_message *smtp_message_t;
+typedef struct smtp_recipient *smtp_recipient_t;
+
+smtp_session_t smtp_create_session (void);
+smtp_message_t smtp_add_message (smtp_session_t session);
+typedef void (*smtp_enumerate_messagecb_t) (smtp_message_t message, void *arg);
+int smtp_enumerate_messages (smtp_session_t session,
+			     smtp_enumerate_messagecb_t cb, void *arg);
+int smtp_set_server (smtp_session_t session, const char *hostport);
+int smtp_set_hostname (smtp_session_t session, const char *hostname);
+int smtp_set_reverse_path (smtp_message_t message, const char *mailbox);
+smtp_recipient_t smtp_add_recipient (smtp_message_t message,
+                                     const char *mailbox);
+typedef void (*smtp_enumerate_recipientcb_t) (smtp_recipient_t recipient,
+					      const char *mailbox, void *arg);
+int smtp_enumerate_recipients (smtp_message_t message,
+			       smtp_enumerate_recipientcb_t cb, void *arg);
+int smtp_set_header (smtp_message_t message, const char *header, ...);
+enum header_option
+  {
+    Hdr_OVERRIDE,
+    Hdr_PROHIBIT,
+    /* add new options here */
+  };
+int smtp_set_header_option (smtp_message_t message, const char *header,
+			    enum header_option option, ...);
+int smtp_set_resent_headers (smtp_message_t message, int onoff);
+typedef const char *(*smtp_messagecb_t) (void **ctx, int *len, void *arg);
+int smtp_set_messagecb (smtp_message_t message,
+		        smtp_messagecb_t cb, void *arg);
+enum
+  {
+  /* Protocol progress */
+    SMTP_EV_CONNECT,
+    SMTP_EV_MAILSTATUS,
+    SMTP_EV_RCPTSTATUS,
+    SMTP_EV_MESSAGEDATA,
+    SMTP_EV_MESSAGESENT,
+    SMTP_EV_DISCONNECT,
+
+  /* Protocol extension progress */
+    SMTP_EV_ETRNSTATUS = 1000,
+
+  /* Required extensions */
+    SMTP_EV_EXTNA_DSN = 2000,
+    SMTP_EV_EXTNA_8BITMIME,
+    SMTP_EV_EXTNA_STARTTLS,
+    SMTP_EV_EXTNA_ETRN,
+
+  /* Extensions specific events */
+    SMTP_EV_DELIVERBY_EXPIRED = 3000,
+  };
+typedef void (*smtp_eventcb_t) (smtp_session_t session, int event_no,
+				void *arg, ...);
+int smtp_set_eventcb (smtp_session_t session, smtp_eventcb_t cb, void *arg);
+typedef void (*smtp_monitorcb_t) (const char *buf, int buflen,
+				  int writing, void *arg);
+int smtp_set_monitorcb (smtp_session_t session, smtp_monitorcb_t cb, void *arg,
+			int headers);
+int smtp_start_session (smtp_session_t session);
+int smtp_destroy_session (smtp_session_t session);
+
+struct smtp_status
+  {
+    int code;			/* SMTP protocol status code */
+    const char *text;		/* Text from the server */
+    int enh_class;		/* RFC 2034 enhanced status code triplet */
+    int enh_subject;
+    int enh_detail;
+  };
+typedef struct smtp_status smtp_status_t;
+
+const smtp_status_t *smtp_message_transfer_status (smtp_message_t message);
+const smtp_status_t *smtp_reverse_path_status (smtp_message_t message);
+int smtp_message_reset_status (smtp_message_t recipient);
+const smtp_status_t *smtp_recipient_status (smtp_recipient_t recipient);
+int smtp_recipient_check_complete (smtp_recipient_t recipient);
+int smtp_recipient_reset_status (smtp_recipient_t recipient);
+int smtp_errno (void);
+char *smtp_strerror (int error, char buf[], int buflen);
+
+void *smtp_set_application_data (smtp_session_t session, void *data);
+void *smtp_get_application_data (smtp_session_t session);
+void *smtp_message_set_application_data (smtp_message_t message, void *data);
+void *smtp_message_get_application_data (smtp_message_t message);
+void *smtp_recipient_set_application_data (smtp_recipient_t recipient,
+					   void *data);
+void *smtp_recipient_get_application_data (smtp_recipient_t recipient);
+
+int smtp_option_require_all_recipients (smtp_session_t session, int state);
+
+#ifdef _auth_client_h
+int smtp_auth_set_context (smtp_session_t session, auth_context_t context);
+#endif
+
+/*
+   Standard callbacks for reading the message from the application.
+ */
+
+const char *_smtp_message_fp_cb (void **ctx, int *len, void *arg);
+#define smtp_set_message_fp(message,fp)	\
+		smtp_set_messagecb ((message), _smtp_message_fp_cb, (fp))
+
+const char *_smtp_message_fp_nocrlf_cb (void **ctx, int *len, void *arg);
+#define smtp_set_message_fp_nocrlf(message,fp)	\
+		smtp_set_messagecb ((message), _smtp_message_fp_nocrlf_cb, (fp))
+
+const char *_smtp_message_str_cb (void **ctx, int *len, void *arg);
+#define smtp_set_message_str(message,str)	\
+		smtp_set_messagecb ((message), _smtp_message_str_cb, (str))
+
+/****************************************************************************
+ * The following APIs relate to SMTP extensions.  Note that not all
+ * supported extensions have corresponding API functions.
+ ****************************************************************************/
+
+/*
+    	RFC 1891.  Delivery Status Notification (DSN)
+ */
+
+enum ret_flags { Ret_NOTSET, Ret_FULL, Ret_HDRS };
+int smtp_dsn_set_ret (smtp_message_t message, enum ret_flags flags);
+int smtp_dsn_set_envid (smtp_message_t message, const char *envid);
+
+enum notify_flags
+  {
+    Notify_NOTSET,
+    Notify_NEVER	= -1,
+    Notify_SUCCESS	= 1,
+    Notify_FAILURE	= 2,
+    Notify_DELAY	= 4
+  };
+int smtp_dsn_set_notify (smtp_recipient_t recipient, enum notify_flags flags);
+int smtp_dsn_set_orcpt (smtp_recipient_t recipient,
+			const char *address_type, const char *address);
+
+/*
+    	RFC 1870.  SMTP Size extension.
+ */
+
+int smtp_size_set_estimate (smtp_message_t message, unsigned long size);
+
+/*
+	RFC 1652.  8bit-MIME Transport
+ */
+enum e8bitmime_body
+  {
+    E8bitmime_NOTSET,
+    E8bitmime_7BIT,
+    E8bitmime_8BITMIME
+  };
+int smtp_8bitmime_set_body (smtp_message_t message, enum e8bitmime_body body);
+
+/*
+	RFC 2852.  Deliver By
+ */
+enum by_mode
+  {
+    By_NOTSET,
+    By_NOTIFY,
+    By_RETURN
+  };
+int smtp_deliverby_set_mode (smtp_message_t message,
+			     long time, enum by_mode mode, int trace);
+
+/*
+    	RFC 2487.  SMTP Starttls extension.
+ */
+enum starttls_option
+  {
+    Starttls_DISABLED,
+    Starttls_ENABLED,
+    Starttls_REQUIRED
+  };
+int smtp_starttls_enable (smtp_session_t session, enum starttls_option how);
+
+/* Only delare this if the app has incuded <openssl/ssl.h> which
+   defines the symbol tested. */
+#ifdef SSL_SESSION_ASN1_VERSION
+int smtp_starttls_set_ctx (smtp_session_t session, SSL_CTX *ctx);
+#endif
+
+/*
+    	RFC 1985.  Remote Message Queue Starting (ETRN)
+ */
+
+typedef struct smtp_etrn_node *smtp_etrn_node_t;
+smtp_etrn_node_t smtp_etrn_add_node (smtp_session_t session,
+                                     int option, const char *node);
+typedef void (*smtp_etrn_enumerate_nodecb_t) (smtp_etrn_node_t node,
+					      int option, const char *domain,
+					      void *arg);
+int smtp_etrn_enumerate_nodes (smtp_session_t session,
+			       smtp_etrn_enumerate_nodecb_t cb, void *arg);
+const smtp_status_t *smtp_etrn_node_status (smtp_etrn_node_t node);
+void *smtp_etrn_set_application_data (smtp_etrn_node_t node, void *data);
+void *smtp_etrn_get_application_data (smtp_etrn_node_t node);
+
+#ifdef __cplusplus
+};
+#endif
+
+#define SMTPAPI_CHECK_ARGS(test,ret)			\
+	do 						\
+		if (!(test)) {				\
+			set_error (SMTP_ERR_INVAL);	\
+			return ret;			\
+		}					\
+	while (0)
+
+
+#define SMTP_ERR_NOTHING_TO_DO			2
+#define SMTP_ERR_DROPPED_CONNECTION		3
+#define SMTP_ERR_INVALID_RESPONSE_SYNTAX	4
+#define SMTP_ERR_STATUS_MISMATCH		5
+#define SMTP_ERR_INVALID_RESPONSE_STATUS	6
+#define SMTP_ERR_INVAL				7
+#define SMTP_ERR_EXTENSION_NOT_AVAILABLE	8
+#define SMTP_ERR_HOST_NOT_FOUND			9
+#define SMTP_ERR_NO_ADDRESS			10
+#define SMTP_ERR_NO_RECOVERY			11
+#define SMTP_ERR_TRY_AGAIN			12
+
+/* Protocol monitor callback.  Values for writing */
+#define SMTP_CB_READING				0
+#define SMTP_CB_WRITING				1
+#define SMTP_CB_HEADERS				2
+
+#endif
