@@ -1,3 +1,53 @@
+2001-08-13 	Brian Stafford	<brian@stafford.uklinux.net>
+      * protocol.c
+      	Completely ignore TLS extension if TLS is already in use.
+
+      * smtp-tls.c
+      	Fix wrong comparison when initialising OpenSSL mutexes.  Record
+      	the fact that TLS is in use.  Change a numeric constant to its
+      	symbolic equivalent.
+
+      * crammd5/client-crammd5.c
+        Correct a typo which prevented the hmac computation being
+        correctly rendered in hexadecimal.
+
+      * examples/mail-file.c
+      	Added --tls and --require-tls options and supporting code.
+
+2001-07-31 	Brian Stafford	<brian@stafford.uklinux.net>
+      * configure.ac
+        Make plugin directory consistent with RPM.
+
+      * libesmtp.spec
+      	Applied patch from Pawel Salek to run ldconfig after installing.
+
+2001-07-30 	Brian Stafford	<brian@stafford.uklinux.net>
+      * protocol.c configure.ac
+	Check for uname and use it in preference to gethostname which
+	is not Posix.
+
+2001-07-19 	Brian Stafford	<brian@stafford.uklinux.net>
+      * configure.ac
+      	Check for the presence of the OpenSSL headers as well as
+      	the libraries.  Remove --enable-callbacks option.
+
+      * smtp-api.c libesmtp.h
+        Added smtp_version API call.
+
+      * message-callbacks.c
+      	Removed callbacks which did \n -> CRLF translation.
+
+      * examples/mail-file.c
+        Use libESMTP provided callback unless the --crlf option is
+        supplied.
+
+2001-07-07 	Brian Stafford	<brian@stafford.uklinux.net>
+      * protocol.c smtp-api.c
+      	Only include netinet/in.h if it is actually needed.
+
+2001-07-06 Version 0.8.3 released
+---------------------------------
+
 2001-07-06 	Brian Stafford	<brian@stafford.uklinux.net>
       * examples/mail-file.c
         Made --help more helpful.  Undocumented --no-crlf now renamed

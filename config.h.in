@@ -106,6 +106,9 @@
    */
 #undef HAVE_TZNAME
 
+/* Define if you have the `uname' function. */
+#undef HAVE_UNAME
+
 /* Define if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H
 
@@ -132,9 +135,6 @@
 
 /* Enable IPv6 support */
 #undef USE_IPV6
-
-/* Add standard callback functions to the library */
-#undef USE_MESSAGE_CALLBACKS
 
 /* Build with support for Posix threading */
 #undef USE_PTHREADS

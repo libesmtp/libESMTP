@@ -68,7 +68,7 @@ starttls_init (void)
       int n;
 
       openssl_mutex = malloc (sizeof (pthread_mutex_t) * CRYPTO_num_locks ());
-      if (openssl_mutex != NULL)
+      if (openssl_mutex == NULL)
         return 0;
       pthread_mutexattr_init (&attr);
       for (n = 0; n < CRYPTO_num_locks (); n++)
@@ -147,6 +147,8 @@ rsp_starttls (siobuf_t conn, smtp_session_t session)
   if (code == 2
       && sio_set_tlsclient_ctx (conn, session->starttls_ctx))
     {
+      session->using_tls = 1;
+
       /* TODO: use the event callback report interesting stuff such as
                the cipher in use, server cert info etc. */
 
@@ -166,7 +168,7 @@ rsp_starttls (siobuf_t conn, smtp_session_t session)
       /* If the application does not require the use of TLS move on
 	 to the mail command since the a publicly referenced MTA is
 	 required to accept mail for its own domain. */
-      if (session->starttls_enabled == 2)
+      if (session->starttls_enabled == Starttls_REQUIRED)
 	session->rsp_state = S_quit;
 #ifdef USE_ETRN
       else if (check_etrn (session))

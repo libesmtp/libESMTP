@@ -44,6 +44,8 @@ typedef struct smtp_session *smtp_session_t;
 typedef struct smtp_message *smtp_message_t;
 typedef struct smtp_recipient *smtp_recipient_t;
 
+int smtp_version (void *buf, size_t len, int what);
+
 smtp_session_t smtp_create_session (void);
 smtp_message_t smtp_add_message (smtp_session_t session);
 typedef void (*smtp_enumerate_messagecb_t) (smtp_message_t message, void *arg);
@@ -143,10 +145,6 @@ int smtp_auth_set_context (smtp_session_t session, auth_context_t context);
 const char *_smtp_message_fp_cb (void **ctx, int *len, void *arg);
 #define smtp_set_message_fp(message,fp)	\
 		smtp_set_messagecb ((message), _smtp_message_fp_cb, (fp))
-
-const char *_smtp_message_fp_nocrlf_cb (void **ctx, int *len, void *arg);
-#define smtp_set_message_fp_nocrlf(message,fp)	\
-		smtp_set_messagecb ((message), _smtp_message_fp_nocrlf_cb, (fp))
 
 const char *_smtp_message_str_cb (void **ctx, int *len, void *arg);
 #define smtp_set_message_str(message,str)	\

@@ -29,8 +29,11 @@
 #include <stdlib.h>
 #include <ctype.h>
 
-#include <netdb.h>
+#if !HAVE_GETADDRINFO
+#include <sys/types.h>
 #include <netinet/in.h>
+#include <netdb.h>
+#endif
 
 #include <errno.h>
 #include "api.h"
@@ -74,7 +77,7 @@ smtp_set_server (smtp_session_t session, const char *hostport)
   if ((service = strchr (host, ':')) != NULL)
     *service++ = '\0';
 
-#ifdef HAVE_GETADDRINFO
+#if HAVE_GETADDRINFO
   if (service == NULL)
     session->port = "587";
   else
@@ -539,6 +542,23 @@ smtp_recipient_get_application_data (smtp_recipient_t recipient)
   SMTPAPI_CHECK_ARGS (recipient != NULL, 0);
 
   return recipient->application_data;
+}
+
+int
+smtp_version (void *buf, size_t len, int what)
+{
+  static const char version[] = VERSION;
+
+  SMTPAPI_CHECK_ARGS (buf != NULL && len > 0, 0);
+  SMTPAPI_CHECK_ARGS (what == 0, 0);
+
+  if (len < sizeof version)
+    {
+      set_error (SMTP_ERR_INVAL);
+      return 0;
+    }
+  memcpy (buf, version, sizeof version);
+  return 1;
 }
 
 #ifdef USE_REQUIRE_ALL_RECIPIENTS

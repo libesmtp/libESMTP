@@ -126,7 +126,7 @@ crammd5_response (void *ctx, const char *challenge, int *len,
       p = strchr (response, '\0');
       for (i = 0; i < sizeof digest; i++)
         {
-          *p = hex[(digest[i] >> 4) & 0x0F];
+          *p++ = hex[(digest[i] >> 4) & 0x0F];
           *p++ = hex[digest[i] & 0x0F];
         }
       /* Note no \0 termination */

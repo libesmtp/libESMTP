@@ -34,7 +34,7 @@ dnl (with help from M. Frigo), as well as ac_pthread and hb_pthread
 dnl macros posted by AFC to the autoconf macro repository.  We are also
 dnl grateful for the helpful feedback of numerous users.
 dnl
-dnl @version $Id: acx_pthread.m4,v 1.4 2001/03/16 08:40:17 simons Exp $
+dnl @version $Id: acinclude.m4,v 1.5 2001/08/01 21:15:18 brian Exp $
 dnl @author Steven G. Johnson <stevenj@alum.mit.edu> and Alejandro Forero Cuervo <bachue@bachue.com>
 
 AC_DEFUN([ACX_PTHREAD], [
@@ -232,7 +232,7 @@ dnl e.g. 6 arguments (linux)
 dnl e.g. 5 arguments (solaris)
 dnl e.g. 3 arguments (osf/1)
 dnl
-dnl @version $Id$
+dnl @version $Id: acinclude.m4,v 1.5 2001/08/01 21:15:18 brian Exp $
 dnl @author Brian Stafford <brian@stafford.uklinux.net>
 dnl
 dnl based on version by Caolan McNamara <caolan@skynet.ie>
@@ -303,7 +303,7 @@ dnl
 dnl    ACX_DEFINE_DIR(DATADIR, datadir)
 dnl    ACX_DEFINE_DIR(PROG_PATH, bindir, [Location of installed binaries])
 dnl
-dnl @version $Id: ac_define_dir.m4,v 1.3 2001/03/02 11:29:13 simons Exp $
+dnl @version $Id: acinclude.m4,v 1.5 2001/08/01 21:15:18 brian Exp $
 dnl @author Guido Draheim <guidod@gmx.de>, original by Alexandre Oliva
 dnl      Modified by Brian Stafford <brian@stafford.uklinux.net> to
 dnl      change prefix AC_ to ACX_

@@ -25,5 +25,5 @@ include_HEADERS = libesmtp.h auth-client.h auth-plugin.h
 
 bin_SCRIPTS = libesmtp-config
 
-EXTRA_DIST = libesmtp.spec.in libesmtp.spec COPYING.GPL Notes \
+EXTRA_DIST = libesmtp.spec.in libesmtp.spec COPYING.GPL Notes doc/api.xml \
 	     examples/Makefile examples/mail-file.c examples/test-mail

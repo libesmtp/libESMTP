@@ -21,9 +21,8 @@
  */
 
 /* Standard callback functions for use by message-source.c
-   An application requiring anything more sophisticated will need to
-   supply its own callback.
- */
+   An application requiring anything more sophisticated than either of
+   these will need to supply its own callback.  */
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
@@ -33,14 +32,10 @@
 #include <string.h>
 #include "libesmtp.h"
 
-const char *_smtp_message_str_nocrlf_cb (void **ctx, int *len, void *arg);
-#define smtp_set_message_str_nocrlf(message,str)	\
-		smtp_set_messagecb ((message), _smtp_message_str_nocrlf_cb, (str))
-
 /* Callback function to read the message from a file.  The file MUST be
    formatted according to RFC 2822 and lines MUST be terminated with the
    canonical CRLF sequence.  Furthermore, RFC 2821 line length
-   limitations must be observed (100 octets maximum). */
+   limitations must be observed (1000 octets maximum). */
 #define BUFLEN	8192
 
 const char *
@@ -57,53 +52,6 @@ _smtp_message_fp_cb (void **ctx, int *len, void *arg)
 
   *len = fread (*ctx, 1, BUFLEN, (FILE *) arg);
   return *ctx;
-}
-
-/* Callback function to read the message from a file.  Lines in the
-   file are terminated with \n however RFC 2821 limitations on line
-   length must still be observed.
-
-   The message is read a line at a time and bare newlines are converted
-   to \r\n.  Unfortunately, RFC 822 states that bare \n and \r are
-   acceptable in messages and that individually they do not constiture a
-   line termination.  This requirement cannot be reconciled with storing
-   messages with Unix line terminations.
-
-   The following code cannot therefore work correctly in all situations.
-   Furthermore it is very inefficient since it must search for the \n
-   on every line.
- */
-const char *
-_smtp_message_fp_nocrlf_cb (void **ctx, int *len, void *arg)
-{
-  int octets;
-  char *buf;
-
-  if (*ctx == NULL)
-    *ctx = malloc (BUFLEN);
-
-  if (len == NULL)
-    {
-      rewind ((FILE *) arg);
-      return NULL;
-    }
-
-  buf = *ctx;
-  if (fgets (buf, BUFLEN - 2, (FILE *) arg) == NULL)
-    octets = 0;
-  else
-    {
-      char *p = strchr (buf, '\0');
-
-      if (p[-1] == '\n' && p[-2] != '\r')
-        {
-	  strcpy (p - 1, "\r\n");
-	  p++;
-        }
-      octets = p - buf;
-    }
-  *len = octets;
-  return buf;
 }
 
 struct state

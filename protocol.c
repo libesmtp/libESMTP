@@ -36,9 +36,15 @@
 #include <errno.h>
 
 #include <netdb.h>
+#include <sys/socket.h>
+#if !HAVE_GETADDRINFO
 #include "gethostbyname.h"
 #include <netinet/in.h>
-#include <sys/socket.h>
+#endif
+
+#if HAVE_UNAME
+#include <sys/utsname.h>
+#endif
 
 #include "libesmtp-private.h"
 #include "message-source.h"
@@ -135,7 +141,24 @@ do_session (smtp_session_t session)
   int nresp, status, want_flush, fast;
   char *nodename;
 
-#ifdef HAVE_GETHOSTNAME
+#if HAVE_UNAME
+  if (session->localhost == NULL)
+    {
+      struct utsname name;
+
+      if (uname (&name) < 0)
+        {
+	  set_errno (errno);
+	  return 0;
+        }
+      session->localhost = strdup (name.nodename);
+      if (session->localhost == NULL)
+        {
+	  set_errno (ENOMEM);
+	  return 0;
+        }
+    }
+#elif HAVE_GETHOSTNAME
   if (session->localhost == NULL)
     {
       char host[256];
@@ -811,7 +834,8 @@ rsp_ehlo (siobuf_t conn, smtp_session_t session)
     }
 
 #ifdef USE_TLS
-  if (session->starttls_enabled != Starttls_DISABLED)
+  /* Totally ignore the TLS stuff if it's already in use */
+  if (!session->using_tls && session->starttls_enabled != Starttls_DISABLED)
     {
       if ((session->extensions & EXT_STARTTLS) && select_starttls (session))
 	{

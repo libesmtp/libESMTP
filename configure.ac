@@ -24,7 +24,7 @@ dnl Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 dnl 
 dnl #########################################################################
 
-AC_INIT([libesmtp],[0.8.3],[brian@stafford.uklinux.net])
+AC_INIT([libesmtp],[0.8.4],[brian@stafford.uklinux.net])
 AC_PREREQ(2.50)
 AM_INIT_AUTOMAKE(AC_PACKAGE_NAME,AC_PACKAGE_VERSION)
 AM_CONFIG_HEADER(config.h)
@@ -54,7 +54,7 @@ dnl Library versioning
 dnl #########################################################################
 
 LIB_CURRENT=5
-LIB_REVISION=4
+LIB_REVISION=5
 LIB_AGE=0
 AC_SUBST(LIB_CURRENT)
 AC_SUBST(LIB_REVISION)
@@ -170,10 +170,10 @@ dnl Set up the authentication plugin dircetory
 
 AC_ARG_WITH(auth-plugin-dir,
 	    AC_HELP_STRING([--with-auth-plugin-dir[=DIR]],
-			   [directory for SASL plugins (default=LIBDIR/esmtp)]),
+			   [directory for SASL plugins (default=LIBDIR/esmtp-plugins)]),
 	    plugindir=$withval)
 if test x$plugindir = x ; then
-	plugindir=$libdir/esmtp
+	plugindir=$libdir/esmtp-plugins
 fi
 AC_SUBST(plugindir)
 ACX_DEFINE_DIR([AUTHPLUGINDIR], $plugindir, [location of authentication plugins.])
@@ -181,11 +181,14 @@ ACX_DEFINE_DIR([AUTHPLUGINDIR], $plugindir, [location of authentication plugins.
 dnl Check for md5 functions in OpenSSL.  If these are present, build the
 dnl CRAM-MD5 SASL plugin.
 
-AC_CHECK_LIB(crypto, MD5_Init, [
-		AC_DEFINE(HAVE_LIBCRYPTO,1,[Set when -lcrypto from OpenSSL is available])
-		SASL_PLUGINS="$SASL_PLUGINS crammd5"
-		CRAMMD5_LIBS="-lcrypto"
-		AC_SUBST(CRAMMD5_LIBS)
+AC_CHECK_HEADER(openssl/md5.h,[
+		AC_CHECK_LIB(crypto, MD5_Init, [
+			     AC_DEFINE(HAVE_LIBCRYPTO,1,
+			     	       [Set when -lcrypto from OpenSSL is available])
+			     SASL_PLUGINS="$SASL_PLUGINS crammd5"
+			     CRAMMD5_LIBS="-lcrypto"
+			     AC_SUBST(CRAMMD5_LIBS)
+		])
 ])
 
 dnl #########################################################################
@@ -200,12 +203,14 @@ AC_ARG_ENABLE([starttls],
 AC_MSG_CHECKING(whether to enable STARTTLS)
 if test x"$enable_starttls" = xyes ; then
 	AC_MSG_RESULT([yes])
+	AC_CHECK_HEADER(openssl/ssl.h,,
+	                AC_MSG_ERROR([cannot find the ssl headers]))
 	AC_CHECK_LIB(ssl, SSL_library_init,
 		     [
 			AC_DEFINE(USE_TLS,1,[Build with support for SMTP STARTTLS extension])
 			LIBS="-lssl -lcrypto $LIBS"
 		     ],
-		     AC_MSG_ERROR([Cannot find the ssl library.]), -lcrypto)
+		     AC_MSG_ERROR([cannot find the ssl library]), -lcrypto)
 else
 	AC_MSG_RESULT([no])
 fi
@@ -243,20 +248,6 @@ if test x"$enable_xusr" = xyes ; then
 	AC_DEFINE(USE_XUSR,1,[Enable support for sendmail XUSR extension])
 else
 	AC_MSG_RESULT([no])
-fi
-
-dnl #########################################################################
-dnl Provide standard callbacks for reading messages (experimental)
-dnl #########################################################################
-
-AC_ARG_ENABLE([message-callbacks],
-              AC_HELP_STRING([--enable-message-callbacks],[add standard message callbacks (experimental) (default=no)]),
-  	      ,
-  	      enable_message_callbacks=$enable_all)
- 
-if test x"$enable_message_callbacks" != xno ; then
-  AC_DEFINE(USE_MESSAGE_CALLBACKS,1,
-            [Add standard callback functions to the library])
 fi
 
 dnl #########################################################################
@@ -313,7 +304,7 @@ dnl #########################################################################
 dnl Checks for library functions.
 dnl #########################################################################
 
-AC_CHECK_FUNCS(snprintf strdup strndup strtol gethostname)
+AC_CHECK_FUNCS(snprintf strdup strndup strtol uname gethostname)
 AC_SEARCH_LIBS(socket, socket)
 
 dnl Conditional check for functions needed in threaded code
@@ -431,7 +422,6 @@ ACX_FEATURE([enable],[pthreads])
 ACX_FEATURE([enable],[starttls])
 ACX_FEATURE([enable],[etrn])
 ACX_FEATURE([enable],[xusr])
-ACX_FEATURE([enable],[message-callbacks])
 ACX_FEATURE([enable],[require-all-recipients])
 ACX_FEATURE([enable],[debug])
 

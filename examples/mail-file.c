@@ -41,6 +41,7 @@
 struct option longopts[] =
   {
     { "help", no_argument, NULL, '?', }, 
+    { "version", no_argument, NULL, 'v', }, 
     { "host", required_argument, NULL, 'h', }, 
     { "monitor", no_argument, NULL, 'm', }, 
     { "crlf", no_argument, NULL, 'c', }, 
@@ -48,10 +49,11 @@ struct option longopts[] =
     { "mdn", no_argument, NULL, 'd', }, 
     { "subject", required_argument, NULL, 's', }, 
     { "reverse-path", required_argument, NULL, 'f', }, 
+    { "tls", no_argument, NULL, 't', }, 
+    { "require-tls", no_argument, NULL, 'T', }, 
     { NULL, },
   };
 
-const char *readfp_cb (void **buf, int *len, void *arg);
 const char *readlinefp_cb (void **buf, int *len, void *arg);
 void monitor_cb (const char *buf, int buflen, int writing, void *arg);
 void print_recipient_status (smtp_recipient_t recipient,
@@ -59,6 +61,7 @@ void print_recipient_status (smtp_recipient_t recipient,
 int authinteract (auth_client_request_t request, char **result, int fields,
                   void *arg);
 void usage (void);
+void version (void);
 
 int
 main (int argc, char **argv)
@@ -84,7 +87,7 @@ main (int argc, char **argv)
   session = smtp_create_session ();
   message = smtp_add_message (session);
 
-  while ((c = getopt_long (argc, argv, "dmch:f:s:n:",
+  while ((c = getopt_long (argc, argv, "dmch:f:s:n:tTv",
   			   longopts, NULL)) != EOF)
     switch (c)
       {
@@ -123,6 +126,18 @@ main (int argc, char **argv)
         /* Request MDN sent to the same address as the reverse path */
         smtp_set_header (message, "Disposition-Notification-To", NULL, NULL);
         break;
+
+      case 't':
+        smtp_starttls_enable (session, Starttls_ENABLED);
+	break;
+
+      case 'T':
+        smtp_starttls_enable (session, Starttls_REQUIRED);
+	break;
+    
+      case 'v':
+        version ();
+        exit (2);
 
       default:
         usage ();
@@ -189,7 +204,10 @@ main (int argc, char **argv)
       fprintf (stderr, "can't open %s: %s\n", file, strerror (errno));
       exit (1);
     }
-  smtp_set_messagecb (message, nocrlf ? readlinefp_cb : readfp_cb, fp);
+  if (nocrlf)
+    smtp_set_messagecb (message, readlinefp_cb, fp);
+  else
+    smtp_set_message_fp (message, fp);
 
   /* Add remaining program arguments as message recipients.
    */
@@ -232,30 +250,21 @@ print_recipient_status (smtp_recipient_t recipient,
   printf ("%s: %d %s", mailbox, status->code, status->text);
 }
 
-/* Callback function to read the message from a file.  The file MUST be
-   formatted according to RFC 822 and lines MUST be terminated with the
-   canonical CRLF sequence.
+/* Callback function to read the message from a file.  Since libESMTP
+   does not provide callbacks which translate line endings, one must
+   be provided by the application.
 
-   To make this example program into a useful one, a more sophisticated
-   callback capable of translating the Un*x \n tro CRLF would be needed.
+   The message is read a line at a time and the newlines converted
+   to \r\n.  Unfortunately, RFC 822 states that bare \n and \r are
+   acceptable in messages and that individually they do not constitute a
+   line termination.  This requirement cannot be reconciled with storing
+   messages with Unix line terminations.  RFC 2822 rescues this situation
+   slightly by prohibiting lone \r and \n in messages.
+
+   The following code cannot therefore work correctly in all situations.
+   Furthermore it is very inefficient since it must search for the \n.
  */
 #define BUFLEN	8192
-
-const char *
-readfp_cb (void **buf, int *len, void *arg)
-{
-  if (*buf == NULL)
-    *buf = malloc (BUFLEN);
-
-  if (len == NULL)
-    {
-      rewind ((FILE *) arg);
-      return NULL;
-    }
-
-  *len = fread (*buf, 1, BUFLEN, (FILE *) arg);
-  return *buf;
-}
 
 const char *
 readlinefp_cb (void **buf, int *len, void *arg)
@@ -271,15 +280,6 @@ readlinefp_cb (void **buf, int *len, void *arg)
       return NULL;
     }
 
-  /* The message needs to be read a line at a time and the newlines
-     converted to \r\n.  Unfortunately, RFC 822 states that bare \n and
-     \r are acceptable in messages and that individually they do not
-     constiture a line termination.  This requirement cannot be
-     reconciled with storing messages with Unix line terminations.
-
-     The following code cannot therefore work correctly in all situations.
-     Furthermore it is very inefficient since it must search for the \n.
-   */
   if (fgets (*buf, BUFLEN - 2, (FILE *) arg) == NULL)
     octets = 0;
   else
@@ -368,17 +368,20 @@ usage (void)
 	 "Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA\n"
 	 "\n"
          "usage: mail-file [options] file mailbox [mailbox ...]\n"
-         "\t-h,--host=hostname[:port] -- set SMTP server\n"
+         "\t-h,--host=hostname[:service] -- set SMTP host and service (port)\n"
          "\t-f,--reverse-path=mailbox -- set reverse path\n"
          "\t-s,--subject=text -- set subject of the message\n"
          "\t-n,--notify=success|failure|delay|never -- request DSN\n"
          "\t-d,--mdn -- request MDN\n"
          "\t-m,--monitor -- watch the protocol session with the server\n"
          "\t-c,--crlf -- translate line endings from \\n to CR-LF\n"
+         "\t-t,--tls -- use STARTTLS extension if possible\n"
+         "\t-T,--require-tls -- require use of STARTTLS extension\n"
+         "\t--version -- show version info and exit\n"
          "\t--help -- this message\n"
          "\n"
          "Specify the file argument as \"-\" to read standard input.\n"
-         "The input must be in RFC 822 format, that is, it must consist\n"
+         "The input must be in RFC 2822 format, that is, it must consist\n"
          "of a sequence of message headers terminated by a blank line and\n"
          "followed by the message body.  Lines must be terminated with the\n"
          "canonic CR-LF sequence unless the --crlf flag is specified.\n"
@@ -386,3 +389,11 @@ usage (void)
          stderr);
 }
 
+void
+version (void)
+{
+  char buf[32];
+
+  smtp_version (buf, sizeof buf, 0);
+  printf ("libESMTP version %s\n", buf);
+}
