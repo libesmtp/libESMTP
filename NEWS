@@ -1,3 +1,11 @@
+* libESMTP 0.8.8 development release.	2001-11-30
+
+- See ChangeLog for details.
+
+  o Fixes more autoconf issues.
+
+  o Fixed a type mismatch that prevents compilation on some systems.
+
 * libESMTP 0.8.7 development release.	2001-11-7
 
 - See ChangeLog for details.

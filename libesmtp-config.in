@@ -65,11 +65,11 @@ while test $# -gt 0; do
 	;;
 
     --cflags)
-       	echo -I@includedir@
+       	echo -I@includedir@ @PTHREAD_CFLAGS@
        	;;
 
     --libs)
-       	echo -L@libdir@ -lesmtp @LIBS@ @LIBADD_LTDL@ @LIBADD_DL@
+       	echo @PTHREAD_LDFLAGS@ -L@libdir@ -lesmtp @LIBS@ @LIBADD_LTDL@ @LIBADD_DL@ @PTHREAD_LIBS@
        	;;
 
     --plugindir)

@@ -5,160 +5,92 @@
 #endif
 
 
+/* Define to empty if the keyword does not work.  */
+#undef const
+
+/* Define if your struct tm has tm_zone.  */
+#undef HAVE_TM_ZONE
+
+/* Define if you don't have tm_zone but do have the external array
+   tzname.  */
+#undef HAVE_TZNAME
+
+/* Define as __inline if that's what the C compiler calls it.  */
+#undef inline
+
+/* Define if you have the ANSI C header files.  */
+#undef STDC_HEADERS
+
+/* Define if you can safely include both <sys/time.h> and <time.h>.  */
+#undef TIME_WITH_SYS_TIME
+
+/* Define if your <sys/time.h> declares struct tm.  */
+#undef TM_IN_SYS_TIME
 
 #undef HAVE_GETIPNODEBYNAME
 
-/* location of authentication plugins. */
-#undef AUTHPLUGINDIR
+/* The number of bytes in a int.  */
+#undef SIZEOF_INT
 
-/* Enable additional debugging code */
-#undef DEBUG
+/* The number of bytes in a long.  */
+#undef SIZEOF_LONG
 
-/* Define if you have the GNU dld library. */
-#undef HAVE_DLD
-
-/* Define if you have the `dlerror' function. */
+/* Define if you have the dlerror function.  */
 #undef HAVE_DLERROR
 
-/* Define if you have the <dlfcn.h> header file. */
-#undef HAVE_DLFCN_H
-
-/* Does system provide RFC 2553/Posix getaddrinfo? */
-#undef HAVE_GETADDRINFO
-
-/* Number of parameters to gethostbyname_r or 0 if not available */
-#undef HAVE_GETHOSTBYNAME_R
-
-/* Define if you have the `gethostname' function. */
+/* Define if you have the gethostname function.  */
 #undef HAVE_GETHOSTNAME
 
-/* Define if you have the <inttypes.h> header file. */
-#undef HAVE_INTTYPES_H
-
-/* Set when -lcrypto from OpenSSL is available */
-#undef HAVE_LIBCRYPTO
-
-/* Define if you have the libdl library or equivalent. */
-#undef HAVE_LIBDL
-
-/* Define if you have the `lwres' library (-llwres). */
-#undef HAVE_LIBLWRES
-
-/* Define if you have the `localtime' function. */
+/* Define if you have the localtime function.  */
 #undef HAVE_LOCALTIME
 
-/* Set when localtime_r is available */
-#undef HAVE_LOCALTIME_R
-
-/* Define if you have the <lwres/netdb.h> header file. */
-#undef HAVE_LWRES_NETDB_H
-
-/* Define if you have the <memory.h> header file. */
-#undef HAVE_MEMORY_H
-
-/* Define if you have the shl_load function. */
-#undef HAVE_SHL_LOAD
-
-/* Define if you have the `snprintf' function. */
+/* Define if you have the snprintf function.  */
 #undef HAVE_SNPRINTF
 
-/* Define if you have the <stdint.h> header file. */
-#undef HAVE_STDINT_H
-
-/* Define if you have the <stdlib.h> header file. */
-#undef HAVE_STDLIB_H
-
-/* Define if you have the `strdup' function. */
+/* Define if you have the strdup function.  */
 #undef HAVE_STRDUP
 
-/* Define if you have the `strerror' function. */
+/* Define if you have the strerror function.  */
 #undef HAVE_STRERROR
 
-/* Define if you have the `strerror_r' function. */
+/* Define if you have the strerror_r function.  */
 #undef HAVE_STRERROR_R
 
-/* Define if you have the <strings.h> header file. */
-#undef HAVE_STRINGS_H
-
-/* Define if you have the <string.h> header file. */
-#undef HAVE_STRING_H
-
-/* Define if you have the `strndup' function. */
+/* Define if you have the strndup function.  */
 #undef HAVE_STRNDUP
 
-/* Define if you have the `strtol' function. */
+/* Define if you have the strtol function.  */
 #undef HAVE_STRTOL
 
-/* Define if `tm_zone' is member of `struct tm'. */
-#undef HAVE_STRUCT_TM_TM_ZONE
-
-/* Define if you have the <sys/ioctl.h> header file. */
-#undef HAVE_SYS_IOCTL_H
-
-/* Define if you have the <sys/stat.h> header file. */
-#undef HAVE_SYS_STAT_H
-
-/* Define if you have the <sys/types.h> header file. */
-#undef HAVE_SYS_TYPES_H
-
-/* Define if your `struct tm' has `tm_zone'. Deprecated, use
-   `HAVE_STRUCT_TM_TM_ZONE' instead. */
-#undef HAVE_TM_ZONE
-
-/* Define if you don't have `tm_zone' but do have the external array `tzname'.
-   */
-#undef HAVE_TZNAME
-
-/* Define if you have the `uname' function. */
+/* Define if you have the uname function.  */
 #undef HAVE_UNAME
 
-/* Define if you have the <unistd.h> header file. */
+/* Define if you have the <dlfcn.h> header file.  */
+#undef HAVE_DLFCN_H
+
+/* Define if you have the <lwres/netdb.h> header file.  */
+#undef HAVE_LWRES_NETDB_H
+
+/* Define if you have the <sys/ioctl.h> header file.  */
+#undef HAVE_SYS_IOCTL_H
+
+/* Define if you have the <unistd.h> header file.  */
 #undef HAVE_UNISTD_H
 
-/* Disable assertions */
-#undef NDEBUG
+/* Define if you have the lwres library (-llwres).  */
+#undef HAVE_LIBLWRES
 
 /* Name of package */
 #undef PACKAGE
 
-/* The size of a `int', as computed by sizeof. */
-#undef SIZEOF_INT
-
-/* The size of a `long', as computed by sizeof. */
-#undef SIZEOF_LONG
-
-/* Define if you have the ANSI C header files. */
-#undef STDC_HEADERS
-
-/* Define if you can safely include both <sys/time.h> and <time.h>. */
-#undef TIME_WITH_SYS_TIME
-
-/* Define if your <sys/time.h> declares `struct tm'. */
-#undef TM_IN_SYS_TIME
-
-/* Enable experimental support for SMTP STARTTLS extension */
-#undef USE_ETRN
-
-/* Enable IPv6 support */
-#undef USE_IPV6
-
-/* Build with support for Posix threading */
-#undef USE_PTHREADS
-
-/* Build smtp_option_require_all_recipients() API */
-#undef USE_REQUIRE_ALL_RECIPIENTS
-
-/* Build with support for SMTP AUTH using SASL */
-#undef USE_SASL
-
-/* Build with support for SMTP STARTTLS extension */
-#undef USE_TLS
-
-/* Enable support for sendmail XUSR extension */
-#undef USE_XUSR
-
 /* Version number of package */
 #undef VERSION
+
+/* Sun's netdb.h needs this for getaddrinfo */
+#undef __EXTENSIONS__
+
+/* OSF's netdb.h needs this for getaddrinfo */
+#undef _OSF_SOURCE
 
 /* ISO compliant code */
 #undef _ISOC9X_SOURCE
@@ -169,12 +101,70 @@
 /* Single Unix conformance */
 #undef _XOPEN_SOURCE
 
-/* Sun's netdb.h needs this for getaddrinfo */
-#undef __EXTENSIONS__
+/* Define if you have the libdl library or equivalent.  */
+#undef HAVE_LIBDL
 
-/* Define to empty if `const' does not conform to ANSI C. */
-#undef const
+/* Define if you have the libdl library or equivalent. */
+#undef HAVE_LIBDL
 
-/* Define as `__inline' if that's what the C compiler calls it, or to nothing
-   if it is not supported. */
-#undef inline
+/* Define if you have the libdl library or equivalent. */
+#undef HAVE_LIBDL
+
+/* Define if you have the shl_load function. */
+#undef HAVE_SHL_LOAD
+
+/* Define if you have the shl_load function. */
+#undef HAVE_SHL_LOAD
+
+/* Define if you have the GNU dld library. */
+#undef HAVE_DLD
+
+/* Define to the necessary symbol if this constant
+                           uses a non-standard name on your system. */
+#undef PTHREAD_CREATE_JOINABLE
+
+/* Build with support for Posix threading */
+#undef USE_PTHREADS
+
+/* Does system provide RFC 2553/Posix getaddrinfo? */
+#undef HAVE_GETADDRINFO
+
+/* Number of parameters to gethostbyname_r or 0 if not available */
+#undef HAVE_GETHOSTBYNAME_R
+
+/* Enable IPv6 support */
+#undef USE_IPV6
+
+/* Build with support for SMTP AUTH using SASL */
+#undef USE_SASL
+
+/* location of authentication plugins. */
+#undef AUTHPLUGINDIR
+
+/* Set when -lcrypto from OpenSSL is available */
+#undef HAVE_LIBCRYPTO
+
+/* Build with support for SMTP STARTTLS extension */
+#undef USE_TLS
+
+/* Enable experimental support for SMTP STARTTLS extension */
+#undef USE_ETRN
+
+/* Enable support for sendmail XUSR extension */
+#undef USE_XUSR
+
+/* Build smtp_option_require_all_recipients() API */
+#undef USE_REQUIRE_ALL_RECIPIENTS
+
+/* Enable additional debugging code */
+#undef DEBUG
+
+/* Disable assertions */
+#undef NDEBUG
+
+/* Set when localtime_r is available */
+#undef HAVE_LOCALTIME_R
+
+/* strerror_r works! */
+#undef HAVE_WORKING_STRERROR_R
+

@@ -1,4 +1,31 @@
-2001-10-05 	Brian Stafford	<brian@stafford.uklinux.net>
+2001-11-30 	Brian Stafford	<brian@stafford.uklinux.net>
+      * crammd5/md5.h
+      	The len parameter of md5_update differed in type between
+      	prototype and definition, preventing compilation if size_t
+      	is not an unsigned int.
+
+2001-11-29 	Brian Stafford	<brian@stafford.uklinux.net>
+      * crammd5/*.[ch]
+      	Moved include of config.h from hmacmd5.h to hmacmd5.c.  Make
+      	sure sys/types.h is included since size_t is used.
+
+      * configure.in
+      	Added some extra nonsense for systems which redefine
+      	getaddrinfo to something else in netdb.h
+
+2001-11-27 	Brian Stafford	<brian@stafford.uklinux.net>
+      * configure.in errors.c
+	Add test for broken strerror_r on OSF-1.
+
+2001-11-12 	Brian Stafford	<brian@stafford.uklinux.net>
+      * configure.in
+	Updated the tests for pthreads.  Should now supply the correct
+	compiler flags on more systems.
+
+2001-11-07 Version 0.8.7 released
+---------------------------------
+
+2001-11-05 	Brian Stafford	<brian@stafford.uklinux.net>
       * errors.h libesmtp.h
 	Improve handling of error codes from getaddrinfo.  Delay mapping
 	of codes to make debugging easier.  libesmtp.h defines new error

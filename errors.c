@@ -245,8 +245,15 @@ smtp_strerror (int error, char buf[], size_t buflen)
   SMTPAPI_CHECK_ARGS (buf != NULL && buflen > 0, NULL);
 
   if (error < 0)
-#ifdef HAVE_STRERROR_R
+#if HAVE_WORKING_STRERROR_R
     return strerror_r (-error, buf, buflen);
+#elif HAVE_STRERROR_R
+    {
+      /* Assume the broken OSF1 strerror_r which returns an int. */
+      int n = strerror_r (-error, buf, buflen);
+
+      return n >= 0 ? buf : NULL;
+    }
 #else
     /* Could end up here when threading is enabled but a working
        strerror_r() is not found.  There will be a critical section
