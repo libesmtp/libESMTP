@@ -32,6 +32,9 @@
 /* Define if you have the `gethostname' function. */
 #undef HAVE_GETHOSTNAME
 
+/* Define if you have the <inttypes.h> header file. */
+#undef HAVE_INTTYPES_H
+
 /* Set when -lcrypto from OpenSSL is available */
 #undef HAVE_LIBCRYPTO
 
@@ -50,11 +53,20 @@
 /* Define if you have the <lwres/netdb.h> header file. */
 #undef HAVE_LWRES_NETDB_H
 
+/* Define if you have the <memory.h> header file. */
+#undef HAVE_MEMORY_H
+
 /* Define if you have the shl_load function. */
 #undef HAVE_SHL_LOAD
 
 /* Define if you have the `snprintf' function. */
 #undef HAVE_SNPRINTF
+
+/* Define if you have the <stdint.h> header file. */
+#undef HAVE_STDINT_H
+
+/* Define if you have the <stdlib.h> header file. */
+#undef HAVE_STDLIB_H
 
 /* Define if you have the `strdup' function. */
 #undef HAVE_STRDUP
@@ -64,6 +76,12 @@
 
 /* Define if you have the `strerror_r' function. */
 #undef HAVE_STRERROR_R
+
+/* Define if you have the <strings.h> header file. */
+#undef HAVE_STRINGS_H
+
+/* Define if you have the <string.h> header file. */
+#undef HAVE_STRING_H
 
 /* Define if you have the `strndup' function. */
 #undef HAVE_STRNDUP
@@ -76,6 +94,12 @@
 
 /* Define if you have the <sys/ioctl.h> header file. */
 #undef HAVE_SYS_IOCTL_H
+
+/* Define if you have the <sys/stat.h> header file. */
+#undef HAVE_SYS_STAT_H
+
+/* Define if you have the <sys/types.h> header file. */
+#undef HAVE_SYS_TYPES_H
 
 /* Define if your `struct tm' has `tm_zone'. Deprecated, use
    `HAVE_STRUCT_TM_TM_ZONE' instead. */
@@ -96,6 +120,12 @@
 
 /* Name of package */
 #undef PACKAGE
+
+/* The size of a `int', as computed by sizeof. */
+#undef SIZEOF_INT
+
+/* The size of a `long', as computed by sizeof. */
+#undef SIZEOF_LONG
 
 /* Define if you have the ANSI C header files. */
 #undef STDC_HEADERS
@@ -139,5 +169,12 @@
 /* Single Unix conformance */
 #undef _XOPEN_SOURCE
 
+/* Sun's netdb.h needs this for getaddrinfo */
+#undef __EXTENSIONS__
+
 /* Define to empty if `const' does not conform to ANSI C. */
 #undef const
+
+/* Define as `__inline' if that's what the C compiler calls it, or to nothing
+   if it is not supported. */
+#undef inline

@@ -1,3 +1,32 @@
+2001-10-05 	Brian Stafford	<brian@stafford.uklinux.net>
+      * errors.h libesmtp.h
+	Improve handling of error codes from getaddrinfo.  Delay mapping
+	of codes to make debugging easier.  libesmtp.h defines new error
+	codes for the relevant EAI_XXX codes from getaddrinfo.
+	smtp_strerror will use gai_strerror if appropriate.
+
+2001-10-31 	Brian Stafford	<brian@stafford.uklinux.net>
+      * configure.in
+	Added test for sun platforms and define __EXTENSIONS__ so that
+	sun's netdb.h will declare the getaddrinfo stuff. (James McPherson)
+
+      * crammd5/md5.[ch]
+	Type sanity: change u_intXX_t to uintXX_t.  Also changed the
+	argument for the buffer and length to void * and size_t
+	respectively in md5_update.  Buffer for md5_final is now
+	unsigned char.
+
+2001-10-17 	Brian Stafford	<brian@stafford.uklinux.net>
+      * headers.c
+	Fixed a core dump bug which strikes when existing headers in a
+	message are substituted.
+	
+      * Makefile.am
+	Reinstated libesmtp.spec into tarballs.
+
+2001-08-17 Version 0.8.6 released
+---------------------------------
+
 2001-10-17 	Brian Stafford	<brian@stafford.uklinux.net>
       * libesmtp-config.in
 	Corrected output for --cflags.  Added --numeric-version to make it

@@ -1,3 +1,11 @@
+* libESMTP 0.8.7 development release.	2001-11-7
+
+- See ChangeLog for details.
+
+  o Fixes minor build issues.
+
+  o Improved error handling wrt getaddrinfo
+
 * libESMTP 0.8.6 development release.	2001-10-17
 
 - See ChangeLog for details.

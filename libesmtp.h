@@ -269,10 +269,24 @@ void *smtp_etrn_get_application_data (smtp_etrn_node_t node);
 #define SMTP_ERR_INVALID_RESPONSE_STATUS	6
 #define SMTP_ERR_INVAL				7
 #define SMTP_ERR_EXTENSION_NOT_AVAILABLE	8
-#define SMTP_ERR_HOST_NOT_FOUND			9
-#define SMTP_ERR_NO_ADDRESS			10
-#define SMTP_ERR_NO_RECOVERY			11
-#define SMTP_ERR_TRY_AGAIN			12
+
+/* Deprecated - these will be removed in a future release */
+#define SMTP_ERR_HOST_NOT_FOUND			SMTP_ERR_EAI_ADDRFAMILY
+#define SMTP_ERR_NO_ADDRESS			SMTP_ERR_EAI_NODATA
+#define SMTP_ERR_NO_RECOVERY			SMTP_ERR_EAI_FAIL
+#define SMTP_ERR_TRY_AGAIN			SMTP_ERR_EAI_AGAIN
+
+/* libESMTP versions of some getaddrinfo error numbers */
+#define SMTP_ERR_EAI_AGAIN			12
+#define SMTP_ERR_EAI_FAIL			11
+#define SMTP_ERR_EAI_MEMORY			13
+#define SMTP_ERR_EAI_ADDRFAMILY			9
+#define SMTP_ERR_EAI_NODATA			10
+#define SMTP_ERR_EAI_FAMILY			14
+#define SMTP_ERR_EAI_BADFLAGS			15
+#define SMTP_ERR_EAI_NONAME			16
+#define SMTP_ERR_EAI_SERVICE			17
+#define SMTP_ERR_EAI_SOCKTYPE			18
 
 /* Protocol monitor callback.  Values for writing */
 #define SMTP_CB_READING				0

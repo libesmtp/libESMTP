@@ -5,27 +5,28 @@
 
 Summary:  	SMTP client library
 
-%define package	@PACKAGE@
+%define pkg	@PACKAGE@
 %define ver	@VERSION@
 %define rel    	1
 %define prefix 	/usr
 %define plugindir %{prefix}/lib/esmtp-plugins
 %define openssl	0.9.6
 
-Name:     	%{package}
+Name:     	%{pkg}
 Version:  	%{ver}
 Release:  	%{rel}
 
 Copyright:	LGPL
 Group:    	System Environment/Libraries
-Source:  	%{package}-%{ver}.tar.bz2
+Summary:        SMTP client library.
+Source:  	%{pkg}-%{ver}.tar.bz2
 
 URL:       	http://www.stafford.uklinux.net/libesmtp/
-BuildRoot:	/var/tmp/%{package}-root
+BuildRoot:	/var/tmp/%{pkg}-root
 Prefix:		%{prefix}
 
 Packager:	Brian Stafford <brian@stafford.uklinux.net>
-Provides:	%{package}
+Provides:	%{pkg}
 Docdir:		%{_docdir}
 
 @RPM_REQUIRES@	@RPM_OPENSSL@
@@ -39,7 +40,9 @@ program that must be able to post electronic mail but where mail
 functionality is not the program's primary purpose.
 
 %package devel
-Requires: %{package} = %{ver}
+Group:		Development/Libraries
+Summary:	Headers and development libraries for libESMTP.
+Requires:	%{pkg} = %{ver}
 @RPM_REQUIRES@	@RPM_OPENSSLDEVEL@
 
 %description devel

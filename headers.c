@@ -688,7 +688,7 @@ process_header (smtp_message_t message, const char *header, int *len)
 	      if ((print = action->print) == NULL)
 		print = print_string;
 	      cat_reset (&message->hdr_buffer, 0);
-	      (*print) (message, message->current_header);
+	      (*print) (message, info->hdr);
 	      header = cat_buffer (&message->hdr_buffer, len);
             }
         }

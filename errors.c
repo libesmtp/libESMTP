@@ -40,36 +40,107 @@
 #include "libesmtp-private.h"
 #include "api.h"
 
-#ifndef USE_PTHREADS
-/* This is the totally naive and useless version, I can't believe I've
-   actually just written this!  Less embarrasing code follows.
- */
-
-static int libesmtp_errno;
-
-/* The library's internal function */
-void
-set_error (int code)
-{
-  libesmtp_errno = code;
-}
-
-/* Internal version of the library's API function */
-int
-smtp_errno (void)
-{
-  return libesmtp_errno;
-}
-
-#else
-/* Real, non-embarrasing code :-) */
-
-#include <pthread.h>
-
 struct errno_vars
   {
     int error;
+    int herror;
   };
+
+static inline void
+set_error_internal (struct errno_vars *err, int code)
+{
+  err->error = code;
+  err->herror = 0;
+}
+
+static inline void
+set_herror_internal (struct errno_vars *err, int code)
+{
+  err->herror = code;
+  if (err->herror == EAI_SYSTEM)
+    err->error = errno;
+}
+
+/* Map error codes from getaddrinfo to/from those used by libESMTP. RFC
+   2553 is silent on whether these values are +ve, -ve, how they sort or
+   even whether they are contiguous so the mapping is done with a
+   switch.  NB EAI_SYSTEM is *not* mapped. */
+
+static int
+eai_to_libesmtp (int code)
+{
+#define MAP(code)	case code: return SMTP_ERR_##code;
+  switch (code)
+    {
+    MAP(EAI_AGAIN)
+    MAP(EAI_FAIL)
+    MAP(EAI_MEMORY)
+    MAP(EAI_ADDRFAMILY)
+    MAP(EAI_NODATA)
+    MAP(EAI_FAMILY)
+    MAP(EAI_BADFLAGS)
+    MAP(EAI_NONAME)
+    MAP(EAI_SERVICE)
+    MAP(EAI_SOCKTYPE)
+    default: return SMTP_ERR_INVAL;
+    }
+#undef MAP
+}
+
+static int
+libesmtp_to_eai (int code)
+{
+#define MAP(code)	case SMTP_ERR_##code: return code;
+  switch (code)
+    {
+    MAP(EAI_AGAIN)
+    MAP(EAI_FAIL)
+    MAP(EAI_MEMORY)
+    MAP(EAI_ADDRFAMILY)
+    MAP(EAI_NODATA)
+    MAP(EAI_FAMILY)
+    MAP(EAI_BADFLAGS)
+    MAP(EAI_NONAME)
+    MAP(EAI_SERVICE)
+    MAP(EAI_SOCKTYPE)
+    default: return 0;
+    }
+#undef MAP
+}
+
+static inline int
+get_error_internal (struct errno_vars *err)
+{
+  if (err->herror == 0 || err->herror == EAI_SYSTEM)
+    return err->error;
+  return eai_to_libesmtp (err->herror);
+}
+
+#ifndef USE_PTHREADS
+
+static struct errno_vars libesmtp_errno;
+
+void
+set_error (int code)
+{
+  set_error_internal (&libesmtp_errno, code);
+}
+
+void
+set_herror (int code)
+{
+  set_herror_internal (&libesmtp_errno, code);
+}
+
+int
+smtp_errno (void)
+{
+  return get_error_internal (&libesmtp_errno);
+}
+
+#else
+
+#include <pthread.h>
 
 static pthread_key_t libesmtp_errno;
 static pthread_once_t libesmtp_errno_once = PTHREAD_ONCE_INIT;
@@ -110,7 +181,16 @@ set_error (int code)
   struct errno_vars *value = errno_ptr ();
 
   if (value != NULL)
-    value->error = code;
+    set_error_internal (value, code);
+}
+
+void
+set_herror (int code)
+{
+  struct errno_vars *value = errno_ptr ();
+
+  if (value != NULL)
+    set_herror_internal (value, code);
 }
 
 int
@@ -118,10 +198,17 @@ smtp_errno (void)
 {
   struct errno_vars *value = errno_ptr ();
 
-  return (value != NULL) ? value->error : 0;
+  return (value != NULL) ? get_error_internal (value) : ENOMEM;
 }
 
 #endif
+
+/* store the value of errno in libESMTP's error variable. */
+void
+set_errno (int code)
+{
+  set_error (-code);
+}
 
 static const char *libesmtp_errors[] =
   {
@@ -134,10 +221,18 @@ static const char *libesmtp_errors[] =
     "Invalid SMTP status code in server response",	/* INVALID_RESPONSE_STATUS */
     "Invalid API function argument",			/* INVAL */
     "Requested SMTP extension not available",		/* EXTENSION_NOT_AVAILABLE */
-    "Host not found",					/* HOST_NOT_FOUND */
-    "No address",					/* NO_ADDRESS */
-    "No recovery",					/* NO_RECOVERY */
-    "Temporary DNS failure; try again later",		/* TRY_AGAIN */
+#if 0	/* Next 10 codes handled by gai_strerror() */
+    NULL,						/* EAI_ADDRFAMILY */
+    NULL,						/* EAI_NODATA */
+    NULL,						/* EAI_FAIL */
+    NULL,						/* EAI_AGAIN */
+    NULL,						/* EAI_MEMORY */
+    NULL,						/* EAI_FAMILY */
+    NULL,						/* EAI_BADFLAGS */
+    NULL,						/* EAI_NONAME */
+    NULL,						/* EAI_SERVICE */
+    NULL,						/* EAI_SOCKTYPE */
+#endif
   };
 
 char *
@@ -145,11 +240,12 @@ smtp_strerror (int error, char buf[], size_t buflen)
 {
   const char *text;
   size_t len;
+  int map;
 
   SMTPAPI_CHECK_ARGS (buf != NULL && buflen > 0, NULL);
 
   if (error < 0)
-#ifdef HAVE_WORKING_STRERROR_R
+#ifdef HAVE_STRERROR_R
     return strerror_r (-error, buf, buflen);
 #else
     /* Could end up here when threading is enabled but a working
@@ -160,6 +256,8 @@ smtp_strerror (int error, char buf[], size_t buflen)
        the application could still call strerror anyway. */
     text = strerror (-error);
 #endif
+  else if ((map = libesmtp_to_eai (error)) != 0)
+    text = gai_strerror (map);
   else if (error < (int) (sizeof libesmtp_errors / sizeof libesmtp_errors[0]))
     text = libesmtp_errors[error];
   else
@@ -176,51 +274,4 @@ smtp_strerror (int error, char buf[], size_t buflen)
       buf[len] = '\0';
     }
   return buf;
-}
-
-/* Map the values of h_errno to libESMTP's error codes */
-void
-set_herror (int code)
-{
-  int smtp_code;
-
-  /* Very crude mapping of the error codes on to libESMTP codes.
-   */
-  switch (code)
-    {
-    case EAI_AGAIN:       /* temporary failure in name resolution */
-      smtp_code = SMTP_ERR_TRY_AGAIN;
-      break;
-    case EAI_FAIL:        /* non-recoverable failure in name resolution */
-      smtp_code = SMTP_ERR_NO_RECOVERY;
-      break;
-    case EAI_MEMORY:      /* memory allocation failure */
-      set_error (-ENOMEM);
-      return;
-    case EAI_ADDRFAMILY:  /* address family for nodename not supported */
-      smtp_code = SMTP_ERR_HOST_NOT_FOUND;
-      break;
-    case EAI_NODATA:      /* no address associated with nodename */
-      smtp_code = SMTP_ERR_NO_ADDRESS;
-      break;
-    case EAI_SYSTEM:      /* system error returned in errno */
-      set_error (-errno);
-      return;
-    case EAI_FAMILY:      /* ai_family not supported */
-    case EAI_BADFLAGS:    /* invalid value for ai_flags */
-    case EAI_NONAME:      /* nodename nor servname provided, or not known */
-    case EAI_SERVICE:     /* servname not supported for ai_socktype */
-    case EAI_SOCKTYPE:    /* ai_socktype not supported */
-    default: /* desperation */
-      smtp_code = SMTP_ERR_INVAL;
-      break;
-    }
-  set_error (smtp_code);
-}
-
-/* store the value of errno in libESMTP's error variable. */
-void
-set_errno (int code)
-{
-  set_error (-code);
 }
