@@ -189,12 +189,10 @@ starttls_create_ctx (void)
   char *keyfile, *cafile, *capath;
 
   /* The decision not to support SSL v2 and v3 but instead to use only
-     TLSv1 is deliberate.  RFC 2487 is not clear on what versions of
-     SSL and TLS are to be supported but the implication is that
-     TLS and not SSL is to be used.  Servers typically support SSL as
-     well as TLS because some versions of Netscape do not support TLS.
-     I am assuming that all deployed servers support the full set of
-     protocols including TLSv1. */
+     TLSv1 is deliberate.  This is in line with the intentions of RFC
+     3207.  Servers typically support SSL as well as TLS because some
+     versions of Netscape do not support TLS.  I am assuming that all
+     currently deployed servers correctly support TLS.  */
   ctx = SSL_CTX_new (TLSv1_client_method ());
 
   /* Load our keys and certificates.  To avoid messing with configuration
@@ -367,7 +365,7 @@ select_starttls (smtp_session_t session)
             session promote Starttls_ENABLED to Starttls_REQUIRED.
             If this session does not offer STARTTLS, this will force
             protocol.c to report the extension as not available and QUIT
-            as reccommended in RFC 2487.  */
+            as reccommended in RFC 3207.  */
   /* if (...)
       session->starttls_enabled = Starttls_REQUIRED; */
   if (!(session->extensions & EXT_STARTTLS))

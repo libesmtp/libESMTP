@@ -1,3 +1,17 @@
+* libESMTP 0.8.12 development release.	2002-04-24
+
+- See ChangeLog for details.
+
+  o Added missing check for STARTTLS if server does not support ESMTP.
+
+  o Revoked deprecated status from smtp_option_require_all_recipients
+
+* libESMTP 0.8.11 development release.	2002-03-06
+
+Fixed a buffer overflow which could be exploited by a malicious SMTP
+server.  By overwriting the stack a carefully crafted response could
+cause arbitrary code to be executed.
+
 * libESMTP 0.8.10 development release.	2002-01-29
 
 - Usual autoconf stuff, see ChangeLog for details.

@@ -189,8 +189,11 @@ main (int argc, char **argv)
 #if 0
   /* The message-id is OPTIONAL but SHOULD be present.  By default
      libESMTP supplies one.  If this is not desirable, the following
-     prevents one making its way to the server.  N.B. it is not possible
-     to prohibit REQUIRED headers. */
+     prevents one making its way to the server.
+     N.B. It is not possible to prohibit REQUIRED headers.  Furthermore,
+          the submission server will probably add a Message-ID header,
+          so this cannot prevent the delivered message from containing
+          the message-id.  */
   smtp_set_header_option (message, "Message-Id", Hdr_PROHIBIT, 1);
 #endif
 

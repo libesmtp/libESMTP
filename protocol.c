@@ -723,7 +723,7 @@ cb_ehlo (smtp_session_t session, char *buf)
       set_auth_mechanisms (session, p);
     }
 #endif
-  else if (strcasecmp (token, "STARTTLS") == 0)		/* RFC 2487 */
+  else if (strcasecmp (token, "STARTTLS") == 0)		/* RFC 3207 */
     session->extensions |= EXT_STARTTLS;
   else if (strcasecmp (token, "SIZE") == 0)		/* RFC 1870 */
     {
@@ -879,6 +879,9 @@ void
 rsp_helo (siobuf_t conn, smtp_session_t session)
 {
   int code;
+#ifdef USE_TLS
+  int notls;
+#endif
 
   session->extensions = 0;
   destroy_auth_mechanisms (session);
@@ -899,9 +902,22 @@ rsp_helo (siobuf_t conn, smtp_session_t session)
       return;
     }
 
-  /* There are no extensions.  Make sure none were required.
-   */
-  if (!report_extensions (session))
+#ifdef USE_TLS
+  /* Care must be taken when checking for required TLS.  The client may
+     have connected to a tunnel which offers the STARTTLS extension and
+     the real server does not implement SMTP extensions.  Hence the
+     check that TLS is actually in use before reporting that the
+     extension is not available.  */
+  notls = !session->using_tls && session->starttls_enabled == Starttls_REQUIRED;
+  if (notls && session->event_cb != NULL)
+    (*session->event_cb) (session, SMTP_EV_EXTNA_STARTTLS,
+			  session->event_cb_arg, NULL);
+#else
+# define notls 0
+#endif
+
+  /* There are no extensions.  Make sure none were required. */
+  if (!report_extensions (session) || notls)
     {
       set_error (SMTP_ERR_EXTENSION_NOT_AVAILABLE);
       session->rsp_state = S_quit;
@@ -1027,9 +1043,7 @@ rsp_mail (siobuf_t conn, smtp_session_t session)
   else
     {
       message->valid_recipients = 0;
-#ifdef USE_REQUIRE_ALL_RECIPIENTS
       message->failed_recipients = 0;
-#endif
       session->rsp_state = S_rcpt;
     }
 }
@@ -1095,14 +1109,10 @@ cmd_rcpt (siobuf_t conn, smtp_session_t session)
   session->cmd_recipient = next_recipient (session->cmd_recipient);
   if (session->cmd_recipient != NULL)
     session->cmd_state = S_rcpt;
-  else
-#ifdef USE_REQUIRE_ALL_RECIPIENTS
-  /* Ugly hack:  if requiring all recpients to succeed the decision can't
-                 be made here.  So PIPELINING's improvement is lost. */
-  if (session->require_all_recipients)
+  else if (session->require_all_recipients)
+    /* can't pipeline the DATA command when require_all_recpients is set. */
     session->cmd_state = -1;
   else
-#endif
 #if 0
     session->cmd_state = (session->extensions & EXT_CHUNKING) ? S_bdat : S_data;
 #else
@@ -1119,10 +1129,8 @@ rsp_rcpt (siobuf_t conn, smtp_session_t session)
   			     &session->rsp_recipient->status, NULL);
   if (code == 2)
     session->current_message->valid_recipients += 1;
-#ifdef USE_REQUIRE_ALL_RECIPIENTS
   else
     session->current_message->failed_recipients += 1;
-#endif
 
   /* MTA will never accept this recipient.  Make sure it isn't used
      again. */
@@ -1138,20 +1146,13 @@ rsp_rcpt (siobuf_t conn, smtp_session_t session)
   session->rsp_recipient = next_recipient (session->rsp_recipient);
   if (session->rsp_recipient != NULL)
     session->rsp_state = S_rcpt;
-  else
-#ifdef USE_REQUIRE_ALL_RECIPIENTS
-  /* Ugly hack:  if requiring all recpients to succeed make the decision to
-  		 proceed now.  Using this option may make it impossible
-  		 to send mail at all if some recipients are experiencing
-  		 transient errors.  */
-  if (session->require_all_recipients
-      && session->current_message->failed_recipients > 0)
+  else if (session->require_all_recipients
+           && session->current_message->failed_recipients > 0)
     {
       reset_status (&session->current_message->message_status);
       session->rsp_state = next_message (session) ? S_rset : S_quit;
     }
   else
-#endif
 #if 0
     session->rsp_state = (session->extensions & EXT_CHUNKING) ? S_bdat : S_data;
 #else

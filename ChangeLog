@@ -1,3 +1,31 @@
+2002-04-24 Version 0.8.12 released
+----------------------------------
+
+2002-03-14 	Brian Stafford	<brian@stafford.uklinux.net>
+      * headers.c
+	Setting Hdr_PROHIBIT did not work properly.  Thanks to Ronald
+	F. Guilmette for pointing this out.
+
+2002-03-13 	Brian Stafford	<brian@stafford.uklinux.net>
+      * protocol.c smtp-api.c libesmtp.h configure.in
+      	Revoked deprecated status from smtp_option_require_all_recipients
+      	and remove the corresponding --enable-require-all-recipients
+      	parameter to configure.
+
+2002-03-07 	Brian Stafford	<brian@stafford.uklinux.net>
+      * libesmtp.h libesmtp-private.h protocol.c smtp-tls.c
+      	RFC 2487 is obsoleted by RFC 3207.  Updated references.
+
+      * protocol.c
+      	The check for required STARTTLS was omitted when processing the
+      	HELO command.  If a server did not implement EHLO the session
+      	would proceed instead of quitting.  Check added and the event
+      	callback added to report the missing extension to the
+      	application.
+
+2002-03-06 Version 0.8.11 released
+----------------------------------
+
 2002-03-04 	Brian Stafford	<brian@stafford.uklinux.net>
       * protocol.c
         Fix buffer overflow problem in read_smtp_response.  This

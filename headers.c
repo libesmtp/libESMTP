@@ -842,30 +842,33 @@ smtp_set_header_option (smtp_message_t message, const char *header,
       return 0;
     }
 
-  if (info->prohibit || (info->action->flags & (PROHIBIT | PRESERVE)))
+  /* Don't permit options to be set on headers that must pass intact or
+     which are prohibited. */
+  if (info->action->flags & (PROHIBIT | PRESERVE))
     {
       set_error (SMTP_ERR_INVAL);
       return 0;
     }
 
-  if (option == Hdr_OVERRIDE)
+  /* There is an odd quirk when setting options.  Setting an option for
+     the OPTIONAL headers known to libESMTP causes default values to be
+     generated automatically when not found in the message, so long as
+     there is no other reason to prevent them appearing in the message! */
+
+  /* Don't allow the user to set override on prohibited headers. */
+  if (option == Hdr_OVERRIDE && !info->prohibit)
     {
-      /* There is an odd quirk of the Hdr_OVERRIDE option.  Setting it
-         to false for the OPTIONAL headers known to libESMTP causes
-         default values to be generated automatically when not found in
-         the message! */
       va_start (alist, option);
       info->override = !!va_arg (alist, int);
       va_end (alist);
       return 1;
     }
-  if (option == Hdr_PROHIBIT)
+  /* Don't allow the user to prohibit required headers. */
+  if (option == Hdr_PROHIBIT && !(info->action->flags & REQUIRE))
     {
-      /* Can't set prohibit if a header of this name already set up
-         or the header is required. */
-      if (info->hdr != NULL || (info->action->flags & REQUIRE))
-        return 0;
-      info->prohibit = 1;
+      va_start (alist, option);
+      info->prohibit = !!va_arg (alist, int);
+      va_end (alist);
       return 1;
     }
 

@@ -157,9 +157,6 @@
 /* Build with support for Posix threading */
 #undef USE_PTHREADS
 
-/* Build smtp_option_require_all_recipients() API */
-#undef USE_REQUIRE_ALL_RECIPIENTS
-
 /* Build with support for SMTP AUTH using SASL */
 #undef USE_SASL
 

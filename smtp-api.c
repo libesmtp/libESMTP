@@ -537,9 +537,6 @@ smtp_version (void *buf, size_t len, int what)
   return 1;
 }
 
-#ifdef USE_REQUIRE_ALL_RECIPIENTS
-/* Deprecated: do not use */
-
 /* Some applications can't handle one recipient from many failing
    particularly well.  If the 'require_all_recipients' option is
    set, this will fail the entire transaction even if some of the
@@ -552,4 +549,3 @@ smtp_option_require_all_recipients (smtp_session_t session, int state)
   session->require_all_recipients = !!state;
   return 1;
 }
-#endif

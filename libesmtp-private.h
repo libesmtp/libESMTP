@@ -40,7 +40,7 @@
 #define EXT_PIPELINING		_BIT(1)	/* RFC 2920 */
 #define EXT_DSN			_BIT(2)	/* RFC 1891 */
 #define EXT_AUTH		_BIT(3)	/* RFC 2554 AUTH using SASL */
-#define EXT_STARTTLS		_BIT(4)	/* RFC 2487 */
+#define EXT_STARTTLS		_BIT(4)	/* RFC 3207 */
 #define EXT_SIZE		_BIT(5)	/* RFC 1870 */
 #define EXT_CHUNKING		_BIT(6)	/* RFC 3030 */
 #define EXT_BINARYMIME		_BIT(7)	/* RFC 3030 */
@@ -104,16 +104,14 @@ struct smtp_session
 #endif
 
 #ifdef USE_TLS
-  /* Interface to RFC 2487 STARTTLS extension */
+  /* Interface to RFC 3207 STARTTLS extension */
     enum starttls_option starttls_enabled;
     SSL_CTX *starttls_ctx;
 #endif
 
   /* Miscellaneous options and flags */
     unsigned int try_fallback_server : 1;
-#ifdef USE_REQUIRE_ALL_RECIPIENTS
     unsigned int require_all_recipients : 1;
-#endif
     unsigned int authenticated : 1;
 #ifdef USE_TLS
     unsigned int using_tls : 1;
@@ -139,9 +137,7 @@ struct smtp_message
     struct smtp_recipient *recipients;	/* List of recipients */
     struct smtp_recipient *end_recipients;
     int valid_recipients;		/* Valid recipients in this session */
-#ifdef USE_REQUIRE_ALL_RECIPIENTS
     int failed_recipients;		/* Failed recipients in this session */
-#endif
 
   /* Headers */
     struct rfc2822_header *headers;	/* List of headers to add to message */

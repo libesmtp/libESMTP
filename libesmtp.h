@@ -212,7 +212,7 @@ int smtp_deliverby_set_mode (smtp_message_t message,
 			     long time, enum by_mode mode, int trace);
 
 /*
-    	RFC 2487.  SMTP Starttls extension.
+    	RFC 3207.  SMTP Starttls extension.
  */
 enum starttls_option
   {
