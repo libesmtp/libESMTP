@@ -110,6 +110,20 @@ cat_buffer (struct catbuf *catbuf, int *len)
   return catbuf->buffer;
 }
 
+/* Shrink the allocated memory to the minimum needed.  Return a
+   pointer to the buffer and put its length in *len. */
+char *
+cat_shrink (struct catbuf *catbuf, int *len)
+{
+  assert (catbuf != NULL);
+
+  if (catbuf->buffer != NULL)
+    cat_alloc (catbuf, catbuf->string_length);
+  if (len != NULL)
+    *len = catbuf->string_length;
+  return catbuf->buffer;
+}
+
 /* Concatenate a string to the buffer.  N.B. the buffer is NOT terminated
    by a \0.  If len < 0 then string must be \0 terminated. */
 char *

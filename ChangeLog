@@ -1,3 +1,32 @@
+2002-03-04 	Brian Stafford	<brian@stafford.uklinux.net>
+      * protocol.c
+        Fix buffer overflow problem in read_smtp_response.  This
+        overflow could be exploited by a malicious SMTP server to
+        overwrite the stack and hence a carefully crafted response could
+        cause arbitrary code to be executed.  Also took the opportunity
+        to add a related check for a potential DoS attack which makes
+        use of excessively long SMTP responses.  Thanks to Colin Phipps
+        for detecting this.
+
+      * concatenate.[ch]
+        New function cat_shrink to shrink-wrap the allocated buffer.
+
+      * libesmtp.h errors.c
+        New unterminated response error code and description.
+
+      * ntlm/ntlmstruct.c configure.in crammd5/md5.h
+        stdint.h does not yet seem to be widely available causing
+        compilation to fail on some platforms.  Changed uint{16,32}_t to
+        unsigned{16,32}_t, detect correct sizes with autoconf and added
+        typedefs in ntlmstruct.c.  Changed detection types from int to
+        unsigned int in configure.in and made corresponding changes in
+        crammd5/md5.h.  Thanks to Ronald F. Guilmette for spotting this.
+
+
+2002-02-12 	Brian Stafford	<brian@stafford.uklinux.net>
+      * strcasecmp.c strncasecmp.c
+      	These now return the correct sign of result for differing strings.
+
 2002-01-30 Version 0.8.10p1 released
 ------------------------------------
 

@@ -439,17 +439,18 @@ reset_status (struct smtp_status *status)
 /* All SMTP responses have standard syntax.  This function could be
    called by the protocol engine above and the results from the parsed
    response passed to the response handler functions.  However certain
-   commands, in particular AUTH, involve extra intermediate exchanges
-   with the server that do not correspond to the standard syntax.
-   The response handlers must therefore call this function themselves. */
+   commands involve extra intermediate exchanges with the server that
+   may not correspond to the standard syntax.  The response handlers
+   must therefore call this function themselves. */
 int
 read_smtp_response (siobuf_t conn, smtp_session_t session,
                     struct smtp_status *status,
                     int (*cb) (smtp_session_t, char *))
 {
-  char buf[1024], text[4096];
-  char *p;
-  int code, more, want_enhanced;
+  struct catbuf text;
+  char buf[1024];
+  char *p, *nul;
+  int code, more, want_enhanced, textlen;
   struct smtp_status triplet;
 
   /* First line of an SMTP response is the normal one.  Put it in a buffer.
@@ -492,23 +493,27 @@ read_smtp_response (siobuf_t conn, smtp_session_t session,
 
   /* p points to the remainder of the line.  This is the text of the
      server message */
-  strcpy (text, p);
+  cat_init (&text, 128);
+  concatenate (&text, p, -1);
 
   while (more)
     {
       if ((p = sio_gets (conn, buf, sizeof buf)) == NULL)
 	{
+	  cat_free (&text);
 	  set_error (SMTP_ERR_DROPPED_CONNECTION);
 	  return -1;
 	}
       code = strtol (p, &p, 10);
       if (code != status->code)
 	{
+	  cat_free (&text);
 	  set_error (SMTP_ERR_STATUS_MISMATCH);
 	  return -1;
 	}
       if (!(*p == ' ' || *p == '-'))
 	{
+	  cat_free (&text);
 	  set_error (SMTP_ERR_INVALID_RESPONSE_SYNTAX);
 	  return -1;
 	}
@@ -517,29 +522,54 @@ read_smtp_response (siobuf_t conn, smtp_session_t session,
 	{
 	  if (!parse_status_triplet (p, &p, &triplet))
 	    {
+	      cat_free (&text);
 	      set_error (SMTP_ERR_INVALID_RESPONSE_SYNTAX);
 	      return -1;
 	    }
 	  if (!compare_status_triplet (status, &triplet))
 	    {
+	      cat_free (&text);
 	      set_error (SMTP_ERR_STATUS_MISMATCH);
 	      return -1;
 	    }
 	}
 
-      while (isspace (*p))
+      /* Skip whitespace but don't wander over the CRLF */
+      while (isspace (*p) && isprint (*p))
 	p++;
+
+      /* Check that the line is correctly terminated. */
+      nul = strchr (p, '\0');
+      if (nul == NULL || nul == p || nul[-1] != '\n')
+        {
+	  cat_free (&text);
+	  set_error (SMTP_ERR_UNTERMINATED_RESPONSE);
+	  return -1;
+        }
 
       /* `p' points to the remainder of the line.  Either process with the
          callback or concatenate with the first line. */
       if (cb != NULL)
         (*cb) (session, p);
       else
-        strcat (text, p);
+	concatenate (&text, p, nul - p);
+
+      /* Check if the total text returned in a multiline response
+         exceeds 4k.  Abort if this happens, this might be a DoS attack
+         or a broken server. */
+      textlen = 0;
+      cat_buffer (&text, &textlen);
+      if (textlen > 4096)
+        {
+	  cat_free (&text);
+	  set_error (SMTP_ERR_UNTERMINATED_RESPONSE);
+	  return -1;
+        }
     }
 
-  /* Save the response text */
-  status->text = strdup (text);
+  /* Terminate and save the response text */
+  concatenate (&text, "", 1);
+  status->text = cat_shrink (&text, NULL);
 
   return status->code / 100;
 }

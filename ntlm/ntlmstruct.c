@@ -25,7 +25,6 @@
 #include <config.h>
 #endif
 
-#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
@@ -33,12 +32,34 @@
 #include <byteswap.h>
 #endif
 
+/* Must have at least 32 bits in an int (at least pending a more thorough
+   code review - this module is still experimental) */
+#if SIZEOF_UNSIGNED_INT < 32 / 8
+# error "unsigned int is less than 32 bits wide"
+#endif
+
+#if SIZEOF_UNSIGNED_SHORT == 16 / 8
+typedef unsigned short unsigned16_t;
+#else
+#include <sys/types.h>
+typedef	uint16 unsigned16_t;
+#endif
+
+#if SIZEOF_UNSIGNED_INT == 32 / 8
+typedef	unsigned int unsigned32_t;
+#elif SIZEOF_UNSIGNED_LONG == 32 / 8
+typedef	unsigned long unsigned32_t;
+#else
+#include <sys/types.h>
+typedef	uint32 unsigned32_t;
+#endif
+
 #include "ntlm.h"
 
 static void
 write_uint16 (char *buf, size_t offset, unsigned int value)
 {
-  uint16_t i16 = value;
+  unsigned16_t i16 = value;
 
   assert (sizeof i16 == 2);
 #ifdef WORDS_BIGENDIAN
@@ -50,7 +71,7 @@ write_uint16 (char *buf, size_t offset, unsigned int value)
 static inline void
 write_uint32 (char *buf, size_t offset, unsigned int value)
 {
-  uint32_t i32 = value;
+  unsigned32_t i32 = value;
 
   assert (sizeof i32 == 4);
 #ifdef WORDS_BIGENDIAN
@@ -62,7 +83,7 @@ write_uint32 (char *buf, size_t offset, unsigned int value)
 static inline unsigned int
 read_uint16 (const char *buf, size_t offset)
 {
-  uint16_t i16;
+  unsigned16_t i16;
 
   assert (sizeof i16 == 2);
   memcpy (&i16, buf + offset, sizeof i16);
@@ -75,7 +96,7 @@ read_uint16 (const char *buf, size_t offset)
 static inline unsigned int
 read_uint32 (const char *buf, size_t offset)
 {
-  uint32_t i32;
+  unsigned32_t i32;
 
   assert (sizeof i32 == 4);
   memcpy (&i32, buf + offset, sizeof i32);

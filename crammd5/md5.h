@@ -24,9 +24,9 @@
 #ifndef MD5_UTILS_H
 #define MD5_UTILS_H
 
-#if SIZEOF_INT == 32 / 8
+#if SIZEOF_UNSIGNED_INT == 32 / 8
 typedef	unsigned int unsigned32_t;
-#elif SIZEOF_LONG == 32 / 8
+#elif SIZEOF_UNSIGNED_LONG == 32 / 8
 typedef	unsigned long unsigned32_t;
 #else
 #include <sys/types.h>

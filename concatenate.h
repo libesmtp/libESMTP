@@ -32,6 +32,7 @@ struct catbuf
 void cat_init (struct catbuf *catbuf, size_t minimum_length);
 void cat_reset (struct catbuf *catbuf, size_t minimum_length);
 void cat_free (struct catbuf *catbuf);
+char *cat_shrink (struct catbuf *catbuf, int *len);
 char *cat_buffer (struct catbuf *catbuf, int *len);
 char *concatenate (struct catbuf *catbuf, const char *string, int len);
 char *vconcatenate (struct catbuf *catbuf, ...);

@@ -50,9 +50,13 @@ same lines as the client implementation.
 Dependencies
 ------------
 
+libltdl:
+
 libESMTP requires that libltdl is installed on your system.  Libltdl is
 included in the libESMTP tarball.  Libltdl is distributed with GNU
 Libtool, which is available from http://www.gnu.org/software/libtool/
+
+getaddrinfo:
 
 You will need a modern resolver library providing the getaddrinfo API.
 getaddrinfo is easier to use, protocol independent, thread-safe and
@@ -65,9 +69,12 @@ libc or BIND is used.  Most people will already at least one of these
 lightweight resolver distributed with BIND 9.  BIND may be downloaded
 from the ISC (http://www.isc.org/).
 
-OpenSSL (http://www.openssl.org/) is required by the CRAM-MD5
-authentication module and by the STARTTLS SMTP extension.  If you have
-no need for either of these, you will not need OpenSSL to build libESMTP.
+openssl:
+
+OpenSSL (http://www.openssl.org/) is required to build the SMTP STARTTLS
+extension and to build the NTLM authentication module.  If you have no
+need for either of these features, you do not need OpenSSL.
+
 
 Installation
 ------------

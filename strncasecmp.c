@@ -35,13 +35,15 @@
 int
 strncasecmp (const char *a, const char *b, size_t len)
 {
+  register int n;
+
   if (len < 1)
     return 0;
-  while (*a != '\0' && (*a == *b || tolower (*a) == tolower (*b)))
+  while (*a == *b || (n = tolower (*a) - tolower (*b)) == 0)
     {
-      if (--len < 1)
+      if (*a == '\0' || --len < 1)
         return 0;
       a++, b++;
     }
-  return *a - *b;
+  return n;
 }

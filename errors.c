@@ -223,7 +223,7 @@ static const char *libesmtp_errors[] =
     "Invalid SMTP status code in server response",	/* INVALID_RESPONSE_STATUS */
     "Invalid API function argument",			/* INVAL */
     "Requested SMTP extension not available",		/* EXTENSION_NOT_AVAILABLE */
-#if 0	/* Next 10 codes handled by gai_strerror() */
+    /* Next 10 codes handled by gai_strerror() */
     NULL,						/* EAI_ADDRFAMILY */
     NULL,						/* EAI_NODATA */
     NULL,						/* EAI_FAIL */
@@ -234,7 +234,7 @@ static const char *libesmtp_errors[] =
     NULL,						/* EAI_NONAME */
     NULL,						/* EAI_SERVICE */
     NULL,						/* EAI_SOCKTYPE */
-#endif
+    "Unterminated server response",			/* UNTERMINATED_RESPONSE */
   };
 
 char *

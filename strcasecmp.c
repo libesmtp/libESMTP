@@ -35,7 +35,13 @@
 int
 strcasecmp (const char *a, const char *b)
 {
-  while (*a != '\0' && (*a == *b || tolower (*a) == tolower (*b)))
-    a++, b++;
-  return *a - *b;
+  register int n;
+
+  while (*a == *b || (n = tolower (*a) - tolower (*b)) == 0)
+    {
+      if (*a == '\0')
+        return 0;
+      a++, b++;
+    }
+  return n;
 }
