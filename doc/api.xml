@@ -113,7 +113,7 @@ directly in the message data.
 
     <para>
 libESMTP does not implement MIME [RFC 2045] since MIME is orthogonal
-to RFC 2822.  It is expected that a seperate library will be used to
+to RFC 2822.  It is expected that a separate library will be used to
 construct MIME documents.  libESMTP ensures that top level MIME headers
 are passed unaltered and the header API functions are guaranteed to fail
 if any header in the name space reserved for MIME is specified, thus
@@ -2219,7 +2219,7 @@ The get variant returns the current value of the application data.
       <para>
 Enable the SMTP AUTH verb if <parameter>context</parameter> is not
 <constant>NULL</constant> or disable it when context is <constant>NULL</constant>.
-The authentication API is described seperately.
+The authentication API is described separately.
       </para>
       <para>
 When enabled and the SMTP server advertises the AUTH extension, libESMTP
@@ -2231,7 +2231,7 @@ library API defined in <filename>auth-client.h</filename>.
       <note>
 	<title>Authentication Contexts</title>
 	<para>
-A seperate authentication context must be created for each SMTP session.
+A separate authentication context must be created for each SMTP session.
 The application is responsible for destroying context.  The application
 should either call <function>smtp_destroy_session</function> or call
 <function>smtp_auth_set_context</function> with context set to

@@ -91,6 +91,8 @@ enum
     SMTP_EV_EXTNA_8BITMIME,
     SMTP_EV_EXTNA_STARTTLS,
     SMTP_EV_EXTNA_ETRN,
+    SMTP_EV_EXTNA_CHUNKING,
+    SMTP_EV_EXTNA_BINARYMIME,
 
   /* Extensions specific events */
     SMTP_EV_DELIVERBY_EXPIRED = 3000,
@@ -157,6 +159,18 @@ const char *_smtp_message_str_cb (void **ctx, int *len, void *arg);
 #define smtp_set_message_str(message,str)	\
 		smtp_set_messagecb ((message), _smtp_message_str_cb, (str))
 
+/* Protocol timeouts */
+enum rfc2822_timeouts
+  {
+    Timeout_GREETING,
+    Timeout_ENVELOPE,
+    Timeout_DATA,
+    Timeout_TRANSFER,
+    Timeout_DATA2
+  };
+#define Timeout_OVERRIDE_RFC2822_MINIMUM	0x1000
+long smtp_set_timeout (smtp_session_t session, int which, long value);
+
 /****************************************************************************
  * The following APIs relate to SMTP extensions.  Note that not all
  * supported extensions have corresponding API functions.
@@ -195,7 +209,8 @@ enum e8bitmime_body
   {
     E8bitmime_NOTSET,
     E8bitmime_7BIT,
-    E8bitmime_8BITMIME
+    E8bitmime_8BITMIME,
+    E8bitmime_BINARYMIME
   };
 int smtp_8bitmime_set_body (smtp_message_t message, enum e8bitmime_body body);
 

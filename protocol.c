@@ -100,9 +100,9 @@ next_recipient (smtp_recipient_t recipient)
   return recipient;
 }
 
-/* Return a pointer to the next unsent message.
+/* Set the session's current message to the next unsent message.
  */
-static int
+int
 next_message (smtp_session_t session)
 {
   while ((session->current_message = session->current_message->next) != NULL)
@@ -590,7 +590,7 @@ void
 cmd_greeting (siobuf_t conn, smtp_session_t session)
 {
   /* Set a five minute timeout. */
-  sio_set_timeout (conn, 5 * 60 * 1000);
+  sio_set_timeout (conn, session->greeting_timeout);
   session->cmd_state = -1;
 }
 
@@ -663,14 +663,30 @@ report_extensions (smtp_session_t session)
       if (quit_now)
         exts |= EXT_DSN;
     }
+#ifdef USE_CHUNKING
+  if (no_required_extension (session, EXT_CHUNKING))
+    {
+      quit_now = 0;
+      if (session->event_cb != NULL)
+	(*session->event_cb) (session, SMTP_EV_EXTNA_CHUNKING,
+			      session->event_cb_arg, &quit_now);
+      if (quit_now)
+        exts |= EXT_DSN;
+    }
+  if (no_required_extension (session, EXT_BINARYMIME))
+    {
+      if (session->event_cb != NULL)
+	(*session->event_cb) (session, SMTP_EV_EXTNA_BINARYMIME,
+			      session->event_cb_arg);
+      exts |= EXT_BINARYMIME;
+    }
+#endif
   if (no_required_extension (session, EXT_8BITMIME))
     {
-      quit_now = 1;
       if (session->event_cb != NULL)
 	(*session->event_cb) (session, SMTP_EV_EXTNA_8BITMIME,
 			      session->event_cb_arg);
-      if (quit_now)
-        exts |= EXT_8BITMIME;
+      exts |= EXT_8BITMIME;
     }
 #ifdef USE_ETRN
   if (no_required_extension (session, EXT_ETRN))
@@ -743,10 +759,8 @@ cb_ehlo (smtp_session_t session, char *buf)
     }
   else if (strcasecmp (token, "ETRN") == 0)		/* RFC 1985 */
     session->extensions |= EXT_ETRN;
-#ifdef USE_XUSR
   else if (strcasecmp (token, "XUSR") == 0)	/* sendmail (I feel ill) */
     session->extensions |= EXT_XUSR;
-#endif
   return 1;
 }
 
@@ -949,7 +963,7 @@ cmd_mail (siobuf_t conn, smtp_session_t session)
 
   /* Set a five minute timeout.  This stays in force until the DATA
      command. */
-  sio_set_timeout (conn, 5 * 60 * 1000);
+  sio_set_timeout (conn, session->envelope_timeout);
 
   message = session->current_message;
   mailbox = message->reverse_path_mailbox;
@@ -972,8 +986,12 @@ cmd_mail (siobuf_t conn, smtp_session_t session)
 		    encode_xtext (xtext, sizeof xtext, message->dsn_envid));
     }
 
-  /* 8BITMIME: RET=FULL/HDRS  ENVID=xtext */
+  /* 8BITMIME: BODY=7BIT/8BITMIME/BINARYMIME */
+#ifdef USE_CHUNKING
+  if ((session->extensions & (EXT_8BITMIME | EXT_BINARYMIME))
+#else
   if ((session->extensions & EXT_8BITMIME)
+#endif
       && message->e8bitmime != E8bitmime_NOTSET)
     {
       sio_write (conn, " BODY=", -1);
@@ -981,6 +999,10 @@ cmd_mail (siobuf_t conn, smtp_session_t session)
 	sio_write (conn, "8BITMIME", -1);
       else if (message->e8bitmime == E8bitmime_7BIT)
 	sio_write (conn, "7BIT", -1);
+#ifdef USE_CHUNKING
+      else if (message->e8bitmime == E8bitmime_BINARYMIME)
+	sio_write (conn, "BINARYMIME", -1);
+#endif
     }
 
   if ((session->extensions & EXT_DELIVERBY) && message->by_mode != By_NOTSET)
@@ -1113,7 +1135,7 @@ cmd_rcpt (siobuf_t conn, smtp_session_t session)
     /* can't pipeline the DATA command when require_all_recpients is set. */
     session->cmd_state = -1;
   else
-#if 0
+#ifdef USE_CHUNKING
     session->cmd_state = (session->extensions & EXT_CHUNKING) ? S_bdat : S_data;
 #else
     session->cmd_state = S_data;
@@ -1153,7 +1175,7 @@ rsp_rcpt (siobuf_t conn, smtp_session_t session)
       session->rsp_state = next_message (session) ? S_rset : S_quit;
     }
   else
-#if 0
+#ifdef USE_CHUNKING
     session->rsp_state = (session->extensions & EXT_CHUNKING) ? S_bdat : S_data;
 #else
     session->rsp_state = S_data;
@@ -1167,7 +1189,7 @@ rsp_rcpt (siobuf_t conn, smtp_session_t session)
 void
 cmd_data (siobuf_t conn, smtp_session_t session)
 {
-  sio_set_timeout (conn, 2 * 60 * 1000);
+  sio_set_timeout (conn, session->data_timeout);
   sio_write (conn, "DATA\r\n", -1);
   session->cmd_state = -1;
 }
@@ -1230,7 +1252,7 @@ cmd_data2 (siobuf_t conn, smtp_session_t session)
       return;
     }
 
-  sio_set_timeout (conn, 3 * 60 * 1000);
+  sio_set_timeout (conn, session->transfer_timeout);
 
   /* Arrange to read the current message from the application. */
   msg_source_set_cb (session->msg_source,
@@ -1395,7 +1417,7 @@ break_2:
   sio_write (conn, ".\r\n", 3);
   sio_flush (conn);
 
-  sio_set_timeout (conn, 10 * 60 * 1000);
+  sio_set_timeout (conn, session->data2_timeout);
   session->cmd_state = -1;
 }
 

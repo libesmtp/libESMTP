@@ -37,6 +37,13 @@
 #include "auth-client.h"
 #include "auth-plugin.h"
 
+#if 0
+/* This is handy for changing te value of the flags in the debugger. */
+unsigned int t1flags = TYPE1_FLAGS;
+#undef TYPE1_FLAGS
+#define TYPE1_FLAGS t1flags
+#endif
+
 #define NELT(x)		(sizeof x / sizeof x[0])
 
 static int ntlm_init (void *pctx);
@@ -105,6 +112,7 @@ ntlm_response (void *ctx, const char *challenge, int *len,
   struct ntlm_context *context = ctx;
   unsigned char nonce[8];
   unsigned char lm_resp[24], nt_resp[24];
+  unsigned int flags;
   char *domain = NULL;
   char *p;
 
@@ -118,17 +126,17 @@ ntlm_response (void *ctx, const char *challenge, int *len,
       gethostname (context->host, sizeof context->host);
       if ((p = strchr (context->host, '.')) != NULL)
         *p = '\0';
-      *len = ntlm_build_type_1 (context->buf, sizeof context->buf,
+      *len = ntlm_build_type_1 (context->buf, sizeof context->buf, TYPE1_FLAGS,
       				context->result[0], context->host);
       return context->buf;
 
     case 1:	/* compute a response based om the challenge */
       context->state = 2;
-      if (!ntlm_parse_type_2 (challenge, *len, nonce, &domain))
+      if (!ntlm_parse_type_2 (challenge, *len, &flags, nonce, &domain))
         break;
       ntlm_responses (lm_resp, nt_resp, nonce, context->result[2]);
       *len = ntlm_build_type_3 (context->buf, sizeof context->buf,
-				lm_resp, nt_resp,
+				flags, lm_resp, nt_resp,
 				context->result[0], context->result[1],
 				context->host);
       if (domain != NULL)

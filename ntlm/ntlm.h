@@ -33,16 +33,20 @@ void nt_hash_password (unsigned char *hash, const char *pass);
 void ntlm_responses (unsigned char *lm_resp, unsigned char *nt_resp,
 		     const unsigned char *challenge, const char *secret);
 
-size_t ntlm_build_type_1 (char *buf, size_t buflen,
+size_t ntlm_build_type_1 (char *buf, size_t buflen, unsigned int flags,
 			  const char *domain, const char *workstation);
-size_t ntlm_build_type_2 (char *buf, size_t buflen,
+size_t ntlm_build_type_2 (char *buf, size_t buflen, unsigned int flags,
 			  const unsigned char *nonce, const char *domain);
 size_t ntlm_build_type_3 (char *buf, size_t buflen,
+			  unsigned int flags,
 			  const unsigned char *lm_resp,
 			  const unsigned char *nt_resp,
 			  const char *domain, const char *user,
 			  const char *workstation);
-size_t ntlm_parse_type_2 (const char *buf, size_t buflen,
+
+size_t ntlm_parse_type_2 (const char *buf, size_t buflen, unsigned int *flags,
 		          unsigned char *nonce, char **domain);
+
+#define TYPE1_FLAGS	0x8202u
 
 #endif

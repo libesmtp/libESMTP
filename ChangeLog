@@ -1,6 +1,21 @@
+2002-06-24 	Brian Stafford	<brian@stafford.uklinux.net>
+      * configure.in Makefile.am protocol.c protocol-states.h
+      * smtp-api.c smtp-bdat.c libesmtp.h libesmtp-private.h
+        Added experimental support for the SMTP CHUNKING extension.
+
+      * configure.in
+	Enable non-standard AUTH= response by default.
+
+2002-05-31 	Brian Stafford	<brian@stafford.uklinux.net>
+      * protocol.c smtp-api.c libesmtp.h libesmtp-private.h
+      	Added API call to permit protocol timeouts to be set.
+
+      * ntlm/ntlmstruct.c
+        Replaced use of byteswap.h and bswap_{16,32} with locally defined
+        functions.
+
 2002-04-24 Version 0.8.12 released
 ----------------------------------
-
 2002-03-14 	Brian Stafford	<brian@stafford.uklinux.net>
       * headers.c
 	Setting Hdr_PROHIBIT did not work properly.  Thanks to Ronald

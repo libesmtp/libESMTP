@@ -1,4 +1,4 @@
-			libESMTP, version 0.8
+			libESMTP, version 1.0
 			      -- oOo --
 	      	Brian Stafford	<brian@stafford.uklinux.net>
 
@@ -8,8 +8,8 @@ What is libESMTP?
 
 LibESMTP is a library to manage posting (or submission of) electronic
 mail using SMTP to a preconfigured Mail Transport Agent (MTA) such as
-Exim.  It may be used as part of a Mail User Agent (MUA) or another
-program that must be able to post electronic mail but where mail
+Exim or Postfix.  It may be used as part of a Mail User Agent (MUA) or
+another program that must be able to post electronic mail but where mail
 functionality is not the program's primary purpose.
 
 LibESMTP is not intended to be used as part of a program that implements
@@ -18,13 +18,6 @@ a Mail Transport Agent.
 It is hoped that the availability of a lightweight library implementing
 an SMTP client will both ease the task of coding for software authors
 and improve the quality of the resulting code.
-
-Important
----------
-libESMTP is currently under development and testing.  Consequently
-certain parts of the API are subject to change between releases of the
-library and certain APIs and SMTP extensions have not yet been fully
-implemented or tested.
 
 Features
 --------
@@ -37,24 +30,32 @@ message is an initial submission.
 SASL
 ----
 
-AUTH is implemented using a new SASL (RFC 2222) client library which is
+AUTH is implemented using a SASL (RFC 2222) client library which is
 currently integrated into libESMTP.  It was felt that the Cyrus SASL
 library was too complex for the needs of a client only SASL
 implementation.
 
 If there is sufficient interest in a LGPL SASL library, the SASL client
-API will be split off into a seperate library in the future.  There may
+API will be split off into a separate library in the future.  There may
 also be a case for implementing a server side SASL library along the
 same lines as the client implementation.
+
+Installation
+------------
+
+Please refer to INSTALL for generic installation instructions.  LibESMTP
+has a few options when configuring; ./configure --help lists them.
 
 Dependencies
 ------------
 
-libltdl:
+dlsym:
 
-libESMTP requires that libltdl is installed on your system.  Libltdl is
-included in the libESMTP tarball.  Libltdl is distributed with GNU
-Libtool, which is available from http://www.gnu.org/software/libtool/
+libESMTP requires that dlsym() is available on your system.  This is
+true of many modern systems but not all.  An alternative is to download
+and install libltdl which provides a functional equivalent.  Libltdl is
+distributed with GNU Libtool, which is available from
+http://www.gnu.org/software/libtool/
 
 getaddrinfo:
 
@@ -72,30 +73,9 @@ from the ISC (http://www.isc.org/).
 openssl:
 
 OpenSSL (http://www.openssl.org/) is required to build the SMTP STARTTLS
-extension and to build the NTLM authentication module.  If you have no
-need for either of these features, you do not need OpenSSL.
+extension and the NTLM authentication module.  If you have no need for
+either of these features, you do not need OpenSSL.
 
-
-Installation
-------------
-
-Please refer to INSTALL for generic installation instructions.  LibESMTP
-has a few options when configuring; ./configure --help will list them.
-
-Balsa users: be sure to use the --enable-require-all-recipients when running
-configure (--enable-all turns this on as well).
-
-configure may complain that it cannot find getaddrinfo and suggest using
-the --enable-gethostbyname option.  This is not enabled automatically
-since gethostbyname is deprecated in favour of the more modern function.
-
-If this happens, you have a choice.  Either take the easy option and do
-as configure suggests or get a modern resolver library which implements
-getaddrinfo, e.g.  recent versions of ISC bind.  Support for gethostbyname
-is likely to be removed from libESMTP in the future.
-
-Please note that if your system provides getaddrinfo it will always be
-used.  Support for gethostbyname cannot be enabled in this case.
 
 Licence
 -------

@@ -28,9 +28,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
-#ifdef WORDS_BIGENDIAN
-#include <byteswap.h>
-#endif
+
+#include "ntlm.h"
 
 /* Must have at least 32 bits in an int (at least pending a more thorough
    code review - this module is still experimental) */
@@ -54,7 +53,40 @@ typedef	unsigned long unsigned32_t;
 typedef	uint32 unsigned32_t;
 #endif
 
-#include "ntlm.h"
+#ifdef WORDS_BIGENDIAN
+/* Everything in NTLM is little endian binary, therefore byte swapping
+   is needed on big endian platforms.  For simplicity, always provide
+   byte swapping functions rather than trying to detect the local
+   platform's support.  These functions make no effort to be efficient
+   since this code doesn't require efficient byte swapping. */
+
+#define SWAP(a,b)	do { unsigned char s = u.swap[(a)];	\
+			     u.swap[(a)] = u.swap[(b)];		\
+			     u.swap[(b)] = s; } while (0)
+
+static unsigned16_t
+bswap_16 (unsigned16_t value)
+{
+  union { unsigned16_t val; unsigned char swap[2]; } u;
+
+  u.val = value;
+  SWAP(0,1);
+  return u.val;
+}
+
+static unsigned32_t
+bswap_32 (unsigned32_t value)
+{
+  union u32 { unsigned32_t val; unsigned char swap[4]; } u;
+
+  u.val = value;
+  SWAP(0,3);
+  SWAP(1,2);
+  return u.val;
+}
+
+#undef SWAP
+#endif
 
 static void
 write_uint16 (char *buf, size_t offset, unsigned int value)
@@ -150,7 +182,7 @@ static const char NTLMSSP[] = "NTLMSSP";
         domain - the NT domain the workstation belongs to
    workstation - the NT (netbios) name of the workstation */
 size_t
-ntlm_build_type_1 (char *buf, size_t buflen,
+ntlm_build_type_1 (char *buf, size_t buflen, unsigned int flags,
                    const char *domain, const char *workstation)
 {
   size_t offset = T1SIZE;
@@ -162,7 +194,7 @@ ntlm_build_type_1 (char *buf, size_t buflen,
     return 0;
   memcpy (buf, NTLMSSP, 8);
   write_uint32 (buf, MSGTYPE, 1);
-  write_uint32 (buf, T1FLAGS, 0xB203);
+  write_uint32 (buf, T1FLAGS, flags);
   up = NULL;
   len = 0;
   if (domain != NULL)
@@ -188,7 +220,7 @@ ntlm_build_type_1 (char *buf, size_t buflen,
 
 /* Build a NTLM type 2 structure in the buffer */
 size_t
-ntlm_build_type_2 (char *buf, size_t buflen,
+ntlm_build_type_2 (char *buf, size_t buflen, unsigned int flags,
                    const unsigned char *nonce, const char *domain)
 {
   size_t offset = T2SIZE;
@@ -212,7 +244,7 @@ ntlm_build_type_2 (char *buf, size_t buflen,
   write_string (buf, T2AUTHTARGET, &offset, up, len);
   if (up != NULL)
     free (up);
-  write_uint32 (buf, T2FLAGS, 0x8201);
+  write_uint32 (buf, T2FLAGS, flags);
   memcpy (buf + T2NONCE, nonce, 8);
   memset (buf + T2RESERVED, 0, 8);
   return offset;
@@ -220,7 +252,7 @@ ntlm_build_type_2 (char *buf, size_t buflen,
 
 /* Build a NTLM type 3 structure in the buffer */
 size_t
-ntlm_build_type_3 (char *buf, size_t buflen,
+ntlm_build_type_3 (char *buf, size_t buflen, unsigned int flags,
                    const unsigned char *lm_resp, const unsigned char *nt_resp,
                    const char *domain, const char *user, const char *workstation)
 {
@@ -272,7 +304,7 @@ ntlm_build_type_3 (char *buf, size_t buflen,
   if (up != NULL)
     free (up);
   write_string (buf, T3SESSIONKEY, &offset, NULL, 0);
-  write_uint32 (buf, T3FLAGS, 0x8201);
+  write_uint32 (buf, T3FLAGS, flags);
   return offset;
 }
 
@@ -282,7 +314,7 @@ ntlm_build_type_3 (char *buf, size_t buflen,
    Verify that the packet is a type 2 structure and copy the nonce to the
    supplied buffer (which must be eight bytes long) */
 size_t
-ntlm_parse_type_2 (const char *buf, size_t buflen,
+ntlm_parse_type_2 (const char *buf, size_t buflen, unsigned int *flags,
                    unsigned char *nonce, char **domain)
 {
   if (buflen < T2SIZE)
@@ -291,6 +323,7 @@ ntlm_parse_type_2 (const char *buf, size_t buflen,
     return 0;
   if (read_uint32 (buf, MSGTYPE) != 2)
     return 0;
+  *flags = read_uint32 (buf, T2FLAGS);
   *domain = NULL;
   memcpy (nonce, buf + T2NONCE, 8);
   return 1;

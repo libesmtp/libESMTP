@@ -10,7 +10,7 @@ lib_LTLIBRARIES = libesmtp.la
 libesmtp_la_SOURCES = auth-client.c base64.c concatenate.c errors.c \
 		      headers.c htable.c message-source.c protocol.c \
 		      rfc2822date.c siobuf.c smtp-api.c smtp-auth.c \
-		      smtp-tls.c smtp-etrn.c tokens.c \
+		      smtp-bdat.c smtp-tls.c smtp-etrn.c tokens.c \
 		      api.h base64.h message-callbacks.c \
 		      concatenate.h headers.h htable.h \
 		      libesmtp-private.h message-source.h protocol-states.h \

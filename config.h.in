@@ -148,7 +148,10 @@
 /* Define if your <sys/time.h> declares `struct tm'. */
 #undef TM_IN_SYS_TIME
 
-/* Enable experimental support for SMTP STARTTLS extension */
+/* Enable experimental support for SMTP CHUNKING extension */
+#undef USE_CHUNKING
+
+/* Enable experimental support for SMTP ETRN extension */
 #undef USE_ETRN
 
 /* Enable IPv6 support */

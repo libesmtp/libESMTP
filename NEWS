@@ -1,3 +1,19 @@
+* libESMTP 1.0rc1 stable release candidate 1.	2002-06-24
+
+- See ChangeLog for details.
+
+  o Support for the non-standard AUTH= syntax used by some broken
+    servers is now on by default.  This does not appear to interefere
+    with correctly implemented SMTP AUTH and having it on by default is
+    less confusing for users whose ISPs insist on deploying broken
+    servers.
+
+  o Added experimental support for RFC 3030 CHUNKING and BINARYMIME;
+    enable with ./configure --enable-chunking.  Feedback on the success
+    or otherwise of this code is solicited.
+
+  o New API function to set protocol timeouts.
+
 * libESMTP 0.8.12 development release.	2002-04-24
 
 - See ChangeLog for details.
@@ -33,7 +49,7 @@ Important:
     is no longer distributed with libESMTP reducing tarball size.  This
     change simplifies installation for the majority of users, however
     users with platforms which do not supply dlopen or libltdl must now
-    obtain and install libltdl seperately.
+    obtain and install libltdl separately.
 
 Also Important:
     Building with --enable-more-warnings=yes/picky might prove akward.

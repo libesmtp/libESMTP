@@ -81,6 +81,13 @@ struct smtp_session
     struct smtp_recipient *rsp_recipient;
     msg_source_t msg_source;
 
+  /* SMTP timeouts */
+    long greeting_timeout;		/* default 5 minutes */
+    long envelope_timeout;		/* default 5 minutes */
+    long data_timeout;			/* default 2 minutes */
+    long transfer_timeout;		/* default 3 minutes */
+    long data2_timeout;			/* default 10 minutes */
+
   /* Status */
     smtp_status_t mta_status;		/* Status from MTA greeting */
 
@@ -109,10 +116,18 @@ struct smtp_session
     SSL_CTX *starttls_ctx;
 #endif
 
+#ifdef USE_CHUNKING
+    int bdat_pipelined;
+#endif
+
   /* Miscellaneous options and flags */
     unsigned int try_fallback_server : 1;
     unsigned int require_all_recipients : 1;
     unsigned int authenticated : 1;
+#ifdef USE_CHUNKING
+    unsigned int bdat_abort_pipeline : 1;
+    unsigned int bdat_last_issued : 1;
+#endif
 #ifdef USE_TLS
     unsigned int using_tls : 1;
 #endif
@@ -195,9 +210,18 @@ struct smtp_recipient
 					  (item)->next = NULL;		\
 					} while (0)
 
+/* RFC 2822 minimum timeouts */
+
+#define GREETING_DEFAULT	( 5 * 60l * 1000l)
+#define ENVELOPE_DEFAULT	( 5 * 60l * 1000l)
+#define DATA_DEFAULT		( 2 * 60l * 1000l)
+#define TRANSFER_DEFAULT	( 3 * 60l * 1000l)
+#define DATA2_DEFAULT		(10 * 60l * 1000l)
+
 /* protocol.c */
 
 int initial_transaction_state (smtp_session_t session);
+int next_message (smtp_session_t session);
 
 /* errors.c */
 

@@ -41,7 +41,10 @@ S (mail)
 S (rcpt)
 S (data)
 S (data2)
-/*S (bdat)*/
+#ifdef USE_CHUNKING
+S (bdat)
+S (bdat2)
+#endif
 S (rset)
 S (quit)
 

@@ -54,6 +54,14 @@ smtp_create_session (void)
     }
 
   memset (session, 0, sizeof (struct smtp_session));
+
+  /* Set the default timeouts to the minimum values described in RFC 2822 */
+  session->greeting_timeout = GREETING_DEFAULT;
+  session->envelope_timeout = ENVELOPE_DEFAULT;
+  session->data_timeout = DATA_DEFAULT;
+  session->transfer_timeout = TRANSFER_DEFAULT;
+  session->data2_timeout = DATA2_DEFAULT;
+
   return session;
 }
 
@@ -327,8 +335,16 @@ int
 smtp_8bitmime_set_body (smtp_message_t message, enum e8bitmime_body body)
 {
   SMTPAPI_CHECK_ARGS (message != NULL, 0);
+#ifndef USE_CHUNKING
+  SMTPAPI_CHECK_ARGS (body != E8bitmime_BINARYMIME, 0);
+#endif
 
   message->e8bitmime = body;
+#ifdef USE_CHUNKING
+  if (body == E8bitmime_BINARYMIME)
+    message->session->required_extensions |= (EXT_BINARYMIME | EXT_CHUNKING);
+  else
+#endif
   if (body != E8bitmime_NOTSET)
     message->session->required_extensions |= EXT_8BITMIME;
   return 1;
@@ -548,4 +564,67 @@ smtp_option_require_all_recipients (smtp_session_t session, int state)
 
   session->require_all_recipients = !!state;
   return 1;
+}
+
+/* Set the timeouts.  An absolute minumum timeout of one second is imposed.
+   Unless overriden using the OVERRIDE_RFC2822_MINIMUM flag, the minimum
+   values recommended in RFC 2822 are enforced.  Return value is the actual
+   timeout set or zero on error. */
+long
+smtp_set_timeout (smtp_session_t session, int which, long value)
+{
+  long minimum = 1000L;
+  int override = 0;
+
+  /* ``which'' is checked in the switch below */
+  SMTPAPI_CHECK_ARGS (session != NULL && value > 0, 0);
+
+  override = which & Timeout_OVERRIDE_RFC2822_MINIMUM;
+  if (override)
+    which &= ~Timeout_OVERRIDE_RFC2822_MINIMUM;
+  else
+    switch (which)
+      {
+      case Timeout_GREETING:
+	minimum = GREETING_DEFAULT;
+	break;
+      case Timeout_ENVELOPE:
+	minimum = ENVELOPE_DEFAULT;
+	break;
+      case Timeout_DATA:
+	minimum = DATA_DEFAULT;
+	break;
+      case Timeout_TRANSFER:
+	minimum = TRANSFER_DEFAULT;
+	break;
+      case Timeout_DATA2:
+	minimum = DATA2_DEFAULT;
+	break;
+      }
+
+  if (value < minimum)
+    value = minimum;
+  switch (which)
+    {
+    case Timeout_GREETING:
+      session->greeting_timeout = value;
+      break;
+    case Timeout_ENVELOPE:
+      session->envelope_timeout = value;
+      break;
+    case Timeout_DATA:
+      session->data_timeout = value;
+      break;
+    case Timeout_TRANSFER:
+      session->transfer_timeout = value;
+      break;
+    case Timeout_DATA2:
+      session->data2_timeout = value;
+      break;
+    default:
+      set_error (SMTP_ERR_INVAL);
+      return 0L;
+    }
+
+  return value;
 }
