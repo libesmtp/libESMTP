@@ -1,3 +1,35 @@
+2001-10-17 	Brian Stafford	<brian@stafford.uklinux.net>
+      * libesmtp-config.in
+	Corrected output for --cflags.  Added --numeric-version to make it
+	simpler for configure scripts to compare version numbers.
+
+      * configure.in libesmtp-spec.in
+      	Merged changes from Cristophe Lambin.  Spec file now creates
+      	libesmtp and libesmtp-devel packages.  If OpenSSL is used
+      	spec file will have openssl dependencies added.
+
+      * Makefile.am
+	Make sure libesmtp.spec and config.h do not make their way into
+	tarballs.  These confused the build on some platforms.
+
+2001-10-16 	Brian Stafford	<brian@stafford.uklinux.net>
+      * configure.in
+      	Added --with-openssl[=DIR] option, removed --enable-starttls.
+      	OpenSSL dependent features are now enabled or disabled en masse
+      	using --with-openssl.
+
+      * crammd5/md5.[ch] crammd5/Makefile.am
+	Added public domain MD5 implementation to crammd5 module.  This
+	enables the CRAM-MD5 mechanism to be built, even if OpenSSL is
+	not available.
+
+      * smtp-tls.c
+      	Applied patch from James McPherson correcting __attribute to
+      	__attribute__
+
+2001-08-05 Version 0.8.5 released
+---------------------------------
+
 2001-10-05 	Brian Stafford	<brian@stafford.uklinux.net>
       * libesmtp.spec.in
       	Make sure libesmtp-config gets installed!

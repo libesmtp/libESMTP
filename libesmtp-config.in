@@ -16,6 +16,7 @@ Known values for OPTION are:
   --plugindir		print authentication plugin location
   --help		display this help and exit
   --version		output version information
+  --numeric-version	output version information
   --lib-version		output library version
 EOF
 
@@ -64,7 +65,7 @@ while test $# -gt 0; do
 	;;
 
     --cflags)
-       	echo -I@includedir@ @CFLAGS@
+       	echo -I@includedir@
        	;;
 
     --libs)

@@ -56,8 +56,8 @@ static pthread_mutex_t *openssl_mutex;
 
 static void
 openssl_mutexcb (int mode, int n,
-		 const char *file __attribute ((unused)),
-		 int line __attribute ((unused)))
+		 const char *file __attribute__ ((unused)),
+		 int line __attribute__ ((unused)))
 {
   if (mode & CRYPTO_LOCK)
     pthread_mutex_lock (&openssl_mutex[n]);
@@ -536,7 +536,7 @@ int smtp_starttls_set_ctx (smtp_session_t session, SSL_CTX *ctx);
 
 int
 smtp_starttls_set_ctx (smtp_session_t session,
-                       SSL_CTX *ctx __attribute ((unused)))
+                       SSL_CTX *ctx __attribute__ ((unused)))
 {
   SMTPAPI_CHECK_ARGS (session != (smtp_session_t) 0, 0);
 
@@ -545,7 +545,7 @@ smtp_starttls_set_ctx (smtp_session_t session,
 
 int
 smtp_starttls_enable (smtp_session_t session,
-                      enum starttls_option how __attribute ((unused)))
+                      enum starttls_option how __attribute__ ((unused)))
 {
   SMTPAPI_CHECK_ARGS (session != (smtp_session_t) 0, 0);
 
@@ -554,8 +554,8 @@ smtp_starttls_enable (smtp_session_t session,
 
 int
 smtp_starttls_set_password_cb (smtp_starttls_passwordcb_t cb
-							__attribute ((unused)),
-                               void *arg __attribute ((unused)))
+							__attribute__ ((unused)),
+                               void *arg __attribute__ ((unused)))
 {
   return 0;
 }

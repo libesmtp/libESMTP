@@ -47,7 +47,7 @@ Auth
 Need to support client side for
    	EXTERNAL	RFC 2222 sect 7.4	(done - untested)
 	CRAM-MD5	RFC 2195		(done)
-	PLAIN		RFC 2595		(done - untested)
+	PLAIN		RFC 2595		(done)
 	LOGIN		undocumented		(done)
 	ANONYMOUS	RFC 2245
 	OTP		RFC 2444

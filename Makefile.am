@@ -12,7 +12,7 @@ libesmtp_la_SOURCES = auth-client.c base64.c concatenate.c errors.c \
 		      rfc2822date.c siobuf.c smtp-api.c smtp-auth.c \
 		      smtp-tls.c smtp-etrn.c tokens.c \
 		      api.h base64.h message-callbacks.c \
-		      concatenate.h config.h headers.h htable.h \
+		      concatenate.h headers.h htable.h \
 		      libesmtp-private.h message-source.h protocol-states.h \
 		      protocol.h rfc2822date.h siobuf.h tokens.h \
 		      getaddrinfo.h gethostbyname.h
@@ -25,5 +25,5 @@ include_HEADERS = libesmtp.h auth-client.h auth-plugin.h
 
 bin_SCRIPTS = libesmtp-config
 
-EXTRA_DIST = libesmtp.spec.in libesmtp.spec COPYING.GPL Notes doc/api.xml \
+EXTRA_DIST = libesmtp.spec.in COPYING.GPL Notes doc/api.xml \
 	     examples/Makefile examples/mail-file.c examples/test-mail

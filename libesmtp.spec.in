@@ -1,5 +1,7 @@
 # libesmtp.spec.in
 # Based on original file by Carlos Morgado <chbm@chbm.nu>
+# Updates from Pawel Salek <pawsa@theochem.kth.se>
+# Updates from Christophe Lambin <clambin@easynet.be>
 
 Summary:  	SMTP client library
 
@@ -8,6 +10,7 @@ Summary:  	SMTP client library
 %define rel    	1
 %define prefix 	/usr
 %define plugindir %{prefix}/lib/esmtp-plugins
+%define openssl	0.9.6
 
 Name:     	%{package}
 Version:  	%{ver}
@@ -25,12 +28,24 @@ Packager:	Brian Stafford <brian@stafford.uklinux.net>
 Provides:	%{package}
 Docdir:		%{_docdir}
 
+@RPM_REQUIRES@	@RPM_OPENSSL@
+@RPM_BUILDREQUIRES@	@RPM_OPENSSLDEVEL@
+
 %description
 LibESMTP is a library to manage posting (or submission of) electronic
 mail using SMTP to a preconfigured Mail Transport Agent (MTA) such as
 Exim.  It may be used as part of a Mail User Agent (MUA) or another
 program that must be able to post electronic mail but where mail
 functionality is not the program's primary purpose.
+
+%package devel
+Requires: %{package} = %{ver}
+@RPM_REQUIRES@	@RPM_OPENSSLDEVEL@
+
+%description devel
+The libesmtp-devel package contains headers and development libraries
+necessary for building programs against libesmtp.
+
  
 %prep 
 %setup -T -b 0
@@ -51,8 +66,14 @@ rm -rf $RPM_BUILD_ROOT
 %files
 %defattr(-, root, root)
 %doc AUTHORS COPYING COPYING.GPL NEWS Notes README
-%{prefix}/include/libesmtp.h
-%{prefix}/include/auth-client.h
-%{prefix}/lib/libesmtp.*
-%{prefix}/lib/libesmtp-config
+%{prefix}/lib/libesmtp.so.*
 %{plugindir}/sasl-*
+
+%files devel
+%defattr(-,root,root)
+%{prefix}/bin/libesmtp-config
+%{prefix}/include/*
+%{prefix}/lib/libesmtp.so
+%{prefix}/lib/libesmtp.la
+%{prefix}/lib/libesmtp.a
+

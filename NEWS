@@ -1,3 +1,11 @@
+* libESMTP 0.8.6 development release.	2001-10-17
+
+- See ChangeLog for details.
+
+  o Fixes minor build issues.
+
+  o SASL CRAM-MD5 builds without OpenSSL
+
 * libESMTP 0.8.5 development release.	2001-10-04
 
 - See ChangeLog for details.

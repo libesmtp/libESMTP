@@ -30,14 +30,14 @@
 
 #include <openssl/md5.h>
 
-#elif HAVE_MD5GLOBAL_H
+#else
 
-#include <md5global.h>
-#include <md5.h>
+#include "md5.h"
 
-#define MD5_Init(c)		MD5Init((c))
-#define MD5_Update(c,d,l)	MD5Update((c),(d),(l))
-#define MD5_Final(md,c)	MD5Final((md),(c))
+#define MD5_CTX			MD5Context
+#define MD5_Init(c)		md5_init((c))
+#define MD5_Update(c,d,l)	md5_update((c),(d),(l))
+#define MD5_Final(md,c)		md5_final((c),(md))
 
 #endif
 
