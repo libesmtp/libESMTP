@@ -1,3 +1,5 @@
+#ifndef _missing_h
+#define _missing_h
 /*
  *  This file is part of libESMTP, a library for submission of RFC 2822
  *  formatted electronic mail messages using the SMTP protocol described
@@ -20,22 +22,31 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
-#undef HAVE_STRCASECMP
-#undef _GNU_SOURCE
-#undef _ISOC9X_SOURCE
-#undef _OSF_SOURCE
-#undef _XOPEN_SOURCE
-#undef __EXTENSIONS__
-#include <missing.h>
-#include <ctype.h>
+/* Collect together some declarations that might not be present on
+   some systems */
 
-int
-strcasecmp (const char *a, const char *b)
-{
-  while (*a != '\0' && (*a == *b || tolower (*a) == tolower (*b)))
-    a++, b++;
-  return *a - *b;
-}
+#ifndef HAVE_STRDUP
+char *strdup (const char *s1);
+#endif
+
+#ifndef HAVE_STRCASECMP
+int strcasecmp (const char *a, const char *b);
+#endif
+
+#ifndef HAVE_STRNCASECMP
+#include <sys/types.h>
+int strncasecmp (const char *a, const char *b, size_t len);
+#endif
+
+#ifndef HAVE_SNPRINTF
+#include <sys/types.h>
+int snprintf(char *s, size_t n, const char *format, ...);
+#endif
+
+#ifndef HAVE_VSNPRINTF
+#include <stdarg.h>
+#include <sys/types.h>
+int vsnprintf(char *s, size_t n, const char *format, va_list ap);
+#endif
+
+#endif

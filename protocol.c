@@ -3,7 +3,7 @@
  *  formatted electronic mail messages using the SMTP protocol described
  *  in RFC 2821.
  *
- *  Copyright (C) 2001  Brian Stafford  <brian@stafford.uklinux.net>
+ *  Copyright (C) 2001,2002  Brian Stafford  <brian@stafford.uklinux.net>
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
@@ -34,6 +34,8 @@
 #include <stdarg.h>
 #include <unistd.h>
 #include <errno.h>
+
+#include <missing.h> /* declarations for missing library functions */
 
 #include <sys/socket.h>
 #if HAVE_LWRES_NETDB_H

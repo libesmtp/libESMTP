@@ -2,7 +2,7 @@
  *  This file is a ghastly hack because nobody can agree on
  *  gethostbyname_r()'s prototype.
  *
- *  Copyright (C) 2001  Brian Stafford  <brian@stafford.uklinux.net>
+ *  Copyright (C) 2001,2002  Brian Stafford  <brian@stafford.uklinux.net>
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public

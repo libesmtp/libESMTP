@@ -3,7 +3,7 @@
  *  formatted electronic mail messages using the SMTP protocol described
  *  in RFC 2821.
  *
- *  Copyright (C) 2001  Brian Stafford  <brian@stafford.uklinux.net>
+ *  Copyright (C) 2001,2002  Brian Stafford  <brian@stafford.uklinux.net>
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
@@ -31,6 +31,8 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <errno.h>
+
+#include <missing.h> /* declarations for missing library functions */
 
 #include <unistd.h>
 #include <fcntl.h>
@@ -583,7 +585,9 @@ sio_printf (struct siobuf *sio, const char *format, ...)
   va_start (alist, format);
   len = vsnprintf (buf, sizeof buf, format, alist);
   va_end (alist);
-
-  sio_write (sio, buf, len);
+  if (len >= (int) sizeof buf - 1)
+    len = sizeof buf - 1;
+  if (len > 0)
+    sio_write (sio, buf, len);
   return len;
 }

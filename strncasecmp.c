@@ -3,7 +3,7 @@
  *  formatted electronic mail messages using the SMTP protocol described
  *  in RFC 2821.
  *
- *  Copyright (C) 2001  Brian Stafford  <brian@stafford.uklinux.net>
+ *  Copyright (C) 2002  Brian Stafford  <brian@stafford.uklinux.net>
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
@@ -23,6 +23,13 @@
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
+#undef HAVE_STRNCASECMP
+#undef _GNU_SOURCE
+#undef _ISOC9X_SOURCE
+#undef _OSF_SOURCE
+#undef _XOPEN_SOURCE
+#undef __EXTENSIONS__
+#include <missing.h>
 #include <ctype.h>
 
 int
@@ -36,5 +43,5 @@ strncasecmp (const char *a, const char *b, size_t len)
         return 0;
       a++, b++;
     }
-  return *a - *b
+  return *a - *b;
 }

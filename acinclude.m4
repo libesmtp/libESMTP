@@ -340,3 +340,35 @@ dnl @synopsis ACX_FEATURE(ENABLE_OR_WITH,NAME[,VALUE])
 AC_DEFUN([ACX_FEATURE],
 	 [echo "builtin([substr],[                                  ],len(--$1-$2))--$1-$2: ifelse($3,,[$]translit($1-$2,-,_),$3)"])
 
+dnl @synopsis ACX_SNPRINTF(ACTION-IF-CORRECT,ACTION-IF-BROKEN)
+dnl
+dnl Provides a test to determine if snprintf correctly truncates strings
+dnl too long for the buffer.  If snprintf works correctly execute 
+dnl ACTION-IF-CORRECT else execute ACTION-IF-BROKEN.  If ACTION-IF-CORRECT
+dnl is not supplied, the default is to define HAVE_WORKING_SNPRINTF
+dnl
+dnl @version $Id$
+dnl @author Brian Stafford <brian@stafford.uklinux.net>
+dnl
+AC_DEFUN([ACX_SNPRINTF], [
+    AC_CACHE_CHECK([for working snprintf], [acx_working_snprintf], [
+	AC_TRY_RUN([
+#include <stdio.h> 
+
+main ()
+{
+  char buf[16];
+
+  snprintf (buf, 4, "abcd");
+  exit ((buf[3] == '\0') ? 0 : 1);
+}
+
+	], acx_working_snprintf=yes, acx_working_snprintf=no)
+    ])
+    if test x$acx_working_snprintf = xyes ; then
+        ifelse([$1],,AC_DEFINE([HAVE_WORKING_SNPRINTF], 1,
+		  [snprintf correctly terminates the buffer on overflow]),[$1])
+        ifelse([$2],,,[else $2])
+    fi
+])
+	

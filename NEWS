@@ -1,3 +1,15 @@
+* libESMTP 0.8.10 development release.	2002-01-29
+
+- Usual autoconf stuff, see ChangeLog for details.
+
+Added an NTLM authentication module.  Currently this requires OpenSSL to
+build.  This has not seen much in the way of testing as I don't have
+regular access to a server which requires NTLM authentication for SMTP.
+However it does generate the correct responses for the test cases I have
+tried.  Feedback on the success or otherwise of this module is solicited.
+
+Compilation with --enable-more-warnings=picky seems to be clean again.
+
 * libESMTP 0.8.9 development release.	2002-01-02
 
 - See ChangeLog for details.

@@ -15,7 +15,7 @@ libesmtp_la_SOURCES = auth-client.c base64.c concatenate.c errors.c \
 		      concatenate.h headers.h htable.h \
 		      libesmtp-private.h message-source.h protocol-states.h \
 		      protocol.h rfc2822date.h siobuf.h tokens.h \
-		      getaddrinfo.h gethostbyname.h
+		      getaddrinfo.h gethostbyname.h missing.h
 libesmtp_la_LIBADD = @LTLIBOBJS@
 
 libesmtp_la_LDFLAGS = -export-dynamic \

@@ -3,7 +3,7 @@
  *  formatted electronic mail messages using the SMTP protocol described
  *  in RFC 2821.
  *
- *  Copyright (C) 2001  Brian Stafford  <brian@stafford.uklinux.net>
+ *  Copyright (C) 2001,2002  Brian Stafford  <brian@stafford.uklinux.net>
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
@@ -25,6 +25,8 @@
 #endif
 
 #define _SVID_SOURCE	1	/* Need this to get strerror_r() */
+
+#include <missing.h> /* declarations for missing library functions */
 
 #include <stdio.h>
 #include <errno.h>
@@ -239,7 +241,7 @@ char *
 smtp_strerror (int error, char buf[], size_t buflen)
 {
   const char *text;
-  size_t len;
+  int len;
   int map;
 
   SMTPAPI_CHECK_ARGS (buf != NULL && buflen > 0, NULL);
@@ -271,14 +273,14 @@ smtp_strerror (int error, char buf[], size_t buflen)
     text = (const char *) 0;
 
   if (text == (const char *) 0)
-    snprintf (buf, buflen, "Error %d", error);
+    len = snprintf (buf, buflen, "Error %d", error);
   else
     {
       len = strlen (text);
-      if (len > buflen - 1)
+      if (len > (int) buflen - 1)
         len = buflen - 1;
       memcpy (buf, text, len);
       buf[len] = '\0';
     }
-  return buf;
+  return len >= 0 ? buf : NULL;
 }

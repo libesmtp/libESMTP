@@ -1,3 +1,46 @@
+2002-01-26 	Brian Stafford	<brian@stafford.uklinux.net>
+      * various files
+	Copyright messages now show the correct year.
+	Minor tweaks to kill warnings when compiling with
+	--enable-more-warnings=picky.  In a few cases this meant adding
+	a few casts which superficially look unnecessary.  In other
+	cases this meant adding a number of #undefs to get a vanilla
+	ISOC environment.
+
+      * missing.h
+      	Added missing.h which has declarations for Posix/SUS functions
+      	which may be missing from system libraries on some platforms.
+
+      * snprintf.c configure.in
+        Detect broken or missing snprintf() implementations and replace
+        if necessary.  N.B. the replacement snprintf.c is taken from the
+        libmutt distro and it too, is broken.  However, it *does*
+        correctly truncate and \0 terminate output which is too long to
+        fit in the buffer and that is the behaviour I rely on.
+
+      * strdup.c
+	Added strdup() for systems which don't have it.
+
+      * examples/mail-file.c
+      	Check for errors when smtp_start_session returns.  Fixed
+      	authinteract so that responses are not accidentally overwritten.
+
+2002-01-24 	Brian Stafford	<brian@stafford.uklinux.net>
+      * htable.c configure.in strndup.c
+      	Altered code to avoid the use of strndup.  strndup.c is removed
+      	from the distribution.
+
+2002-01-16 	Brian Stafford	<brian@stafford.uklinux.net>
+      * ntlm/* configure.in
+	Added NTLM auhentication module.
+
+2002-01-07 	Brian Stafford	<brian@stafford.uklinux.net>
+      * concatenate.c errors.c siobuf.c
+      	Check return value from snprintf.
+
+2002-01-03 Version 0.8.9 released
+---------------------------------
+
 2002-01-02 	Brian Stafford	<brian@stafford.uklinux.net>
       * configure.in
       	Added -lsocket to list of libraries searched for getaddrinfo().

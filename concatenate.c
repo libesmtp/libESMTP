@@ -3,7 +3,7 @@
  *  formatted electronic mail messages using the SMTP protocol described
  *  in RFC 2821.
  *
- *  Copyright (C) 2001  Brian Stafford  <brian@stafford.uklinux.net>
+ *  Copyright (C) 2001,2002  Brian Stafford  <brian@stafford.uklinux.net>
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
@@ -24,9 +24,6 @@
    to keep writing code like this, so I've put it in a file by itself.
    Maybe I should consolidate some other string buffering code with this.
 
-   TODO: various options to control quoting of the string, for example,
-         quoting rules for the phrase portion of the From/To/Cc headers.
-
    NOTE: no \0 terminating strings
  */
 
@@ -40,6 +37,8 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdarg.h>
+
+#include <missing.h> /* declarations for missing library functions */
 
 #include "concatenate.h"
 
@@ -170,6 +169,10 @@ cat_printf (struct catbuf *catbuf, const char *format, ...)
   va_start (alist, format);
   len = vsnprintf (buf, sizeof buf, format, alist);
   va_end (alist);
+  if (len <= 0)
+    return len;
+  if (len >= (int) sizeof buf)
+    len = sizeof buf;
   concatenate (catbuf, buf, len);
   return len;
 }

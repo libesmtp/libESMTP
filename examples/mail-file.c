@@ -1,6 +1,6 @@
 /*
  *  A libESMTP Example Application.
- *  Copyright (C) 2001  Brian Stafford <brian@stafford.uklinux.net>
+ *  Copyright (C) 2001,2002  Brian Stafford <brian@stafford.uklinux.net>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published
@@ -234,13 +234,21 @@ main (int argc, char **argv)
 
   /* Initiate a connection to the SMTP server and transfer the
      message. */
-  smtp_start_session (session);
+  if (!smtp_start_session (session))
+    {
+      char buf[128];
 
-  /* Report on the success or otherwise of the mail transfer.
-   */
-  status = smtp_message_transfer_status (message);
-  printf ("%d %s", status->code, status->text);
-  smtp_enumerate_recipients (message, print_recipient_status, NULL);
+      fprintf (stderr, "SMTP server problem %s\n",
+	       smtp_strerror (smtp_errno (), buf, sizeof buf));
+    }
+  else
+    {
+      /* Report on the success or otherwise of the mail transfer.
+       */
+      status = smtp_message_transfer_status (message);
+      printf ("%d %s", status->code, status->text);
+      smtp_enumerate_recipients (message, print_recipient_status, NULL);
+    }
 
   /* Free resources consumed by the program.
    */
@@ -333,10 +341,11 @@ authinteract (auth_client_request_t request, char **result, int fields,
               void *arg)
 {
   char prompt[64];
-  static char resp[64];
-  char *p;
+  static char resp[512];
+  char *p, *rp;
   int i, n, tty;
 
+  rp = resp;
   for (i = 0; i < fields; i++)
     {
       n = snprintf (prompt, sizeof prompt, "%s%s: ", request[i].prompt,
@@ -348,13 +357,14 @@ authinteract (auth_client_request_t request, char **result, int fields,
 	{
 	  tty = open ("/dev/tty", O_RDWR);
 	  write (tty, prompt, n);
-	  n = read (tty, resp, sizeof resp);
+	  n = read (tty, rp, sizeof resp - (rp - resp));
 	  close (tty);
-	  p = resp + n;
+	  p = rp + n;
 	  while (isspace (p[-1]))
 	    p--;
-	  *p = '\0';
-	  result[i] = resp;
+	  *p++ = '\0';
+	  result[i] = rp;
+	  rp = p;
 	}
     }
   return 1;

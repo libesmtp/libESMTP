@@ -3,7 +3,7 @@
  *  formatted electronic mail messages using the SMTP protocol described
  *  in RFC 2821.
  *
- *  Copyright (C) 2001  Brian Stafford  <brian@stafford.uklinux.net>
+ *  Copyright (C) 2001,2002  Brian Stafford  <brian@stafford.uklinux.net>
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
@@ -37,6 +37,8 @@
 #include <string.h>
 #include <ctype.h>
 #include <stdlib.h>
+
+#include <missing.h> /* declarations for missing library functions */
 
 #include "htable.h"
 
@@ -118,11 +120,12 @@ h_insert (struct h_node **table, const char *name, int namelen, size_t size)
   if ((node = malloc (size)) == NULL)
     return NULL;
   memset (node, 0, size);
-  if ((node->name = strndup (name, namelen)) == NULL)
+  if ((node->name = malloc (namelen)) == NULL)
     {
       free (node);
       return NULL;
     }
+  memcpy (node->name, name, namelen);
   hv = hashi (node->name, namelen);
   node->next = table[hv];
   table[hv] = node;

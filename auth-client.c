@@ -54,6 +54,8 @@ typedef lt_dlhandle dlhandle_t;
 #include <string.h>
 #include <ctype.h>
 
+#include <missing.h>
+
 #include "auth-client.h"
 #include "auth-plugin.h"
 #include "api.h"
@@ -134,13 +136,13 @@ append_plugin (dlhandle_t module, const struct auth_client_plugin *info)
 }
 
 static const struct auth_client_plugin *
-load_client_plugin (auth_context_t context, const char *name)
+load_client_plugin (const char *name)
 {
   dlhandle_t module;
   char *plugin;
   const struct auth_client_plugin *info;
 
-  assert (context != NULL && name != NULL);
+  assert (name != NULL);
 
   /* Try searching for a plugin. */
   plugin = plugin_name (name);
@@ -364,7 +366,7 @@ auth_set_mechanism (auth_context_t context, const char *name)
       }
 
   /* Load the module if not found above. */
-  if (info == NULL && (info = load_client_plugin (context, name)) == NULL)
+  if (info == NULL && (info = load_client_plugin (name)) == NULL)
     {
 #ifdef USE_PTHREADS
       pthread_mutex_unlock (&plugin_mutex);

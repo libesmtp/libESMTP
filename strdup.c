@@ -3,7 +3,7 @@
  *  formatted electronic mail messages using the SMTP protocol described
  *  in RFC 2821.
  *
- *  Copyright (C) 2001  Brian Stafford  <brian@stafford.uklinux.net>
+ *  Copyright (C) 2002  Brian Stafford  <brian@stafford.uklinux.net>
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
@@ -23,18 +23,23 @@
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
+#undef HAVE_STRDUP
+#undef _GNU_SOURCE
+#undef _ISOC9X_SOURCE
+#undef _OSF_SOURCE
+#undef _XOPEN_SOURCE
+#undef __EXTENSIONS__
 #include <string.h>
+#include <stdlib.h>
+#include <missing.h>
 
 char *
-strndup (const char *string, size_t length)
+strdup (const char *s1)
 {
   char *p;
 
-  if ((p = malloc (length + 1)) != NULL)
-    {
-      memcpy (p, string, length);
-      p[length] = '\0';
-    }
+  p = malloc (strlen (s1) + 1);
+  if (p != NULL)
+    strcpy (p, s1);
   return p;
 }
-

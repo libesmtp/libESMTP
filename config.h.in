@@ -27,6 +27,10 @@
 /* Define if your <sys/time.h> declares struct tm.  */
 #undef TM_IN_SYS_TIME
 
+/* Define if your processor stores words with the most significant
+   byte first (like Motorola and SPARC, unlike Intel and VAX).  */
+#undef WORDS_BIGENDIAN
+
 /* The number of bytes in a int.  */
 #undef SIZEOF_INT
 
@@ -38,9 +42,6 @@
 
 /* Define if you have the localtime function.  */
 #undef HAVE_LOCALTIME
-
-/* Define if you have the snprintf function.  */
-#undef HAVE_SNPRINTF
 
 /* Define if you have the strcasecmp function.  */
 #undef HAVE_STRCASECMP
@@ -56,9 +57,6 @@
 
 /* Define if you have the strncasecmp function.  */
 #undef HAVE_STRNCASECMP
-
-/* Define if you have the strndup function.  */
-#undef HAVE_STRNDUP
 
 /* Define if you have the strtol function.  */
 #undef HAVE_STRTOL
@@ -163,13 +161,6 @@
 /* strerror_r works! */
 #undef HAVE_WORKING_STRERROR_R
 
+/* snprintf correctly terminates the buffer on overflow */
+#undef HAVE_WORKING_SNPRINTF
 
-#ifndef HAVE_STRCASECMP
-int strcasecmp (const char *a, const char *b);
-#endif
-#ifndef HAVE_STRNCASECMP
-int strncasecmp (const char *a, const char *b, size_t len);
-#endif
-#ifndef HAVE_STRNDUP
-char *strndup (const char *string, size_t length);
-#endif
