@@ -565,10 +565,6 @@ destroy_header_table (smtp_message_t message)
 
   assert (message != NULL);
 
-  /* Take out the hash table */
-  h_destroy (message->hdr_action, NULL, NULL);
-  message->hdr_action = NULL;
-
   /* Take out the linked list */
   for (header = message->headers; header!= NULL; header = next)
     {
@@ -578,6 +574,14 @@ destroy_header_table (smtp_message_t message)
       free (header->header);
       free (header);
     }
+
+  /* Take out the hash table */
+  if (message->hdr_action != NULL)
+    {
+      h_destroy (message->hdr_action, NULL, NULL);
+      message->hdr_action = NULL;
+    }
+
   message->headers = message->end_headers = NULL;
 }
 

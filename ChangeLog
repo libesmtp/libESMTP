@@ -1,3 +1,23 @@
+2002-11-09 Stable Version 1.0 released
+--------------------------------------
+2002-11-09 	Brian Stafford	<brian@stafford.uklinux.net>
+      * configure.in
+      	All version 1.0 features enabled by default.
+	--enable-isoc now sets -std=c99 instead of -ansi
+
+      * headers.c
+	Added missing check for NULL pointer in destroy_header_table.
+	Reversed order of freeing header structures and hash table to
+	avoid referencing freed memory. (Wally Yau)
+
+2002-06-24 	Brian Stafford	<brian@stafford.uklinux.net>
+      * smtp-etrn.c
+	Compilation fails with `./configure --enable-more-warnings=picky
+	--disable-etrn'.  Added missing __attribute__ ((unused)) markers
+	to offending function arguments to avoid this.
+
+2002-06-24 Version 1.0rc1 released
+----------------------------------
 2002-06-24 	Brian Stafford	<brian@stafford.uklinux.net>
       * configure.in Makefile.am protocol.c protocol-states.h
       * smtp-api.c smtp-bdat.c libesmtp.h libesmtp-private.h

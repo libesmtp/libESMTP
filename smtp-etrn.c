@@ -210,7 +210,8 @@ smtp_etrn_add_node (smtp_session_t session, int option, const char *domain)
 
 int
 smtp_etrn_enumerate_nodes (smtp_session_t session,
-			   smtp_etrn_enumerate_nodecb_t cb, void *arg)
+			   smtp_etrn_enumerate_nodecb_t cb,
+			   void *arg __attribute__ ((unused)))
 {
   SMTPAPI_CHECK_ARGS (session != NULL && cb != NULL, 0);
 
@@ -226,7 +227,8 @@ smtp_etrn_node_status (smtp_etrn_node_t node)
 }
 
 void *
-smtp_etrn_set_application_data (smtp_etrn_node_t node, void *data)
+smtp_etrn_set_application_data (smtp_etrn_node_t node,
+                                void *data __attribute__ ((unused)))
 {
   SMTPAPI_CHECK_ARGS (node != NULL, NULL);
 

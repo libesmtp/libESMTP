@@ -1,5 +1,6 @@
 ## Process this file with automake to produce Makefile.in
-AUTOMAKE_OPTIONS = gnu dist-bzip2
+#AUTOMAKE_OPTIONS = gnu dist-bzip2
+AUTOMAKE_OPTIONS = gnu
 
 INCLUDES = -I$(srcdir) $(VERSION_FLAGS)
 SUBDIRS = @subdirs@ @SASL_PLUGINS@

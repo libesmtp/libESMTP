@@ -1,3 +1,22 @@
+* libESMTP 1.0 stable release. 2002-11-09
+
+  LibESMTP is now considered stable.  Version 1.0 is the best available
+  release of libESMTP and all users are urged to upgrade as soon as is
+  practicable.
+
+  There have been some minor changes to the configure script such that
+  ./configure with no arguments includes all non-experimental features.
+  This means that some features formerly not enabled by default are now
+  included and, conversely, some features formerly enabled by default must
+  now be requested explicitly.  It is intended that, with the exception of
+  features such as setting --prefix or --with-gnu-ld, ./configure will
+  build the correct configuration for most OS distributions.
+
+- See ChangeLog for details.
+
+  This release fixes a minor compilation issue and a potentially more
+  serious memory reference after freeing.
+
 * libESMTP 1.0rc1 stable release candidate 1.	2002-06-24
 
 - See ChangeLog for details.
