@@ -1,3 +1,39 @@
+* libESMTP 0.8.9 development release.	2002-01-02
+
+- See ChangeLog for details.
+
+Important:
+    The use of libltdl is now deprecated in favour of dlopen().  libltdl
+    is no longer distributed with libESMTP reducing tarball size.  This
+    change simplifies installation for the majority of users, however
+    users with platforms which do not supply dlopen or libltdl must now
+    obtain and install libltdl seperately.
+
+Also Important:
+    Building with --enable-more-warnings=yes/picky might prove akward.
+    Recent glibc versions seem to have changed their mind about the
+    status of strcasecmp and friends to being GNU extensions.
+    Naturally, autoconf 2.13 detects the functions in the library but
+    not that their declarations are unavailable. For this reason,
+    _GNU_SOURCE is defined on gnu type platforms but this might cause
+    inconsistent pointer declarations wrt. signedness, YMMV.  If you
+    have problems, try ./configure --disable-more-warnings.
+
+A horrible hack:
+    Added tentative support/hack for the non-standard AUTH= syntax in
+    EHLO responses.  It might work.  Don't complain to me if it doesn't.
+    You need to ./configure --enable-nsauth for this support.
+      This syntax was only ever described in internet drafts and never
+    made it into RFC 2554.  It should *never* have been deployed on the
+    internet.  Internet drafts are deleted after 6 months and after
+    publication of RFCs.  So there is *no* documentation for this syntax
+    and I can't even begin to guess what it is supposed to be or what
+    implementation errors there are wrt these unavailable documents.
+      My advice is if this hack doesn't work, complain to your ISP and
+    recommend that they deploy MTAs that are standards compliant.
+    Documentation exists for standards and I am happy to make sure
+    libESMTP complies with documents I can actually obtain.
+
 * libESMTP 0.8.8 development release.	2001-11-30
 
 - See ChangeLog for details.

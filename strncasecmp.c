@@ -1,5 +1,3 @@
-#ifndef _htable
-#define _htable
 /*
  *  This file is part of libESMTP, a library for submission of RFC 2822
  *  formatted electronic mail messages using the SMTP protocol described
@@ -22,18 +20,21 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-struct h_node;
-
-void *h_insert (struct h_node **table,
-		const char *name, int namelen, size_t size);
-void h_remove (struct h_node **table, void *data);
-void *h_search (struct h_node **table, const char *name, int namelen);
-void h_enumerate (struct h_node **table,
-		 void (*cb) (const char *name, void *data, void *arg),
-		 void *arg);
-struct h_node **h_create (void);
-void h_destroy (struct h_node **table,
-		void (*cb) (const char *name, void *data, void *arg),
-		void *arg);
-
+#ifdef HAVE_CONFIG_H
+#include <config.h>
 #endif
+#include <ctype.h>
+
+int
+strncasecmp (const char *a, const char *b, size_t len)
+{
+  if (len < 1)
+    return 0;
+  while (*a != '\0' && (*a == *b || tolower (*a) == tolower (*b)))
+    {
+      if (--len < 1)
+        return 0;
+      a++, b++;
+    }
+  return *a - *b
+}

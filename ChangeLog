@@ -1,3 +1,67 @@
+2002-01-02 	Brian Stafford	<brian@stafford.uklinux.net>
+      * configure.in
+      	Added -lsocket to list of libraries searched for getaddrinfo().
+
+2001-12-29 	Brian Stafford	<brian@stafford.uklinux.net>
+      * protocol.c configure.in
+	Added hack for stupid SMTP servers that advertise AUTH using
+	non-standard syntax from an internet draft that never made it
+	into RFC 2554.	Because this feature is non-standard, it must
+	be explicitly enabled when configuring.
+	rsp_{helo,ehlo}() now reset the auth mechanism list before
+	processing the result.	Previously this was done only when AUTH
+	was advertised.
+
+      * smtp-auth.c
+	set_auth_mechanisms no longer resets the mechanism list
+	before processing.  Added a test to avoid duplicates in the
+	mechanism list.  select_auth_mechanism now guarantees to select
+	the *first* usable mechanism.  The net effect of these changes
+	is that multiple calls to set_auth_mechanisms accumulate.
+
+      * auth-client.c
+        Rearranged code in auth_set_mechanisms and load_client_plugin
+        avoiding the need to repeat the test for plugin acceptability.
+
+2001-12-24 	Brian Stafford	<brian@stafford.uklinux.net>
+      * configure.in
+	Compiling with picky warnings turned on was broken.  Also,
+	recent glibc versions seem to have decided that strcasecmp and
+	a few other functions are GNU extensions causing compiles to
+	fail because of missing declarations.  Naturally, autoconf does
+	not detect this.  Added a _GNU_SOURCE define to fix this on
+	potentially affected systems.  No, I don't like it either.
+
+      * strcasecmp.c strncasecmp.c strndup.c
+	Added these functions in case some systems don't provide them.
+
+2001-12-21 	Brian Stafford	<brian@stafford.uklinux.net>
+      * htable.[ch]
+      	h_insert now returns a void pointer to the data instead of a
+      	struct h_node eliminating the need for the h_dptr macro and
+      	for code using hash tables to maintain two pointers instead
+      	of one.
+
+      * headers.c
+	Updated to use the simpler hash table interface.
+
+2001-12-10 	Brian Stafford	<brian@stafford.uklinux.net>
+      * auth-client.c
+	Use dlsym and friends directly on platforms that have it.
+
+      * configure.in Makefile.am
+        Detect dlsym, fall back to using libltdl for other platforms.
+        libltdl is no longer distributed significantly reducing tarball
+        size.
+
+2001-12-10 	Brian Stafford	<brian@stafford.uklinux.net>
+      * configure.in
+        A missing comma caused the test for getipnodebyname to fail on
+        systems which provide it.
+
+2001-12-06 Version 0.8.8 released
+---------------------------------
+
 2001-11-30 	Brian Stafford	<brian@stafford.uklinux.net>
       * crammd5/md5.h
       	The len parameter of md5_update differed in type between

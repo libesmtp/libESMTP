@@ -40,6 +40,12 @@
 
 #include "htable.h"
 
+struct h_node
+  {
+    struct h_node *next;	/* Next node in chain for this hash value */
+    char *name;			/* Node name */
+  };
+
 #define HASHSIZE 256
 
 static const unsigned char shuffle[HASHSIZE] =
@@ -94,26 +100,11 @@ hashi (const char *string, int length)
   return h1;
 }
 
-#if !defined (HAVE_STRNDUP) || !defined (__USE_GNU)
-static char *
-strndup (const char *string, size_t length)
-{
-  char *p;
-
-  if ((p = malloc (length + 1)) != NULL)
-    {
-      memcpy (p, string, length);
-      p[length] = '\0';
-    }
-  return p;
-}
-#endif
-
 /* Insert a new node into the table.  It is not an error for an entry with
    the same name to be already present in the table.  The new entry will
    be found when searching the table.  When removed, the former entry
    will be found on a subsequent search */
-struct h_node *
+void *
 h_insert (struct h_node **table, const char *name, int namelen, size_t size)
 {
   unsigned int hv;
@@ -123,7 +114,7 @@ h_insert (struct h_node **table, const char *name, int namelen, size_t size)
 
   if (namelen < 0)
     namelen = strlen (name);
-  size += sizeof (struct h_node) - 1;
+  size += sizeof (struct h_node);
   if ((node = malloc (size)) == NULL)
     return NULL;
   memset (node, 0, size);
@@ -135,14 +126,15 @@ h_insert (struct h_node **table, const char *name, int namelen, size_t size)
   hv = hashi (node->name, namelen);
   node->next = table[hv];
   table[hv] = node;
-  return node;
+  return node + 1;
 }
 
 /* Remove the node from the table.
  */
 void 
-h_remove (struct h_node **table, struct h_node *node)
+h_remove (struct h_node **table, void *data)
 {
+  struct h_node *node = (struct h_node *) data - 1;
   unsigned int hv;
   struct h_node *p;
 
@@ -165,7 +157,7 @@ h_remove (struct h_node **table, struct h_node *node)
 
 /* Search for a node in the table.
  */
-struct h_node *
+void *
 h_search (struct h_node **table, const char *name, int namelen)
 {
   struct h_node *p;
@@ -176,7 +168,7 @@ h_search (struct h_node **table, const char *name, int namelen)
     namelen = strlen (name);
   for (p = table[hashi (name, namelen)]; p != NULL; p = p->next)
     if (strncasecmp (name, p->name, namelen) == 0)
-      return p;
+      return p + 1;
   return NULL;
 }
 
@@ -184,7 +176,7 @@ h_search (struct h_node **table, const char *name, int namelen)
    Entries are located in no particular order. */
 void
 h_enumerate (struct h_node **table,
-	     void (*cb) (struct h_node *node, void *arg), void *arg)
+	     void (*cb) (const char *name, void *data, void *arg), void *arg)
 {
   struct h_node *p;
   int i;
@@ -193,7 +185,7 @@ h_enumerate (struct h_node **table,
 
   for (i = 0; i < HASHSIZE; i++)
     for (p = table[i]; p != NULL; p = p->next)
-      (*cb) (p, arg);
+      (*cb) (p->name, p + 1, arg);
 }
 
 /* Create a new hash table.
@@ -210,7 +202,7 @@ h_create (void)
  */
 void
 h_destroy (struct h_node **table,
-	   void (*cb) (struct h_node *node, void *arg), void *arg)
+	   void (*cb) (const char *name, void *data, void *arg), void *arg)
 {
   struct h_node *p, *next;
   int i;
@@ -222,7 +214,7 @@ h_destroy (struct h_node **table,
       {
 	next = p->next;
 	if (cb != NULL)
-	  (*cb) (p, arg);
+	  (*cb) (p->name, p + 1, arg);
 	free (p->name);
 	free (p);
       }

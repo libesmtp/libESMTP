@@ -73,11 +73,12 @@ struct header_info
 #define NELT(x)		((int) (sizeof x / sizeof x[0]))
 
 #define OPTIONAL	0
-#define REQUIRE		1
-#define PROHIBIT	2
-#define PRESERVE	4
-#define LISTVALUE	8
-#define MULTIPLE	16
+#define SHOULD		1
+#define REQUIRE		2
+#define PROHIBIT	4
+#define PRESERVE	8
+#define LISTVALUE	16
+#define MULTIPLE	32
 
 static struct rfc2822_header *create_header (smtp_message_t message,
 					    const char *header,
@@ -485,13 +486,16 @@ static const struct header_actions header_actions[] =
     { "MIME-",		PRESERVE, NULL, NULL, NULL, },
     { "Resent-",	PRESERVE, NULL, NULL, NULL, },
     { "Received",	PRESERVE, NULL, NULL, NULL, },
+    /* Headers which are optional but which are recommended to be
+       present.  Default action is to provide a default unless the
+       application explicitly requests not to. */
+    { "Message-Id",	SHOULD,
+      set_string_null,print_message_id,		destroy_string, },
     /* Remaining headers are known to libESMTP to simplify handling them
        for the application.   All other headers are reaated as simple
        string values. */
     { "Sender",		OPTIONAL,
       set_sender,	print_sender,		destroy_mbox_list, },
-    { "Message-Id",	OPTIONAL,
-      set_string_null,print_message_id,		destroy_string, },
     { "To",		OPTIONAL,
       set_to,		print_to,		destroy_mbox_list, },
     { "Cc",		OPTIONAL,
@@ -518,7 +522,6 @@ static int
 init_header_table (smtp_message_t message)
 {
   int i;
-  struct h_node *node;
   struct header_info *hi;
 
   assert (message != NULL);
@@ -532,19 +535,19 @@ init_header_table (smtp_message_t message)
   for (i = 0; i < NELT (header_actions); i++)
     if (header_actions[i].name != NULL)
       {
-	node = h_insert (message->hdr_action, header_actions[i].name, -1,
-			 sizeof (struct header_info));
-	if (node == NULL)
+	hi = h_insert (message->hdr_action, header_actions[i].name, -1,
+		       sizeof (struct header_info));
+	if (hi == NULL)
 	  return 0;
-	hi = h_dptr (node, struct header_info);
 	hi->action = &header_actions[i];
 
-	/* REQUIREd headers must be present in the message.  Create
-	   a NULL valued header.  This will either be set later with
-	   the API, or the print_xxx function will handle the NULL
+	/* REQUIREd headers must be present in the message.  SHOULD
+	   means the header is optional but its presence is recommended.
+	   Create a NULL valued header.  This will either be set later
+	   with the API, or the print_xxx function will handle the NULL
 	   value as a special case, e.g, the To: header is generated
 	   from the recipient_t list. */
-	if (hi->action->flags & REQUIRE)
+	if (hi->action->flags & (REQUIRE | SHOULD))
 	  {
 	    if (create_header (message, header_actions[i].name, hi) == NULL)
 	      return 0;
@@ -579,29 +582,27 @@ destroy_header_table (smtp_message_t message)
 struct header_info *
 find_header (smtp_message_t message, const char *name, int len)
 {
-  struct h_node *node;
+  struct header_info *info;
   const char *p;
 
   assert (message != NULL && name != NULL);
 
-  node = h_search (message->hdr_action, name, len);
-  if (node == NULL && (p = memchr (name, '-', len)) != NULL)
-    node = h_search (message->hdr_action, name, p - name + 1);
-  return (node != NULL) ? h_dptr (node, struct header_info) : NULL;
+  info = h_search (message->hdr_action, name, len);
+  if (info == NULL && (p = memchr (name, '-', len)) != NULL)
+    info = h_search (message->hdr_action, name, p - name + 1);
+  return info;
 }
 
 struct header_info *
 insert_header (smtp_message_t message, const char *name)
 {
-  struct h_node *node;
   struct header_info *info;
 
   assert (message != NULL && name != NULL);
 
-  node = h_insert (message->hdr_action, name, -1, sizeof (struct header_info));
-  if (node == NULL)
+  info = h_insert (message->hdr_action, name, -1, sizeof (struct header_info));
+  if (info == NULL)
     return NULL;
-  info = h_dptr (node, struct header_info);
   info->action = &header_actions[0];
   return info;
 }
@@ -633,13 +634,13 @@ create_header (smtp_message_t message, const char *header,
    Resets the seen flag for headers libESMTP is interested in */
 
 static void
-reset_headercb (struct h_node *node, void *arg __attribute__ ((unused)))
+reset_headercb (const char *name __attribute__ ((unused)),
+                void *data, void *arg __attribute__ ((unused)))
 {
-  struct header_info *info;
+  struct header_info *info = data;
 
-  assert (node != NULL);
+  assert (info != NULL);
 
-  info = h_dptr (node, struct header_info);
   info->seen = 0;
 }
 

@@ -683,6 +683,14 @@ cb_ehlo (smtp_session_t session, char *buf)
       session->extensions |= EXT_AUTH;
       set_auth_mechanisms (session, p);
     }
+#ifdef AUTH_ID_HACK
+  else if (strncasecmp (token, "AUTH=", 5) == 0) /* non-standard syntax */
+    {
+      session->extensions |= EXT_AUTH;
+      set_auth_mechanisms (session, token + 5);
+      set_auth_mechanisms (session, p);
+    }
+#endif
   else if (strcasecmp (token, "STARTTLS") == 0)		/* RFC 2487 */
     session->extensions |= EXT_STARTTLS;
   else if (strcasecmp (token, "SIZE") == 0)		/* RFC 1870 */
@@ -717,6 +725,7 @@ rsp_ehlo (siobuf_t conn, smtp_session_t session)
   int code;
 
   session->extensions = 0;
+  destroy_auth_mechanisms (session);
   code = read_smtp_response (conn, session, &session->mta_status, cb_ehlo);
   if (code == 0)
     {
@@ -840,6 +849,7 @@ rsp_helo (siobuf_t conn, smtp_session_t session)
   int code;
 
   session->extensions = 0;
+  destroy_auth_mechanisms (session);
   code = read_smtp_response (conn, session, &session->mta_status, NULL);
   if (code == 0)
     {

@@ -186,12 +186,15 @@ main (int argc, char **argv)
    */
   smtp_set_reverse_path (message, from);
 
-  /* RFC 2822 doesn't require a message to have a Message-Id: header.
-     libESMTP can generate one.  This is how to request the library to
-     do this. */
-  smtp_set_header (message, "Message-Id", NULL);
+#if 0
+  /* The message-id is OPTIONAL but SHOULD be present.  By default
+     libESMTP supplies one.  If this is not desirable, the following
+     prevents one making its way to the server.  N.B. it is not possible
+     to prohibit REQUIRED headers. */
+  smtp_set_header_option (message, "Message-Id", Hdr_PROHIBIT, 1);
+#endif
 
-  /* Likewise, recipient headers are not required but a To: header would
+  /* RFC 2822 doesn't require recipient headers but a To: header would
      be nice to have if not present. */
   smtp_set_header (message, "To", NULL, NULL);
 

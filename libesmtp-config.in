@@ -69,7 +69,7 @@ while test $# -gt 0; do
        	;;
 
     --libs)
-       	echo @PTHREAD_LDFLAGS@ -L@libdir@ -lesmtp @LIBS@ @LIBADD_LTDL@ @LIBADD_DL@ @PTHREAD_LIBS@
+       	echo @PTHREAD_LDFLAGS@ -L@libdir@ -lesmtp @LIBS@ @PTHREAD_LIBS@
        	;;
 
     --plugindir)

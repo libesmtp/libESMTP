@@ -1,7 +1,7 @@
 ## Process this file with automake to produce Makefile.in
 AUTOMAKE_OPTIONS = gnu dist-bzip2
 
-INCLUDES = -I$(srcdir) $(VERSION_FLAGS) $(INCLTDL)
+INCLUDES = -I$(srcdir) $(VERSION_FLAGS)
 SUBDIRS = @subdirs@ @SASL_PLUGINS@
 CFLAGS = @CFLAGS@ @EXTRA_CFLAGS@
 
@@ -18,7 +18,7 @@ libesmtp_la_SOURCES = auth-client.c base64.c concatenate.c errors.c \
 		      getaddrinfo.h gethostbyname.h
 libesmtp_la_LIBADD = @LTLIBOBJS@
 
-libesmtp_la_LDFLAGS = $(LIBLTDL) -export-dynamic \
+libesmtp_la_LDFLAGS = -export-dynamic \
 		      -version-info $(LIBESMTP_VERSION)
 
 include_HEADERS = libesmtp.h auth-client.h auth-plugin.h 

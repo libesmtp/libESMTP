@@ -27,16 +27,11 @@
 /* Define if your <sys/time.h> declares struct tm.  */
 #undef TM_IN_SYS_TIME
 
-#undef HAVE_GETIPNODEBYNAME
-
 /* The number of bytes in a int.  */
 #undef SIZEOF_INT
 
 /* The number of bytes in a long.  */
 #undef SIZEOF_LONG
-
-/* Define if you have the dlerror function.  */
-#undef HAVE_DLERROR
 
 /* Define if you have the gethostname function.  */
 #undef HAVE_GETHOSTNAME
@@ -47,6 +42,9 @@
 /* Define if you have the snprintf function.  */
 #undef HAVE_SNPRINTF
 
+/* Define if you have the strcasecmp function.  */
+#undef HAVE_STRCASECMP
+
 /* Define if you have the strdup function.  */
 #undef HAVE_STRDUP
 
@@ -55,6 +53,9 @@
 
 /* Define if you have the strerror_r function.  */
 #undef HAVE_STRERROR_R
+
+/* Define if you have the strncasecmp function.  */
+#undef HAVE_STRNCASECMP
 
 /* Define if you have the strndup function.  */
 #undef HAVE_STRNDUP
@@ -89,8 +90,11 @@
 /* Sun's netdb.h needs this for getaddrinfo */
 #undef __EXTENSIONS__
 
-/* OSF's netdb.h needs this for getaddrinfo */
+/* OSF needs this for getaddrinfo */
 #undef _OSF_SOURCE
+
+/* GNU needs this for strcasecmp etc */
+#undef _GNU_SOURCE
 
 /* ISO compliant code */
 #undef _ISOC9X_SOURCE
@@ -101,23 +105,8 @@
 /* Single Unix conformance */
 #undef _XOPEN_SOURCE
 
-/* Define if you have the libdl library or equivalent.  */
-#undef HAVE_LIBDL
-
-/* Define if you have the libdl library or equivalent. */
-#undef HAVE_LIBDL
-
-/* Define if you have the libdl library or equivalent. */
-#undef HAVE_LIBDL
-
-/* Define if you have the shl_load function. */
-#undef HAVE_SHL_LOAD
-
-/* Define if you have the shl_load function. */
-#undef HAVE_SHL_LOAD
-
-/* Define if you have the GNU dld library. */
-#undef HAVE_DLD
+/* the dlsym() function is available */
+#undef HAVE_DLSYM
 
 /* Define to the necessary symbol if this constant
                            uses a non-standard name on your system. */
@@ -128,6 +117,9 @@
 
 /* Does system provide RFC 2553/Posix getaddrinfo? */
 #undef HAVE_GETADDRINFO
+
+/* Set when getipnodebyname is available */
+#undef HAVE_GETIPNODEBYNAME
 
 /* Number of parameters to gethostbyname_r or 0 if not available */
 #undef HAVE_GETHOSTBYNAME_R
@@ -153,6 +145,9 @@
 /* Enable support for sendmail XUSR extension */
 #undef USE_XUSR
 
+/* support non-standard EHLO AUTH= response */
+#undef AUTH_ID_HACK
+
 /* Build smtp_option_require_all_recipients() API */
 #undef USE_REQUIRE_ALL_RECIPIENTS
 
@@ -168,3 +163,13 @@
 /* strerror_r works! */
 #undef HAVE_WORKING_STRERROR_R
 
+
+#ifndef HAVE_STRCASECMP
+int strcasecmp (const char *a, const char *b);
+#endif
+#ifndef HAVE_STRNCASECMP
+int strncasecmp (const char *a, const char *b, size_t len);
+#endif
+#ifndef HAVE_STRNDUP
+char *strndup (const char *string, size_t length);
+#endif

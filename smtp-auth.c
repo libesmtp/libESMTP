@@ -82,9 +82,16 @@ set_auth_mechanisms (smtp_session_t session, const char *mechanisms)
   char buf[64];
   struct mechanism *mech;
 
-  destroy_auth_mechanisms (session);
   while (read_atom (skipblank (mechanisms), &mechanisms, buf, sizeof buf))
     {
+      /* scan existing list to avoid duplicates */
+      for (mech = session->auth_mechanisms; mech != NULL; mech = mech->next)
+        if (strcasecmp (buf, mech->name) == 0)
+          break;
+      if (mech != NULL)
+        continue;
+
+      /* new mechanism, so add to the list */
       mech = malloc (sizeof (struct mechanism));
       if (mech == NULL)
         {
@@ -100,7 +107,6 @@ set_auth_mechanisms (smtp_session_t session, const char *mechanisms)
         }
       APPEND_LIST (session->auth_mechanisms, session->current_mechanism, mech);
     }
-  session->current_mechanism = session->auth_mechanisms;
 }
 
 int
@@ -112,7 +118,9 @@ select_auth_mechanism (smtp_session_t session)
     return 0;
   if (!auth_client_enabled (session->auth_context))
     return 0;
-  for (; session->current_mechanism != NULL;
+  /* find the first usable auth mechanism */
+  for (session->current_mechanism = session->auth_mechanisms;
+       session->current_mechanism != NULL;
        session->current_mechanism = session->current_mechanism->next)
     if (auth_set_mechanism (session->auth_context,
 			    session->current_mechanism->name))
@@ -123,6 +131,7 @@ select_auth_mechanism (smtp_session_t session)
 static int
 next_auth_mechanism (smtp_session_t session)
 {
+  /* find the next usable auth mechanism */
   while ((session->current_mechanism = session->current_mechanism->next) != NULL)
     if (auth_set_mechanism (session->auth_context,
 			    session->current_mechanism->name))

@@ -29,7 +29,27 @@
 #ifdef USE_PTHREADS
 #include <pthread.h>
 #endif
-#include <ltdl.h>
+
+#if HAVE_DLSYM
+# include <dlfcn.h>
+# ifndef DLEXT
+#  define DLEXT ".so"
+# endif
+# ifndef RTLD_LAZY
+#  define RTLD_LAZY RTLD_NOW
+# endif
+typedef void *dlhandle_t;
+#else
+# include <ltdl.h>
+# ifndef DLEXT
+#  define DLEXT ""
+# endif
+typedef lt_dlhandle dlhandle_t;
+# define dlopen(n,f)	lt_dlopenext((n))
+# define dlsym(h,s)	lt_dlsym((h),(s))
+# define dlclose(h)	lt_dlclose((h))
+#endif
+
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
@@ -45,7 +65,7 @@ static pthread_mutex_t plugin_mutex = PTHREAD_MUTEX_INITIALIZER;
 struct auth_plugin
   {
     struct auth_plugin *next;
-    lt_dlhandle module;
+    dlhandle_t module;
     const struct auth_client_plugin *info;
   };
 static struct auth_plugin *client_plugins, *end_client_plugins;
@@ -64,25 +84,33 @@ struct auth_context
 #define mechanism_disabled(p,a,f)		\
 	  (((p)->flags & AUTH_PLUGIN_##f) && !((a)->flags & AUTH_PLUGIN_##f))
 
-static const char *
-plugin_name (char *buf, size_t buflen, const char *str)
+#if HAVE_DLSYM && defined AUTHPLUGINDIR
+# define PLUGIN_DIR AUTHPLUGINDIR "/"
+#else
+# define PLUGIN_DIR
+#endif
+
+static char *
+plugin_name (const char *str)
 {
-  char *p;
-  static const char prefix[] = "sasl-";
+  char *buf, *p;
+  static const char prefix[] = PLUGIN_DIR "sasl-";
 
-  assert (buf != NULL && buflen > sizeof prefix && str != NULL);
+  assert (str != NULL);
 
+  buf = malloc (sizeof prefix + strlen (str) + sizeof DLEXT);
+  if (buf == NULL)
+    return NULL;
   strcpy (buf, prefix);
   p = buf + sizeof prefix - 1;
-  buflen -= sizeof prefix;
-  while (*str != '\0' && buflen-- > 0)
+  while (*str != '\0')
     *p++ = tolower (*str++);
-  *p = '\0';
+  strcpy (p, DLEXT);
   return buf;
 }
 
 static int
-append_plugin (lt_dlhandle module, const struct auth_client_plugin *info)
+append_plugin (dlhandle_t module, const struct auth_client_plugin *info)
 {
   struct auth_plugin *auth_plugin;
 
@@ -108,34 +136,25 @@ append_plugin (lt_dlhandle module, const struct auth_client_plugin *info)
 static const struct auth_client_plugin *
 load_client_plugin (auth_context_t context, const char *name)
 {
-  lt_dlhandle module;
-  char buf[32];
-  const char *plugin;
+  dlhandle_t module;
+  char *plugin;
   const struct auth_client_plugin *info;
 
   assert (context != NULL && name != NULL);
 
   /* Try searching for a plugin. */
-  plugin = plugin_name (buf, sizeof buf, name);
-  module = lt_dlopenext (plugin);
+  plugin = plugin_name (name);
+  if (plugin == NULL)
+    return NULL;
+  module = dlopen (plugin, RTLD_LAZY);
+  free (plugin);
   if (module == NULL)
     return NULL;
 
-  info = lt_dlsym (module, "sasl_client");
+  info = dlsym (module, "sasl_client");
   if (info == NULL || info->response == NULL)
     {
-      lt_dlclose (module);
-      return NULL;
-    }
-
-  /* Check the application's requirements regarding minimum SSF and
-     whether anonymous or plain text mechanisms are explicitly allowed. */
-  if (info->ssf < context->min_ssf
-      || mechanism_disabled (info, context, EXTERNAL)
-      || mechanism_disabled (info, context, ANONYMOUS)
-      || mechanism_disabled (info, context, PLAIN))
-    {
-      lt_dlclose (module);
+      dlclose (module);
       return NULL;
     }
 
@@ -143,7 +162,7 @@ load_client_plugin (auth_context_t context, const char *name)
    */
   if (!append_plugin (module, info))
     {
-      lt_dlclose (module);
+      dlclose (module);
       return NULL;
     }
 
@@ -153,16 +172,18 @@ load_client_plugin (auth_context_t context, const char *name)
 void
 auth_client_init (void)
 {
-#ifdef USE_PTHREADS
+#if !HAVE_DLSYM
+# ifdef USE_PTHREADS
   pthread_mutex_lock (&plugin_mutex);
-#endif
+# endif
   lt_dlinit ();
-#ifdef AUTHPLUGINDIR
+# ifdef AUTHPLUGINDIR
   lt_dladdsearchdir (AUTHPLUGINDIR);
-#endif
+# endif
   /* Add builtin mechanisms to the plugin list */
-#ifdef USE_PTHREADS
+# ifdef USE_PTHREADS
   pthread_mutex_unlock (&plugin_mutex);
+# endif
 #endif
 }
 
@@ -171,7 +192,7 @@ auth_client_exit (void)
 {
   struct auth_plugin *plugin, *next;
 
-  /* Scan the auth_plugin array and lt_dlclose() the modules */
+  /* Scan the auth_plugin array and dlclose() the modules */
 #ifdef USE_PTHREADS
   pthread_mutex_lock (&plugin_mutex);
 #endif
@@ -179,11 +200,13 @@ auth_client_exit (void)
     {
       next = plugin->next;
       if (plugin->module != NULL)
-	lt_dlclose (plugin->module);
+	dlclose (plugin->module);
       free (plugin);
     }
   client_plugins = end_client_plugins = NULL;
+#if !HAVE_DLSYM
   lt_dlexit ();
+#endif
 #ifdef USE_PTHREADS
   pthread_mutex_unlock (&plugin_mutex);
 #endif
@@ -340,25 +363,24 @@ auth_set_mechanism (auth_context_t context, const char *name)
 	break;
       }
 
-  if (info != NULL)
+  /* Load the module if not found above. */
+  if (info == NULL && (info = load_client_plugin (context, name)) == NULL)
     {
-      /* Check the application's requirements regarding minimum SSF and
-	 whether anonymous or plain text mechanisms are explicitly
-	 allowed.  This has to be checked here since the list of loaded
-	 plugins is global and the plugin may have been acceptable in
-	 another context but not in this one.  */
-      if (info->ssf < context->min_ssf
-	  || mechanism_disabled (info, context, EXTERNAL)
-	  || mechanism_disabled (info, context, ANONYMOUS)
-	  || mechanism_disabled (info, context, PLAIN))
-	{
 #ifdef USE_PTHREADS
-	  pthread_mutex_unlock (&plugin_mutex);
+      pthread_mutex_unlock (&plugin_mutex);
 #endif
-	  return 0;
-	}
+      return 0;
     }
-  else if ((info = load_client_plugin (context, name)) == NULL)
+
+  /* Check the application's requirements regarding minimum SSF and
+     whether anonymous or plain text mechanisms are explicitly allowed.
+     This has to be checked here since the list of loaded plugins is
+     global and the plugin may have been acceptable in another context
+     but not in this one.  */
+  if (info->ssf < context->min_ssf
+      || mechanism_disabled (info, context, EXTERNAL)
+      || mechanism_disabled (info, context, ANONYMOUS)
+      || mechanism_disabled (info, context, PLAIN))
     {
 #ifdef USE_PTHREADS
       pthread_mutex_unlock (&plugin_mutex);
