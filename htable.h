@@ -33,9 +33,10 @@ struct h_node
 #define h_assign(node,value,type)	(*h_dptr((node),type) = (value))
 
 struct h_node *h_insert (struct h_node **table,
-			 const char *name, int namelen, int size);
+			 const char *name, int namelen, size_t size);
 void h_remove (struct h_node **table, struct h_node *node);
-struct h_node *h_search (struct h_node **table, const char *name, int namelen);
+struct h_node *h_search (struct h_node **table,
+                         const char *name, int namelen);
 void h_enumerate (struct h_node **table,
 		 void (*cb) (struct h_node *node, void *arg), void *arg);
 struct h_node **h_create (void);

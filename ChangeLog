@@ -1,3 +1,62 @@
+2001-06-26 	Brian Stafford	<brian@stafford.uklinux.net>
+      * protocol.c siobuf.c
+      	Resolved a problem related to blocking/non-blocking polling
+      	for server events.  This could lead to deadlock with certain
+      	servers.
+
+2001-06-24 	Brian Stafford	<brian@stafford.uklinux.net>
+      * configure.ac  most C sources
+      	Added --disable-isoc option.  When using gcc, -ansi -pedantic
+      	are now specified by default since the code compiles without
+      	warnings when using both flags.
+      	Added --enable-debug option to control DEBUG and NDEBUG
+      	definitions.  Assert macros used to check arguments to
+      	most internal functions.
+
+2001-06-23 	Brian Stafford	<brian@stafford.uklinux.net>
+      * message-source.c
+	msg_gets now checks for both \r and \n when searching for line
+	endings.
+
+      * errors.c
+	API function now includes ommitted the arguments check.
+
+2001-06-22 	Brian Stafford	<brian@stafford.uklinux.net>
+      * protocol.c smtp-api.c configure.ac
+	Now uses RFC 2553 / Posix protocol independent getaddrinfo where
+	possible instead of gethostbyname family of resolver functions.
+
+      * gethostbyname.c configure.ac
+      	Added ability to use getipnodebyname and corresponding test
+      	for configure.
+
+2001-06-18 	Brian Stafford	<brian@stafford.uklinux.net>
+      * auth-client.c
+        More thorough argument checking on the auth_xxx APIs.
+	Added some missing malloc return value checking.
+	When loading a plugin, make sure it provides a response()
+	function.
+
+      * smtp-auth.c
+	Added some missing malloc return value checking.
+
+      * various sources
+	Changed some 'int' types to 'size_t'
+
+      * message-source.c
+      	In msg_gets, an inconsistent pointer could cause a segfault
+      	after a realloc which moved the original memory block.
+      	Increased sizes of malloc/realloc so that RFC 2821 maximium
+      	line length will not cause realloc.
+	Added missing malloc/realloc return value checking.
+
+      * protocol.c
+	If an error occurs while copying the message to the SMTP
+	server drop the connection without terminating the message.
+
+2001-06-15 Version 0.8.1 released
+---------------------------------
+
 2001-06-13 	Brian Stafford	<brian@stafford.uklinux.net>
       * configure.in
         is now configure.ac to suit autoconf 2.5

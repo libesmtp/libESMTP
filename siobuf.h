@@ -22,10 +22,6 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#if !defined (__attribute__) && (!defined (__GNUC__) || __GNUC__ < 2)
-# define __attribute__(x)
-#endif
-
 typedef struct siobuf *siobuf_t;
 
 #define SIO_BUFSIZE	2048 /* arbitrary, not too short, not too long */
@@ -43,7 +39,7 @@ void sio_set_monitorcb(struct siobuf *sio, monitorcb_t cb, void *arg);
 void sio_set_timeout(struct siobuf *sio, int milliseconds);
 void sio_set_securitycb(struct siobuf *sio, recodecb_t encode_cb,
 		        recodecb_t decode_cb, void *arg);
-int sio_poll(struct siobuf *sio,int want_read, int want_write);
+int sio_poll(struct siobuf *sio,int want_read, int want_write, int fast);
 void sio_write(struct siobuf *sio, const char *buf, int buflen);
 void sio_flush(struct siobuf *sio);
 void sio_mark(struct siobuf *sio);

@@ -34,6 +34,8 @@
 #include <config.h>
 #endif
 
+#include <assert.h>
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -44,12 +46,11 @@
 /* malloc/realloc the buffer to be the requested length.
    Return 0 on failure, non-zero otherwise */
 static int
-cat_alloc (struct catbuf *catbuf, int length)
+cat_alloc (struct catbuf *catbuf, size_t length)
 {
   char *nbuf;
 
-  if (length <= 0)
-    return 0;
+  assert (catbuf != NULL && length > 0);
 
   if (catbuf->buffer == NULL)
     catbuf->buffer = malloc (length);
@@ -68,8 +69,10 @@ cat_alloc (struct catbuf *catbuf, int length)
 
 /* Reset the string to zero length without freeing the allocated memory */
 void
-cat_reset (struct catbuf *catbuf, int minimum_length)
+cat_reset (struct catbuf *catbuf, size_t minimum_length)
 {
+  assert (catbuf != NULL);
+
   catbuf->string_length = 0;
   if (minimum_length > catbuf->allocated)
     cat_alloc (catbuf, minimum_length);
@@ -77,8 +80,10 @@ cat_reset (struct catbuf *catbuf, int minimum_length)
 
 /* Initialise a buffer */
 void
-cat_init (struct catbuf *catbuf, int minimum_length)
+cat_init (struct catbuf *catbuf, size_t minimum_length)
 {
+  assert (catbuf != NULL);
+
   memset (catbuf, 0, sizeof (struct catbuf));
   if (minimum_length > 0)
     cat_alloc (catbuf, minimum_length);
@@ -88,6 +93,8 @@ cat_init (struct catbuf *catbuf, int minimum_length)
 void
 cat_free (struct catbuf *catbuf)
 {
+  assert (catbuf != NULL);
+
   if (catbuf->buffer != NULL)
     free (catbuf->buffer);
   memset (catbuf, 0, sizeof (struct catbuf));
@@ -97,6 +104,8 @@ cat_free (struct catbuf *catbuf)
 char *
 cat_buffer (struct catbuf *catbuf, int *len)
 {
+  assert (catbuf != NULL);
+
   if (len != NULL)
     *len = catbuf->string_length;
   return catbuf->buffer;
@@ -107,7 +116,9 @@ cat_buffer (struct catbuf *catbuf, int *len)
 char *
 concatenate (struct catbuf *catbuf, const char *string, int len)
 {
-  int shortfall;
+  size_t shortfall;
+
+  assert (catbuf != NULL && string != NULL);
 
   if (len < 0)
     len = strlen (string);
@@ -138,6 +149,8 @@ vconcatenate (struct catbuf *catbuf, ...)
   va_list alist;
   const char *string;
 
+  assert (catbuf != NULL);
+
   va_start (alist, catbuf);
   while ((string = va_arg (alist, const char *)) != NULL)
     concatenate (catbuf, string, -1);
@@ -151,6 +164,8 @@ cat_printf (struct catbuf *catbuf, const char *format, ...)
   va_list alist;
   char buf[1024];
   int len;
+
+  assert (catbuf != NULL && format != NULL);
 
   va_start (alist, format);
   len = vsnprintf (buf, sizeof buf, format, alist);

@@ -29,6 +29,8 @@
 #include <config.h>
 #endif
 
+#include <assert.h>
+
 #include <stdlib.h>
 #include <string.h>
 #include "message-source.h"
@@ -48,7 +50,7 @@ struct msg_source
 
     /* Output buffer (used by msg_gets()) */
     char *buf;
-    int nalloc;
+    size_t nalloc;
   };
 
 msg_source_t
@@ -64,6 +66,8 @@ msg_source_create (void)
 void
 msg_source_destroy (msg_source_t source)
 {
+  assert (source != NULL);
+
   if (source->ctx != NULL)
     free (source->ctx);
   if (source->buf != NULL)
@@ -75,6 +79,8 @@ msg_source_set_cb (msg_source_t source,
                    const char *(*cb) (void **ctx, int *len, void *arg),
                    void *arg)
 {
+  assert (source != NULL);
+
   if (source->ctx != NULL)
     {
       free (source->ctx);
@@ -89,6 +95,8 @@ msg_source_set_cb (msg_source_t source,
 static int
 msg_fill (msg_source_t source)
 {
+  assert (source != NULL && source->cb != NULL);
+
   source->rp = (*source->cb) (&source->ctx, &source->rn, source->arg);
   return source->rn > 0;
 }
@@ -96,13 +104,15 @@ msg_fill (msg_source_t source)
 void
 msg_rewind (msg_source_t source)
 {
+  assert (source != NULL && source->cb != NULL);
+
   (*source->cb) (&source->ctx, NULL, source->arg);
 }
 
 /* Line oriented reader.  An output buffer is allocated as required.
    The return value is a pointer to the line and remains valid until the
    next call to msg_gets ().  The line is guaranteed to be terminated
-   with a \n.  Len is set to the number of octets in the buffer.
+   with a \r\n.  Len is set to the number of octets in the buffer.
    The line is *not* terminated with a \0.
 
    If concatenate is non-zero, the next line of input is concatenated
@@ -113,16 +123,20 @@ msg_rewind (msg_source_t source)
 const char *
 msg_gets (msg_source_t source, int *len, int concatenate)
 {
-  int c, buflen;
-  char *p;
+  int lastc, c, buflen;
+  char *p, *nbuf;
+
+  assert (source != NULL && len != NULL);
 
   if (source->rn <= 0 && !msg_fill (source))
     return NULL;
 
   if (source->buf == NULL)
     {
-      source->nalloc = 511;
-      source->buf = malloc (source->nalloc + 1);
+      source->nalloc = 1023;	/* RFC 2821 max line length + slack */
+      source->buf = malloc (source->nalloc + 2);
+      if (source->buf == NULL)
+        return NULL;
     }
   p = source->buf;
   buflen = source->nalloc;
@@ -132,28 +146,39 @@ msg_gets (msg_source_t source, int *len, int concatenate)
       buflen -= *len;
     }
 
+  lastc = 0;
   while (source->rn > 0 || msg_fill (source))
     {
       c = *source->rp++;
       source->rn--;
       if (buflen <= 0)
 	{
-	  buflen = 256;
+	  buflen = 512;
 	  source->nalloc += buflen;
-	  source->buf = realloc (source->buf, source->nalloc + 1);
+	  nbuf = realloc (source->buf, source->nalloc + 2);
+	  if (nbuf == NULL)
+	    {
+	      free (source->buf);
+	      return NULL;
+	    }
+	  p = nbuf + (p - source->buf);
+	  source->buf = nbuf;
 	}
       *p++ = c;
       buflen--;
-      if (c == '\n')
+      if (c == '\n' && lastc == '\r')
 	{
 	  *len = p - source->buf;
 	  return source->buf;
 	}
+      lastc = c;
     }
-  /* Only get here if the input was not properly terminated with a \n.
+  /* Only get here if the input was not properly terminated with a \r\n.
      The handling of the DATA command in protocol.c relies on the \n
-     so we add it here.  This is why there is 1 character of slack in
+     so we add it here.  This is why there is 2 characters of slack in
      malloc and realloc above. */
+  if (lastc != '\r')
+    *p++ = '\r';
   *p++ = '\n';
   *len = p - source->buf;
   return source->buf;
@@ -167,6 +192,8 @@ msg_gets (msg_source_t source, int *len, int concatenate)
 int
 msg_nextc (msg_source_t source)
 {
+  assert (source != NULL);
+
   if (source->rn <= 0 && !msg_fill (source))
     return -1;
 
@@ -178,6 +205,8 @@ msg_nextc (msg_source_t source)
 const char *
 msg_getb (msg_source_t source, int *len)
 {
+  assert (source != NULL);
+
   if (source->rn <= 0 && !msg_fill (source))
     return NULL;
 

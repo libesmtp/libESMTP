@@ -22,9 +22,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#if !defined (__attribute__) && (!defined (__GNUC__) || __GNUC__ < 2)
-# define __attribute__(x)
-#endif
+#include <stddef.h>		/* for size_t */
 
 #ifdef USE_TLS
 #include <openssl/ssl.h>
@@ -57,7 +55,11 @@ struct smtp_session
 
   /* MTA */
     char *host;				/* Host domain name of SMTP server */
+#ifdef HAVE_GETADDRINFO
+    const char *port;			/* Port number - default to 587 */
+#else
     int port;				/* Port number - default to 587 */
+#endif
 
   /* Application data */
     void *application_data;		/* Pointer to data maintained by app */

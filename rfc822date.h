@@ -22,6 +22,6 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-char *rfc822date (char buf[], int buflen, time_t *timedate);
+char *rfc822date (char buf[], size_t buflen, time_t *timedate);
 
 #endif

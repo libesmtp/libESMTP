@@ -1,7 +1,9 @@
-Memory Leaks
-============
+Memory Allocation & Leaks
+=========================
 
-Investigate and fix.
+Investigate and fix leaks.
+More thorough checking of malloc failures.  Where possible fail functions
+that check malloc but don't check a subsequent strdup.
 
 Threads
 =======
@@ -103,39 +105,4 @@ and encrypting messages on the grounds that it is normally accepting
 connections from behind a firewall.  This is feasible using S/MIME or
 PGP MIME.  Without encrypting the first hop, this confidentiality measure
 is lost.  Client certificate is likely to be required in this scenario too.
-
-Errors while reading the message
-================================
-
-Once the DATA or BDAT command is issued, there is no way to tell the server
-an error occurred when reading the message in the client. The only
-available course of action is to drop the connection.  Return from the
-cmd_data/rsp_data function and set next state to -1 to exit without quitting.
-Do not terminate the DATA command with a '.' on its own line.
-
-How about an SMTP extension to allow a client to recover failed data transfer
-gracefully???
-
-E.g.
-C: EHLO ...
-S: 250-COMMIT
-....
-
-
-C: MAIL FROM:<...> COMMIT=YES	[default]
-
-C: MAIL FROM:<...> COMMIT=NO 	[Request MTA to receive data but do not
-				 queue for delivery.  If COMMIT NO is
-			         issued or QUIT uncommitted messages are
-			         deleted without queueing.]
-C: DATA
-S: 320 Go ahead
-data transfer...
-.
-S: 250 Data received - use COMMIT to queue message
-...
-C: COMMIT
-
-COMMIT [YES]
-All uncommitted messages are queued.  If no uncommitted return 503 bad sequence of commands.
 

@@ -24,9 +24,12 @@
 #include <config.h>
 #endif
 
+#define _SVID_SOURCE	1	/* Need this to get strerror_r() */
+
 #include <stdio.h>
 #include <errno.h>
 #include <string.h>
+#include <stdlib.h>
 #include <netdb.h>
 #include "libesmtp-private.h"
 #include "api.h"
@@ -124,7 +127,7 @@ static const char *libesmtp_errors[] =
     "SMTP Status code mismatch on continuation line",	/* STATUS_MISMATCH */
     "Invalid SMTP status code in server response",	/* INVALID_RESPONSE_STATUS */
     "Invalid API function argument",			/* INVAL */
-    "requested SMTP extension not available",		/* EXTENSION_NOT_AVAILABLE */
+    "Requested SMTP extension not available",		/* EXTENSION_NOT_AVAILABLE */
     "Host not found",					/* HOST_NOT_FOUND */
     "No address",					/* NO_ADDRESS */
     "No recovery",					/* NO_RECOVERY */
@@ -132,10 +135,12 @@ static const char *libesmtp_errors[] =
   };
 
 char *
-smtp_strerror (int error, char buf[], int buflen)
+smtp_strerror (int error, char buf[], size_t buflen)
 {
   const char *text;
-  int len;
+  size_t len;
+
+  SMTPAPI_CHECK_ARGS (buf != NULL && buflen > 0, NULL);
 
   if (error < 0)
 #ifdef HAVE_WORKING_STRERROR_R
@@ -173,6 +178,39 @@ set_herror (int code)
 {
   int smtp_code;
 
+#ifdef HAVE_GETADDRINFO
+  /* Very crude mapping of the error codes on to existing ones.
+   */
+  switch (code)
+    {
+    case EAI_AGAIN:       /* temporary failure in name resolution */
+      smtp_code = SMTP_ERR_TRY_AGAIN;
+      break;
+    case EAI_FAIL:        /* non-recoverable failure in name resolution */
+      smtp_code = SMTP_ERR_NO_RECOVERY;
+      break;
+    case EAI_MEMORY:      /* memory allocation failure */
+      set_error (-ENOMEM);
+      return;
+    case EAI_ADDRFAMILY:  /* address family for nodename not supported */
+      smtp_code = SMTP_ERR_HOST_NOT_FOUND;
+      break;
+    case EAI_NODATA:      /* no address associated with nodename */
+      smtp_code = SMTP_ERR_NO_ADDRESS;
+      break;
+    case EAI_SYSTEM:      /* system error returned in errno */
+      set_error (-errno);
+      return;
+    case EAI_FAMILY:      /* ai_family not supported */
+    case EAI_BADFLAGS:    /* invalid value for ai_flags */
+    case EAI_NONAME:      /* nodename nor servname provided, or not known */
+    case EAI_SERVICE:     /* servname not supported for ai_socktype */
+    case EAI_SOCKTYPE:    /* ai_socktype not supported */
+    default: /* desperation */
+      smtp_code = SMTP_ERR_INVAL;
+      break;
+    }
+#else
   switch (code)
     {
     case HOST_NOT_FOUND:	smtp_code = SMTP_ERR_HOST_NOT_FOUND; break;
@@ -181,6 +219,7 @@ set_herror (int code)
     case TRY_AGAIN:		smtp_code = SMTP_ERR_TRY_AGAIN; break;
     default: /* desperation */	smtp_code = SMTP_ERR_INVAL; break;
     }
+#endif
   set_error (smtp_code);
 }
 

@@ -24,6 +24,8 @@
 #include <config.h>
 #endif
 
+#include <assert.h>
+
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
@@ -96,6 +98,8 @@ set_string (struct rfc822_header *header, va_list alist)
 {
   const char *value;
 
+  assert (header != NULL);
+
   if (header->value != NULL)		/* Already set */
     return 0;
 
@@ -111,6 +115,8 @@ set_string_null (struct rfc822_header *header, va_list alist)
 {
   const char *value;
 
+  assert (header != NULL);
+
   if (header->value != NULL)		/* Already set */
     return 0;
 
@@ -125,6 +131,8 @@ set_string_null (struct rfc822_header *header, va_list alist)
 static void
 print_string (smtp_message_t message, struct rfc822_header *header)
 {
+  assert (message != NULL && header != NULL);
+
   /* TODO: implement line folding at white spaces */
   vconcatenate (&message->hdr_buffer, header->header, ": ",
                 (header->value != NULL) ? header->value : "", "\r\n", NULL);
@@ -133,6 +141,8 @@ print_string (smtp_message_t message, struct rfc822_header *header)
 void
 destroy_string (struct rfc822_header *header)
 {
+  assert (header != NULL);
+
   if (header->value != NULL)
     free (header->value);
 }
@@ -141,10 +151,13 @@ destroy_string (struct rfc822_header *header)
 static void
 print_message_id (smtp_message_t message, struct rfc822_header *header)
 {
-  const char *message_id = header->value;
+  const char *message_id;
   char buf[64];
   static int generation;
 
+  assert (message != NULL && header != NULL);
+
+  message_id = header->value;
   if (message_id == NULL)
     {
       snprintf (buf, sizeof buf, "%ld.%d@%s",
@@ -164,6 +177,8 @@ set_date (struct rfc822_header *header, va_list alist)
 {
   const time_t *value;
 
+  assert (header != NULL);
+
   if ((time_t) header->value != (time_t) 0)		/* Already set */
     return 0;
 
@@ -178,6 +193,8 @@ print_date (smtp_message_t message, struct rfc822_header *header)
 {
   char buf[64];
   time_t when;
+
+  assert (message != NULL && header != NULL);
 
   when = (time_t) header->value;
   if (when == (time_t) 0)
@@ -200,6 +217,8 @@ destroy_mbox_list (struct rfc822_header *header)
 {
   struct mbox *mbox, *next;
 
+  assert (header != NULL);
+
   mbox = header->value;
   while (mbox != NULL)
     {
@@ -219,6 +238,8 @@ set_from (struct rfc822_header *header, va_list alist)
   struct mbox *mbox;
   const char *mailbox;
   const char *phrase;
+
+  assert (header != NULL);
 
   phrase = va_arg (alist, const char *);
   mailbox = va_arg (alist, const char *);
@@ -247,6 +268,8 @@ print_from (smtp_message_t message, struct rfc822_header *header)
 {
   struct mbox *mbox;
   const char *mailbox;
+
+  assert (message != NULL && header != NULL);
 
   vconcatenate (&message->hdr_buffer, header->header, ": ", NULL);
   /* TODO: implement line folding at white spaces */
@@ -282,6 +305,8 @@ set_sender (struct rfc822_header *header, va_list alist)
   const char *mailbox;
   const char *phrase;
 
+  assert (header != NULL);
+
   if (header->value != NULL)
     return 0;
 
@@ -301,6 +326,8 @@ set_sender (struct rfc822_header *header, va_list alist)
   return 1;
 }
 
+/* TODO: do nothing if the mailbox is NULL.  Check this doesn't fool
+         the protocol engine into thinking it has seen end of file. */
 /* Print header-name ": " mailbox "\r\n" 
       or header-name ": \"" phrase "\" <" mailbox ">\r\n"
  */
@@ -309,6 +336,8 @@ print_sender (smtp_message_t message, struct rfc822_header *header)
 {
   struct mbox *mbox;
   const char *mailbox;
+
+  assert (message != NULL && header != NULL);
 
   vconcatenate (&message->hdr_buffer, header->header, ": ", NULL);
   mbox = header->value;
@@ -328,6 +357,8 @@ set_to (struct rfc822_header *header, va_list alist)
   struct mbox *mbox;
   const char *mailbox;
   const char *phrase;
+
+  assert (header != NULL);
 
   phrase = va_arg (alist, const char *);
   mailbox = va_arg (alist, const char *);
@@ -350,6 +381,8 @@ print_cc (smtp_message_t message, struct rfc822_header *header)
 {
   struct mbox *mbox;
 
+  assert (message != NULL && header != NULL);
+
   vconcatenate (&message->hdr_buffer, header->header, ": ", NULL);
   for (mbox = header->value; mbox != NULL; mbox = mbox->next)
     {
@@ -370,6 +403,8 @@ static void
 print_to (smtp_message_t message, struct rfc822_header *header)
 {
   smtp_recipient_t recipient;
+
+  assert (header != NULL);
 
   if (header->value != NULL)
     {
@@ -453,6 +488,8 @@ init_header_table (smtp_message_t message)
   struct h_node *node;
   struct header_info *hi;
 
+  assert (message != NULL);
+
   if (message->hdr_action != NULL)
     return -1;
 
@@ -488,6 +525,8 @@ destroy_header_table (smtp_message_t message)
 {
   struct rfc822_header *header, *next;
 
+  assert (message != NULL);
+
   /* Take out the hash table */
   h_destroy (message->hdr_action, NULL, NULL);
   message->hdr_action = NULL;
@@ -510,6 +549,8 @@ find_header (smtp_message_t message, const char *name, int len)
   struct h_node *node;
   const char *p;
 
+  assert (message != NULL && name != NULL);
+
   node = h_search (message->hdr_action, name, len);
   if (node == NULL && (p = memchr (name, '-', len)) != NULL)
     node = h_search (message->hdr_action, name, p - name + 1);
@@ -521,6 +562,8 @@ insert_header (smtp_message_t message, const char *name)
 {
   struct h_node *node;
   struct header_info *info;
+
+  assert (message != NULL && name != NULL);
 
   node = h_insert (message->hdr_action, name, -1, sizeof (struct header_info));
   if (node == NULL)
@@ -535,6 +578,8 @@ create_header (smtp_message_t message, const char *header,
                struct header_info *info)
 {
   struct rfc822_header *hdr;
+
+  assert (message != NULL && header != NULL && info != NULL);
 
   if ((hdr = malloc (sizeof (struct rfc822_header))) == NULL)
     return NULL;
@@ -555,10 +600,13 @@ create_header (smtp_message_t message, const char *header,
    Resets the seen flag for headers libESMTP is interested in */
 
 static void
-reset_headercb (struct h_node *node, void *arg __attribute__((unused)))
+reset_headercb (struct h_node *node, void *arg __attribute__ ((unused)))
 {
-  struct header_info *info = h_dptr (node, struct header_info);
+  struct header_info *info;
 
+  assert (node != NULL);
+
+  info = h_dptr (node, struct header_info);
   info->seen = 0;
 }
 
@@ -566,6 +614,8 @@ int
 reset_header_table (smtp_message_t message)
 {
   int status;
+
+  assert (message != NULL);
 
   if ((status = init_header_table (message)) < 0)
     h_enumerate (message->hdr_action, reset_headercb, NULL);
@@ -580,6 +630,8 @@ process_header (smtp_message_t message, const char *header, int *len)
   const char *p;
   struct header_info *info;
   const struct header_actions *action;
+
+  assert (message != NULL && header != NULL && len != NULL);
 
   if ((p = memchr (header, ':', *len)) != NULL
       && (info = find_header (message, header, p - header)) != NULL)
@@ -609,6 +661,8 @@ missing_header (smtp_message_t message, int *len)
 {
   struct header_info *info;
   hdrprint_t print;
+
+  assert (message != NULL && len != NULL);
 
   /* Move on to the next header */
   if (message->current_header == NULL)

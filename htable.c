@@ -24,6 +24,7 @@
 #include <config.h>
 #endif
 
+#include <assert.h>
 
 /* A simplistic hash table implementation using hashing and chaining.
    The table is always 256 entries long although this is an arbitrary
@@ -82,6 +83,8 @@ hashi (const char *string, int length)
 {
   unsigned char c, h1;
   
+  assert (string != NULL);
+
   for (h1 = 0; length-- > 0; h1 = shuffle[h1 ^ c])
     {
       c = *string++;
@@ -111,10 +114,12 @@ strndup (const char *string, size_t length)
    be found when searching the table.  When removed, the former entry
    will be found on a subsequent search */
 struct h_node *
-h_insert (struct h_node **table, const char *name, int namelen, int size)
+h_insert (struct h_node **table, const char *name, int namelen, size_t size)
 {
   unsigned int hv;
   struct h_node *node;
+
+  assert (table != NULL && name != NULL);
 
   if (namelen < 0)
     namelen = strlen (name);
@@ -141,6 +146,8 @@ h_remove (struct h_node **table, struct h_node *node)
   unsigned int hv;
   struct h_node *p;
 
+  assert (table != NULL && node != NULL);
+
   hv = hashi (node->name, strlen (node->name));
   if (table[hv] == node)
     table[hv] = node->next;
@@ -163,6 +170,8 @@ h_search (struct h_node **table, const char *name, int namelen)
 {
   struct h_node *p;
 
+  assert (table != NULL && name != NULL);
+
   if (namelen < 0)
     namelen = strlen (name);
   for (p = table[hashi (name, namelen)]; p != NULL; p = p->next)
@@ -179,6 +188,8 @@ h_enumerate (struct h_node **table,
 {
   struct h_node *p;
   int i;
+
+  assert (table != NULL && cb != NULL);
 
   for (i = 0; i < HASHSIZE; i++)
     for (p = table[i]; p != NULL; p = p->next)
@@ -203,6 +214,8 @@ h_destroy (struct h_node **table,
 {
   struct h_node *p, *next;
   int i;
+
+  assert (table != NULL);
 
   for (i = 0; i < HASHSIZE; i++)
     for (p = table[i]; p != NULL; p = next)

@@ -10,14 +10,15 @@ lib_LTLIBRARIES = libesmtp.la
 libesmtp_la_SOURCES = auth-client.c base64.c concatenate.c errors.c \
 		      headers.c htable.c message-source.c protocol.c \
 		      rfc822date.c siobuf.c smtp-api.c smtp-auth.c \
-		      smtp-tls.c smtp-etrn.c tokens.c gethostbyname.c \
+		      smtp-tls.c smtp-etrn.c tokens.c \
 		      api.h base64.h message-callbacks.c \
 		      concatenate.h config.h headers.h htable.h \
 		      libesmtp-private.h message-source.h protocol-states.h \
 		      protocol.h rfc822date.h siobuf.h tokens.h \
 		      gethostbyname.h
+libesmtp_la_LIBADD = @LIBOBJS@
 
-libesmtp_la_LDFLAGS = $(LIBLTDL) $(LIBADD_LTDL) -export-dynamic \
+libesmtp_la_LDFLAGS = $(LIBLTDL) -export-dynamic \
 		      -version-info $(LIBESMTP_VERSION)
 
 include_HEADERS = libesmtp.h auth-client.h auth-plugin.h 

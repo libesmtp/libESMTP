@@ -45,7 +45,7 @@ static const char *months[] =
     "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", };
 
 char *
-rfc822date (char buf[], int buflen, time_t *timedate)
+rfc822date (char buf[], size_t buflen, time_t *timedate)
 {
   struct tm *tm;
 #if defined (HAVE_LOCALTIME_R) || defined (HAVE_GMTIME_R)
@@ -53,7 +53,7 @@ rfc822date (char buf[], int buflen, time_t *timedate)
 #endif
   int dir, minutes;
 
-#if defined (HAVE_TM_ZONE)
+#if defined (HAVE_STRUCT_TM_TM_ZONE)
 # if defined (HAVE_LOCALTIME_R)
   tm = localtime_r (timedate, &tmbuf);
 # else

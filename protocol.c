@@ -121,13 +121,19 @@ set_first_message (smtp_session_t session)
 int
 do_session (smtp_session_t session)
 {
+#ifdef HAVE_GETADDRINFO
+  struct addrinfo hints, *res, *addrs;
+  int err;
+#else
   struct ghbnctx ghbnctx;
   struct hostent *hp;
   struct sockaddr sa;
+  char **addrs;
+#endif
   int sd;
   siobuf_t conn;
-  int nresp, status, want_flush;
-  char **addrs;
+  int nresp, status, want_flush, fast;
+  char *nodename;
 
 #ifdef HAVE_GETHOSTNAME
   if (session->localhost == NULL)
@@ -173,12 +179,32 @@ do_session (smtp_session_t session)
     }
 
   /* Connect to the SMTP server.  The following code will only work for
-     an IPv4 connection at present.  This will change to permit IPv6
-     connections (and possibly pipes and Unix sockets, e.g. for LMTP
-     servers). */
+     socket connections at present.  This will eventually change to
+     permit connections on any type of file descriptor, e.g. for LMTP
+     servers or forking an SMTP server which can run the protocol on
+     its standard input. */
 
   errno = 0;
-  hp = gethostbyname_ctx (session->host, &ghbnctx);
+  nodename = (session->host == NULL || *session->host == '\0') ? NULL
+							       : session->host;
+#ifdef HAVE_GETADDRINFO
+  /* Use the RFC 2553/Posix resolver interface.  This allows for much
+     cleaner code, protocol independence and thread safety. */
+  memset (&hints, 0, sizeof hints);
+  hints.ai_family = PF_UNSPEC;
+  hints.ai_socktype = SOCK_STREAM;
+  err = getaddrinfo (nodename, session->port, &hints, &res);
+  if (err != 0)
+    {
+      set_herror (err);
+      return 0;
+    }
+#else
+  /* Use the deprecated, protocol specific BSD resolver interface.
+     This may not be thread safe and requires the use of a wrapper
+     function since the arguments vary in number and type on different
+     platforms.  */
+  hp = gethostbyname_ctx (nodename, &ghbnctx);
   if (hp == NULL)
     {
       if (errno != 0)
@@ -188,11 +214,31 @@ do_session (smtp_session_t session)
       free_ghbnctx (&ghbnctx);
       return 0;
     }
+#endif
 
   /* Try to establish an SMTP session with each host in turn until one
      succeeds.  */
+#ifdef HAVE_GETADDRINFO
+  for (addrs = res; addrs != NULL; addrs = addrs->ai_next)
+#else
   for (addrs = hp->h_addr_list; *addrs != NULL; addrs++)
+#endif
     {
+#ifdef HAVE_GETADDRINFO
+      sd = socket (addrs->ai_family, addrs->ai_socktype, addrs->ai_protocol);
+      if (sd < 0)
+	{
+	  set_errno (errno);
+	  continue;
+	}
+      if (connect (sd, addrs->ai_addr, addrs->ai_addrlen) < 0)
+	{
+	  /* Failed to connect.  Close the socket and try again.  */
+	  set_errno (errno);
+	  close (sd);
+	  continue;
+	}
+#else
       sa.sa_family = hp->h_addrtype;
       switch (sa.sa_family)
         {
@@ -214,8 +260,7 @@ do_session (smtp_session_t session)
 	  return 0;
         }
 
-      /* Create a socket and try to connect to the remote.
-       */
+      /* Create a socket and try to connect to the remote.  */
       if ((sd = socket (sa.sa_family, SOCK_STREAM, 0)) < 0)
 	{
 	  set_errno (errno);
@@ -224,19 +269,23 @@ do_session (smtp_session_t session)
 	}
       if (connect (sd, &sa, sizeof sa) < 0)
 	{
-	  /* Failed to connect.  Close the socket and try again.
-	   */
+	  /* Failed to connect.  Close the socket and try again.  */
 	  set_errno (errno);
 	  close (sd);
 	  continue;
 	}
+#endif
 
       /* Add buffering to the socket */
       conn = sio_attach (sd, sd, SIO_BUFSIZE);
       if (conn == NULL)
 	{
 	  set_errno (ENOMEM);
+#ifdef HAVE_GETADDRINFO
+	  freeaddrinfo (res);
+#else
 	  free_ghbnctx (&ghbnctx);
+#endif
 	  close (sd);
 	  return 0;
 	}
@@ -310,29 +359,47 @@ do_session (smtp_session_t session)
 	    session->cmd_state = -1;
 	  nresp++;
 
+	  if (session->rsp_state < 0)
+	    break;
+
 	  /* The following loop polls the server and reads or writes
 	     to it as required.
 
-	     Reading from the server blocks because we must read
-	     complete responses from the server and they may be larger
-	     than the read buffer.
+	     When the command state is set to -1, this signals that no
+	     more commands can be issued until the response to the most
+	     recent command has been processed, therefore the write
+	     buffer must be explicitly flushed.  If the command state is
+	     not -1, more commands may be issued however, pending
+	     responses from the server should be processed.  When this
+	     is the case, sio_poll should return immediately if there is
+	     nothing to read.  `fast' requests this non-blocking poll.
 
-	     Writing to the server doesn't block because a short command
-	     might solicit a huge response and there may be many more
-	     commands in the write buffer.
-	   */
+	     `want_flush' indicates that the write buffer should be
+	     sent to the server.  This flag remains set until the buffer
+	     has been written.
+
+	     After explicitly flushing the buffer, sio_poll blocks
+	     waiting to read data from the server since the server may
+	     take some time to complete the pending commands.
+           */
 	  want_flush = (session->cmd_state == -1);
-	  while ((status = sio_poll (conn, nresp > 0, want_flush)) > 0)
+	  fast = (session->cmd_state != -1);
+	  while ((status = sio_poll (conn, nresp > 0, want_flush, fast)) > 0)
 	    {
 	      if (status & SIO_READ)
 		{
-		  /* TODO: if nresp == 1 just before reading the final response,
-			   rsp_state must equal cmd_state.  Check this */
 		  nresp--;
 
-		  /* TODO: change so that the response line is parsed here.
-			   This means that the server 421 response which can
-			   be issued at any time may be checked for. */
+		  /* TODO: change so that the response line is parsed
+		           here.  This means that the server 421
+		           response which can be issued at any time may
+			   be checked for here. */
+
+		  /* When reading from the server in the response state
+		     handlers the read call blocks.  Complete responses
+	             must be read from the server before processing and
+	             an individual response may be larger than the read
+	             buffer.  */
 		  (*protocol_states[session->rsp_state].rsp) (conn, session);
 		}
 	      /* XXX - Here I assume that once the write fd becomes
@@ -366,13 +433,21 @@ do_session (smtp_session_t session)
          not set the protocol must have concluded sucessfully. */
       if (!session->try_fallback_server)
 	{
+#ifdef HAVE_GETADDRINFO
+	  freeaddrinfo (res);
+#else
 	  free_ghbnctx (&ghbnctx);
+#endif
 	  return 1;
         }
     }
 
   /* If the loop terminated, couldn't work with any servers. */
+#ifdef HAVE_GETADDRINFO
+  freeaddrinfo (res);
+#else
   free_ghbnctx (&ghbnctx);
+#endif
   return 0;
 }
 
@@ -1173,6 +1248,7 @@ cmd_data2 (siobuf_t conn, smtp_session_t session)
      iii) alters the content of certain headers.  This will happen
           according to library options set up by the application.
    */
+  errno = 0;
   while ((line = msg_gets (session->msg_source, &len, 0)) != NULL)
     {
       /* Header processing stops at a line containing only CRLF */
@@ -1186,6 +1262,8 @@ cmd_data2 (siobuf_t conn, smtp_session_t session)
 	  if (c != ' ' && c != '\t')
 	    break;
 	  line = msg_gets (session->msg_source, &len, 1);
+	  if (line == NULL)
+	    goto break_2;
 	}
 
       /* Line points to one or more lines of text forming an RFC 822
@@ -1220,12 +1298,27 @@ cmd_data2 (siobuf_t conn, smtp_session_t session)
 	  for (pline = header; pline < header + len; pline = p)
 	    {
 	      p = memchr (pline, '\n', header + len - pline);
-	      LIBESMTP_ASSERT (p != NULL);
+	      if (p == NULL)
+	        {
+	          errno = ERANGE;
+	          goto break_2;
+	        }
 	      if (pline[0] == '.')
 		sio_write (conn, ".", 1);
 	      sio_write (conn, pline, ++p - pline);
 	    }
 	}
+    }
+break_2:
+  if (errno != 0)
+    {
+      /* An error occurred during processing.  The only thing that can
+         be done is to drop the connection to the server since SMTP has
+         no way to recover gracefully from client errors while transferring
+         the message. */
+      set_errno (errno);
+      session->cmd_state = session->rsp_state = -1;
+      return;
     }
 
   /* Now send missing headers.  This completes the processing started
@@ -1248,7 +1341,11 @@ cmd_data2 (siobuf_t conn, smtp_session_t session)
       for (pline = header; pline < header + len; pline = p)
 	{
 	  p = memchr (pline, '\n', header + len - pline);
-	  LIBESMTP_ASSERT (p != NULL);
+	  if (p == NULL)
+	    {
+	      errno = ERANGE;
+	      goto break_2;
+	    }
 	  if (pline[0] == '.')
 	    sio_write (conn, ".", 1);
 	  sio_write (conn, pline, ++p - pline);
@@ -1260,6 +1357,7 @@ cmd_data2 (siobuf_t conn, smtp_session_t session)
 
   /* Read message body lines from the application and write them
      to the remote MTA using dot stuffing. */
+  errno = 0;
   while ((line = msg_gets (session->msg_source, &len, 0)) != NULL)
     {
       /* Notify byte count to the application. */
@@ -1271,6 +1369,12 @@ cmd_data2 (siobuf_t conn, smtp_session_t session)
       if (line[0] == '.')
 	sio_write (conn, ".", 1);
       sio_write (conn, line, len);
+    }
+  if (errno != 0)
+    {
+      set_errno (errno);
+      session->cmd_state = session->rsp_state = -1;
+      return;
     }
 
   /* Terminate the DATA command. */

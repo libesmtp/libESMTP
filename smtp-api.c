@@ -62,7 +62,6 @@ int
 smtp_set_server (smtp_session_t session, const char *hostport)
 {
   char *host, *service;
-  struct servent *servent;
 
   SMTPAPI_CHECK_ARGS (session != NULL && hostport != NULL, 0);
 
@@ -72,11 +71,21 @@ smtp_set_server (smtp_session_t session, const char *hostport)
       return 0;
     }
 
-  if ((service = strchr (host, ':')) == NULL)
+  if ((service = strchr (host, ':')) != NULL)
+    *service++ = '\0';
+
+#ifdef HAVE_GETADDRINFO
+  if (service == NULL)
+    session->port = "587";
+  else
+    session->port = service;
+#else
+  if (service == NULL)
     session->port = 587;
   else
     {
-      *service++ = '\0';
+      struct servent *servent;
+
       if (isdigit (*service))
 	session->port = strtol (service, NULL, 10);
       else if ((servent = getservbyname (service, "tcp")) != NULL)
@@ -88,6 +97,7 @@ smtp_set_server (smtp_session_t session, const char *hostport)
           return 0;
         }
     }
+#endif
   session->host = host;
   return 1;
 }

@@ -20,6 +20,12 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
+#include <assert.h>
+
 #include <string.h>
 #include <stdlib.h>
 
@@ -30,8 +36,7 @@
 
 static int plain_init (void *pctx);
 static void plain_destroy (void *ctx);
-static const char *plain_response (void *ctx,
-				   const char *challenge, int *len,
+static const char *plain_response (void *ctx, const char *challenge, int *len,
 				   auth_interact_t interact, void *arg);
 
 const struct auth_client_plugin sasl_client =
@@ -85,8 +90,8 @@ plain_destroy (void *ctx)
 }
 
 static const char *
-plain_response (void *ctx, const char *challenge, int *len,
-		auth_interact_t interact, void *arg)
+plain_response (void *ctx, const char *challenge __attribute__ ((unused)),
+                int *len, auth_interact_t interact, void *arg)
 {
   struct plain_context *plain = ctx;
   char *result[NELT (client_request)];

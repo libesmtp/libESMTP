@@ -24,6 +24,8 @@
 #include <config.h>
 #endif
 
+#include <assert.h>
+
 #ifdef USE_SASL
 /* Support for the SMTP AUTH verb.
  */
@@ -67,7 +69,8 @@ destroy_auth_mechanisms (smtp_session_t session)
   for (mech = session->auth_mechanisms; mech != NULL; mech = next)
     {
       next = mech->next;
-      free (mech->name);
+      if (mech->name != NULL)	/* or assert (mech->name != NULL); */
+	free (mech->name);
       free (mech);
     }
   session->current_mechanism = session->auth_mechanisms = NULL;
@@ -83,7 +86,18 @@ set_auth_mechanisms (smtp_session_t session, const char *mechanisms)
   while (read_atom (skipblank (mechanisms), &mechanisms, buf, sizeof buf))
     {
       mech = malloc (sizeof (struct mechanism));
+      if (mech == NULL)
+        {
+          /* FIXME: propagate ENOMEM to app. */
+          continue;
+        }
       mech->name = strdup (buf);
+      if (mech->name == NULL)
+        {
+          /* FIXME: propagate ENOMEM to app. */
+          free (mech);
+          continue;
+        }
       APPEND_LIST (session->auth_mechanisms, session->current_mechanism, mech);
     }
   session->current_mechanism = session->auth_mechanisms;
@@ -123,7 +137,9 @@ cmd_auth (siobuf_t conn, smtp_session_t session)
   const char *response;
   int len;
 
-  sio_printf (conn, "AUTH %s", session->current_mechanism->name);
+  assert (session != NULL && session->auth_context != NULL);
+
+  sio_printf (conn, "AUTH %s", auth_mechanism_name (session->auth_context));
 
   /* Ask SASL for the initial response (if there is one). */
   response = auth_response (session->auth_context, NULL, &len);

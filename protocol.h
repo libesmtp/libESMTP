@@ -27,6 +27,7 @@ enum states
   {
 #define S(x)		S_##x,
 #include "protocol-states.h"
+    S__swallow_comma		/* required for strict ANSI compiles */
   };
 
 /* Forward declare protocol command/response handlers */

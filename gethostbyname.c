@@ -23,6 +23,10 @@
 #include <config.h>
 #endif
 
+#define _SVID_SOURCE	1	/* Need this to get gethostbyname_r() */
+
+#include <assert.h>
+
 #include <stdlib.h>
 #include <string.h>
 #include <netdb.h>
@@ -30,11 +34,48 @@
 
 #include "gethostbyname.h"
 
-#if HAVE_GETHOSTBYNAME_R == 6
+#if HAVE_GETIPNODEBYNAME
+
+struct ghbnctx
+  {
+    int h_err;
+    struct hostent *hostent;
+  };
 
 void
 free_ghbnctx (struct ghbnctx *ctx)
 {
+  assert (ctx != NULL);
+
+  if (ctx->hostent != NULL)
+    freehostent (ctx->hostent);
+}
+
+struct hostent *
+gethostbyname_ctx (const char *host, struct ghbnctx *ctx)
+{
+  assert (ctx != NULL);
+
+  memset (ctx, 0, sizeof (struct ghbnctx));
+  ctx->hostent = getipnodebyname (host, AF_UNSPEC, AI_ADDRCONFIG, &ctx->h_err);
+  return ctx->hostent;
+}
+
+int
+h_error_ctx (struct ghbnctx *ctx)
+{
+  assert (ctx != NULL);
+
+  return ctx->h_err;
+}
+
+#elif HAVE_GETHOSTBYNAME_R == 6
+
+void
+free_ghbnctx (struct ghbnctx *ctx)
+{
+  assert (ctx != NULL);
+
   if (ctx->hostbuf != NULL)
     free (ctx->hostbuf);
 }
@@ -45,6 +86,8 @@ gethostbyname_ctx (const char *host, struct ghbnctx *ctx)
   struct hostent *hp;
   char *tmp;
   int err;
+
+  assert (ctx != NULL);
 
   memset (ctx, 0, sizeof (struct ghbnctx));
   ctx->hostbuf_len = 2048;
@@ -76,6 +119,8 @@ gethostbyname_ctx (const char *host, struct ghbnctx *ctx)
 int
 h_error_ctx (struct ghbnctx *ctx)
 {
+  assert (ctx != NULL);
+
   return ctx->h_err;
 }
 
@@ -84,6 +129,8 @@ h_error_ctx (struct ghbnctx *ctx)
 void
 free_ghbnctx (struct ghbnctx *ctx)
 {
+  assert (ctx != NULL);
+
   if (ctx->hostbuf != NULL)
     free (ctx->hostbuf);
 }
@@ -93,6 +140,8 @@ gethostbyname_ctx (const char *host, struct ghbnctx *ctx)
 {
   struct hostent *hp;
   char *tmp;
+
+  assert (ctx != NULL);
 
   memset (ctx, 0, sizeof (struct ghbnctx));
   ctx->hostbuf_len = 2048;
@@ -119,6 +168,8 @@ gethostbyname_ctx (const char *host, struct ghbnctx *ctx)
 int
 h_error_ctx (struct ghbnctx *ctx)
 {
+  assert (ctx != NULL);
+
   return ctx->h_err;
 }
 
@@ -127,12 +178,16 @@ h_error_ctx (struct ghbnctx *ctx)
 void
 free_ghbnctx (struct ghbnctx *ctx)
 {
+  assert (ctx != NULL);
+
   /* FIXME: does this need to do anything? */
 }
 
 struct hostent *
 gethostbyname_ctx (const char *host, struct ghbnctx *ctx)
 {
+  assert (ctx != NULL);
+
   if (!gethostbyname_r (host, &ctx->hostent, &ctx->hostent_data))
     {
       ctx->h_err = h_errno;	/* FIXME: is this correct? */
@@ -144,14 +199,17 @@ gethostbyname_ctx (const char *host, struct ghbnctx *ctx)
 int
 h_error_ctx (struct ghbnctx *ctx)
 {
+  assert (ctx != NULL);
+
   return ctx->h_err;
 }
 
 #else
 
 void
-free_ghbnctx (struct ghbnctx *ctx)
+free_ghbnctx (struct ghbnctx *ctx __attribute__ ((unused)))
 {
+  assert (ctx != NULL);
 }
 
 struct hostent *
@@ -168,8 +226,9 @@ gethostbyname_ctx (const char *host, struct ghbnctx *ctx)
 int
 h_error_ctx (struct ghbnctx *ctx)
 {
+  assert (ctx != NULL);
+
   return ctx->h_err;
 }
 
 #endif
-

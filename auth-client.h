@@ -76,6 +76,7 @@ int auth_set_interact_cb (auth_context_t context,
 			  auth_interact_t interact, void *arg);
 int auth_client_enabled(auth_context_t context);
 int auth_set_mechanism(auth_context_t context, const char *name);
+const char *auth_mechanism_name (auth_context_t context);
 const char *auth_response(auth_context_t context, const char *challenge, int *len);
 int auth_get_ssf(auth_context_t context);
 void auth_encode(char **dstbuf, int *dstlen, const char *srcbuf, int srclen, void *arg);

@@ -62,7 +62,7 @@ int smtp_set_header (smtp_message_t message, const char *header, ...);
 enum header_option
   {
     Hdr_OVERRIDE,
-    Hdr_PROHIBIT,
+    Hdr_PROHIBIT
     /* add new options here */
   };
 int smtp_set_header_option (smtp_message_t message, const char *header,
@@ -91,7 +91,7 @@ enum
     SMTP_EV_EXTNA_ETRN,
 
   /* Extensions specific events */
-    SMTP_EV_DELIVERBY_EXPIRED = 3000,
+    SMTP_EV_DELIVERBY_EXPIRED = 3000
   };
 typedef void (*smtp_eventcb_t) (smtp_session_t session, int event_no,
 				void *arg, ...);
@@ -120,7 +120,7 @@ const smtp_status_t *smtp_recipient_status (smtp_recipient_t recipient);
 int smtp_recipient_check_complete (smtp_recipient_t recipient);
 int smtp_recipient_reset_status (smtp_recipient_t recipient);
 int smtp_errno (void);
-char *smtp_strerror (int error, char buf[], int buflen);
+char *smtp_strerror (int error, char buf[], size_t buflen);
 
 void *smtp_set_application_data (smtp_session_t session, void *data);
 void *smtp_get_application_data (smtp_session_t session);

@@ -27,10 +27,10 @@
 /* Support for the SMTP STARTTLS verb.
  */
 
-#include "libesmtp-private.h"
 
 #ifdef USE_TLS
 
+#include "libesmtp-private.h"
 #include "siobuf.h"
 #include "protocol.h"
 
@@ -180,6 +180,7 @@ rsp_starttls (siobuf_t conn, smtp_session_t session)
 #else
 
 #define SSL_CTX void
+#include "libesmtp-private.h"
 
 /* Fudge the declaration.  The idea is that all builds of the library
    export the same API, but that the unsupported features always fail.

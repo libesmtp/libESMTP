@@ -39,7 +39,7 @@
 /* Precompute HMAC-MD5 contexts from a secret
  */
 void
-hmac_md5_pre (const void *secret, int secret_len,
+hmac_md5_pre (const void *secret, size_t secret_len,
               MD5_CTX *inner, MD5_CTX *outer)
 {
   unsigned char ipad[PAD_SIZE];
@@ -87,7 +87,7 @@ hmac_md5_pre (const void *secret, int secret_len,
 /* Finalise HMAC-MD5 contexts from a challenge
  */
 void
-hmac_md5_post (const void *challenge, int challenge_len,
+hmac_md5_post (const void *challenge, size_t challenge_len,
                MD5_CTX *inner, MD5_CTX *outer, unsigned char digest[16])
 {
   unsigned char id[16];
@@ -104,8 +104,8 @@ hmac_md5_post (const void *challenge, int challenge_len,
 /* Digest a challenge and a secret.
  */
 void
-hmac_md5 (const void *challenge, int challenge_len,
-	  const void *secret, int secret_len,
+hmac_md5 (const void *challenge, size_t challenge_len,
+	  const void *secret, size_t secret_len,
 	  unsigned char digest[16])
 {
   MD5_CTX inner, outer;

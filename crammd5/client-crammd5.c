@@ -20,6 +20,12 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
+#include <assert.h>
+
 #include <string.h>
 #include <stdlib.h>
 
@@ -99,7 +105,7 @@ crammd5_response (void *ctx, const char *challenge, int *len,
   unsigned char digest[16];
   char *p, *response;
   int response_len;
-  int i;
+  size_t i;
   static const char hex[] = "0123456789abcdef";
 
   switch (context->state)

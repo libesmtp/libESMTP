@@ -20,6 +20,12 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
+#include <assert.h>
+
 #include <string.h>
 #include <stdlib.h>
 
@@ -97,8 +103,8 @@ login_destroy (void *ctx)
 }
 
 static const char *
-login_response (void *ctx, const char *challenge, int *len,
-		auth_interact_t interact, void *arg)
+login_response (void *ctx, const char *challenge __attribute__ ((unused)),
+                int *len, auth_interact_t interact, void *arg)
 {
   struct login_context *login = ctx;
   char *result[NELT (client_request)];

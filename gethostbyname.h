@@ -49,14 +49,22 @@
 #ifndef _gethostbyname_h
 #define _gethostbyname_h
 
-#if HAVE_GETHOSTBYNAME_R == 6
+#if HAVE_GETIPNODEBYNAME
+
+struct ghbnctx
+  {
+    int h_err;
+    struct hostent *hostent;
+  };
+
+#elif HAVE_GETHOSTBYNAME_R == 6
 
 struct ghbnctx
   {
     int h_err;
     struct hostent hostent;
     char *hostbuf;
-    int hostbuf_len;
+    size_t hostbuf_len;
   };
 
 #elif HAVE_GETHOSTBYNAME_R == 5

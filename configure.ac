@@ -24,7 +24,7 @@ dnl Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 dnl 
 dnl #########################################################################
 
-AC_INIT([libesmtp],[0.8.1],[brian@stafford.uklinux.net])
+AC_INIT([libesmtp],[0.8.2],[brian@stafford.uklinux.net])
 AC_PREREQ(2.50)
 AM_INIT_AUTOMAKE(AC_PACKAGE_NAME,AC_PACKAGE_VERSION)
 AM_CONFIG_HEADER(config.h)
@@ -35,11 +35,26 @@ AC_CONFIG_FILES(libesmtp-config libesmtp.spec
 EXTRA_CFLAGS=""
 
 dnl #########################################################################
+dnl Extra stuff in config.h
+dnl #########################################################################
+
+AH_TOP([
+/* Turn off the GCC specific __attribute__ keyword */
+#if !defined (__GNUC__) || __GNUC__ < 2
+# define __attribute__(x)
+#endif
+])
+
+AC_DEFINE(_ISOC9X_SOURCE,1,[Code is supposed to be ISO compliant])
+AC_DEFINE(_POSIX_C_SOURCE,199506L,[Code is supposed to be POSIX compliant])
+AC_DEFINE(_XOPEN_SOURCE,500,[Single Unix conformance])
+
+dnl #########################################################################
 dnl Library versioning
 dnl #########################################################################
 
 LIB_CURRENT=5
-LIB_REVISION=2
+LIB_REVISION=3
 LIB_AGE=0
 AC_SUBST(LIB_CURRENT)
 AC_SUBST(LIB_REVISION)
@@ -61,6 +76,10 @@ AC_PROG_MAKE_SET
 dnl #########################################################################
 dnl Checks for libraries and options.
 dnl #########################################################################
+
+AC_ARG_ENABLE([all],AC_HELP_STRING([--enable-all], [convenience: enable features which default to off]),
+              ,
+              enable_all=no)
 
 AC_ARG_ENABLE([ltdl-install],AC_HELP_STRING([--enable-ltdl-install],[install libltdl]))
 AC_LIBLTDL_INSTALLABLE
@@ -93,19 +112,44 @@ dnl 		    fi
 dnl 	)
 dnl fi
 
-AC_MSG_CHECKING(whether to use Posix Threads)
 if test x"$enable_pthreads" != xno ; then
-	AC_SEARCH_LIBS(pthread_create, pthread pthreads c_r cr,[AC_MSG_RESULT([yes])
-		       AC_DEFINE(USE_PTHREADS,1,[Build with support for Posix threading])],
+	AC_SEARCH_LIBS(pthread_create, pthread pthreads c_r cr,
+		       enable_pthreads=yes,
 		       if test x"$enable_pthreads" = xyes ; then
 		       		AC_MSG_ERROR([Cannot find the pthread library.])
 		       else
-		       		AC_MSG_RESULT([no])
+		       		enable_pthreads=no
 		       fi
 	)
+fi
+AC_MSG_CHECKING(whether to use Posix Threads)
+if test x"$enable_pthreads" != xno ; then
+	AC_DEFINE(USE_PTHREADS,1,[Build with support for Posix threading])
+	AC_MSG_RESULT([yes])
 else
 	AC_MSG_RESULT([no])
 fi
+
+dnl #########################################################################
+dnl Check if using Posix getaddrinfo()
+dnl #########################################################################
+
+AC_ARG_ENABLE([gethostbyname],
+              AC_HELP_STRING([--enable-gethostbyname],
+                             [enable use of gethostbyname (deprecated, default=no)]),
+  	      ,
+  	      enable_gethostbyname=no)
+ 
+dnl Check if getaddrinfo is available.  If not found and gethostbyname is
+dnl not enabled, print an error message.
+
+AC_SEARCH_LIBS(getaddrinfo, resolv bind nsl c_r cr,
+               AC_DEFINE(HAVE_GETADDRINFO, 1,
+	                  [Build with support for RFC 2553/Posix getaddrinfo]),
+	       if test x$enable_gethostbyname != xyes ; then
+		    AC_MSG_ERROR([getaddrinfo not found: try using --enable-gethostbyname])
+	       fi
+)
 
 dnl #########################################################################
 dnl Check if using SMTP AUTH using SASL
@@ -148,7 +192,7 @@ dnl #########################################################################
 AC_ARG_ENABLE([starttls],
               AC_HELP_STRING([--enable-starttls],[experimental support for STARTTLS  (default=no)]),
   	      ,
-  	      enable_starttls=no)
+  	      enable_starttls=$enable_all)
  
 AC_MSG_CHECKING(whether to enable STARTTLS)
 if test x"$enable_starttls" = xyes ; then
@@ -170,7 +214,7 @@ dnl #########################################################################
 AC_ARG_ENABLE([etrn],
               AC_HELP_STRING([--enable-etrn],[experimental support for ETRN  (default=no)]),
   	      ,
-  	      enable_etrn=no)
+  	      enable_etrn=$enable_all)
  
 AC_MSG_CHECKING(whether to enable ETRN)
 if test x"$enable_etrn" = xyes ; then
@@ -187,7 +231,7 @@ dnl #########################################################################
 AC_ARG_ENABLE([message-callbacks],
               AC_HELP_STRING([--enable-message-callbacks],[add standard message callbacks (experimental) (default=no)]),
   	      ,
-  	      enable_message_callbacks=no)
+  	      enable_message_callbacks=$enable_all)
  
 if test x"$enable_message_callbacks" != xno ; then
   AC_DEFINE(USE_MESSAGE_CALLBACKS,1,
@@ -201,11 +245,27 @@ dnl #########################################################################
 AC_ARG_ENABLE([require-all-recipients],
               AC_HELP_STRING([--enable-require-all-recipients],[add extra API call, needed for Balsa (default=no)]),
   	      ,
-  	      enable_require_all_recipients=no)
+  	      enable_require_all_recipients=$enable_all)
  
 if test x"$enable_require_all_recipients" != xno ; then
   AC_DEFINE(USE_REQUIRE_ALL_RECIPIENTS,1,
             [Build smtp_option_require_all_recipients() API])
+fi
+
+dnl #########################################################################
+dnl Enable debugging code, e.g. assert()
+dnl #########################################################################
+
+AC_ARG_ENABLE([debug],
+              AC_HELP_STRING([--enable-debug],
+                             [enable use of debugging code (default=no)]),
+  	      ,
+  	      enable_debug=no)
+ 
+if test x"$enable_debug" != xno ; then
+  AC_DEFINE(DEBUG,1, [Enable additional debugging code])
+else
+  AC_DEFINE(NDEBUG,1, [Disable assertions])
 fi
 
 dnl #########################################################################
@@ -224,22 +284,6 @@ AC_STRUCT_TM
 AC_HEADER_TIME
 AC_STRUCT_TIMEZONE
 
-AC_CACHE_CHECK([for IPv6 support], acx_cv_sys_use_ipv6, [
-	AC_TRY_COMPILE([
-#include <netinet/in.h>
-	], [
-		struct sockaddr_in6 sin6;
-		void *p;
-
-		sin6.sin6_family = AF_INET6;
-		sin6.sin6_port = 25;
-		p = &sin6.sin6_addr;
-	], [acx_cv_sys_use_ipv6=yes], [acx_cv_sys_use_ipv6=no])
-])
-if test x"$acx_cv_sys_use_ipv6" != xno ; then
-	AC_DEFINE(USE_IPV6,1,[Enable IPv6 support])
-fi
-
 dnl #########################################################################
 dnl Check for types
 dnl #########################################################################
@@ -248,15 +292,11 @@ dnl #########################################################################
 dnl Checks for library functions.
 dnl #########################################################################
 
-AC_FUNC_MEMCMP
-AC_CHECK_FUNCS(gethostname snprintf socket strdup strndup strerror strtol)
+AC_CHECK_FUNCS(snprintf socket strdup strndup strtol gethostname)
 
 dnl Conditional check for functions needed in threaded code
 
 if test x"$enable_pthreads" != xno ; then
-	AC_SEARCH_LIBS(gethostbyname_r, resolv bind nsl c_r cr,
-		       [ACX_WHICH_GETHOSTBYNAME_R],
-		       AC_MSG_ERROR([Cannot find gethostbyname_r.]))
 	AC_SEARCH_LIBS(localtime_r, c_r cr,
 		       AC_DEFINE(HAVE_LOCALTIME_R,1,[Set when gmtime_r is available]),
 		       AC_MSG_ERROR([Cannot find gmtime_r.]))
@@ -264,6 +304,45 @@ if test x"$enable_pthreads" != xno ; then
 		       AC_DEFINE(HAVE_GMTIME_R,1,[Set when localtime_r is available]),
 		       AC_MSG_ERROR([Cannot find localtime_r.]))
 	AC_FUNC_STRERROR_R
+else
+	AC_CHECK_FUNCS(localtime gmtime strerror)
+fi
+
+dnl Conditional check for resolver functions needed in threaded code.
+dnl Only done if the Posix getaddrinfo() function is not available.
+dnl Check if IPv6 code is explicitly needed if using gethostbyname.
+dnl This is not necessray if using getaddrinfo since the new interface
+dnl isolates the code from protocol specifics.
+
+if test x"$enable_gethostbyname" != xno ; then
+	AC_LIBOBJ(gethostbyname)
+	if test x"$enable_pthreads" != xno ; then
+		AC_SEARCH_LIBS(getipnodebyname, resolv bind nsl c_r cr,
+		       AC_DEFINE(HAVE_GETIPNODEBYNAME,1,[Set when getipnodebyname is available]),
+		       [AC_SEARCH_LIBS(gethostbyname_r, resolv bind nsl c_r cr,
+				       [ACX_WHICH_GETHOSTBYNAME_R],
+				       AC_MSG_ERROR([Cannot find gethostbyname_r]))
+		       ])
+	else
+		AC_SEARCH_LIBS(gethostbyname, resolv bind nsl, ,
+			       AC_MSG_ERROR([Cannot find gethostbyname]))
+	fi
+
+	AC_CACHE_CHECK([for IPv6 support], acx_cv_sys_use_ipv6, [
+		AC_TRY_COMPILE([
+#                       include <netinet/in.h>
+		], [
+			struct sockaddr_in6 sin6;
+			void *p;
+
+			sin6.sin6_family = AF_INET6;
+			sin6.sin6_port = 25;
+			p = &sin6.sin6_addr;
+		], [acx_cv_sys_use_ipv6=yes], [acx_cv_sys_use_ipv6=no])
+	])
+	if test x"$acx_cv_sys_use_ipv6" != xno ; then
+		AC_DEFINE(USE_IPV6,1,[Enable IPv6 support])
+	fi
 fi
 
 dnl #########################################################################
@@ -286,6 +365,14 @@ if test "$GCC" = "yes" -a "$enable_more_warnings" = "picky"; then
         		-Wcast-qual"
 fi
 
+AC_ARG_ENABLE([isoc],
+              AC_HELP_STRING([--disable-isoc],[check ISO C compliance (default=yes)]),
+	      ,
+	      enable_isoc=yes)
+if test "$GCC" = "yes" -a "$enable_isoc" != "no"; then
+        EXTRA_CFLAGS="-ansi -pedantic $EXTRA_CFLAGS"
+fi
+
 dnl #########################################################################
 dnl Make substitutions
 dnl #########################################################################
@@ -304,3 +391,24 @@ AC_SUBST(RANLIB)
 AC_SUBST(subdirs)
 
 AC_OUTPUT
+
+dnl #########################################################################
+dnl Feature synopsis
+dnl #########################################################################
+
+AC_DEFUN([ACX_FEATURE],
+[echo "m4_format([   %-34s:], [--$1-$2])" m4_builtin([ifelse],$3,,[$]m4_translit($1-$2,-,_),$3)])
+
+echo
+echo '*************************'
+echo '*** libESMTP features ***'
+echo '*************************'
+d=`eval echo $plugindir`
+ACX_FEATURE([with],[auth-plugin-dir],[`eval echo $d`])
+ACX_FEATURE([enable],[pthreads])
+ACX_FEATURE([enable],[starttls])
+ACX_FEATURE([enable],[etrn])
+ACX_FEATURE([enable],[message-callbacks])
+ACX_FEATURE([enable],[require-all-recipients])
+ACX_FEATURE([enable],[debug])
+

@@ -107,7 +107,7 @@ smtp_etrn_set_application_data (smtp_etrn_node_t node, void *data)
 {
   void *old;
 
-  SMTPAPI_CHECK_ARGS (node != NULL, 0);
+  SMTPAPI_CHECK_ARGS (node != NULL, NULL);
 
   old = node->application_data;
   node->application_data = data;
@@ -117,7 +117,7 @@ smtp_etrn_set_application_data (smtp_etrn_node_t node, void *data)
 void *
 smtp_etrn_get_application_data (smtp_etrn_node_t node)
 {
-  SMTPAPI_CHECK_ARGS (node != NULL, 0);
+  SMTPAPI_CHECK_ARGS (node != NULL, NULL);
 
   return node->application_data;
 }
@@ -226,7 +226,7 @@ smtp_etrn_node_status (smtp_etrn_node_t node)
 void *
 smtp_etrn_set_application_data (smtp_etrn_node_t node, void *data)
 {
-  SMTPAPI_CHECK_ARGS (node != NULL, 0);
+  SMTPAPI_CHECK_ARGS (node != NULL, NULL);
 
   return NULL;
 }
@@ -234,7 +234,7 @@ smtp_etrn_set_application_data (smtp_etrn_node_t node, void *data)
 void *
 smtp_etrn_get_application_data (smtp_etrn_node_t node)
 {
-  SMTPAPI_CHECK_ARGS (node != NULL, 0);
+  SMTPAPI_CHECK_ARGS (node != NULL, NULL);
 
   return NULL;
 }

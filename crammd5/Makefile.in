@@ -65,7 +65,6 @@ AMTAR = @AMTAR@
 AS = @AS@
 AWK = @AWK@
 CC = @CC@
-CFLAGS = @CFLAGS@
 CPP = @CPP@
 CRAMMD5_LIBS = @CRAMMD5_LIBS@
 DEPDIR = @DEPDIR@
@@ -105,6 +104,7 @@ subdirs = @subdirs@
 libdir = @plugindir@
 
 INCLUDES = -I@srcdir@
+CFLAGS = @CFLAGS@ @EXTRA_CFLAGS@
 
 lib_LTLIBRARIES = sasl-cram-md5.la
 

@@ -24,6 +24,8 @@
 #include <config.h>
 #endif
 
+#include <assert.h>
+
 #ifdef USE_PTHREADS
 #include <pthread.h>
 #endif
@@ -68,6 +70,8 @@ plugin_name (char *buf, int buflen, const char *str)
   char *p;
   static const char prefix[] = "sasl-";
 
+  assert (buf != NULL && buflen > sizeof prefix && str != NULL);
+
   strcpy (buf, prefix);
   p = buf + sizeof prefix - 1;
   buflen -= sizeof prefix;
@@ -77,12 +81,19 @@ plugin_name (char *buf, int buflen, const char *str)
   return buf;
 }
 
-static void
+static int
 append_plugin (lt_dlhandle module, const struct auth_client_plugin *info)
 {
   struct auth_plugin *auth_plugin;
 
+  assert (info != NULL);
+
   auth_plugin = malloc (sizeof (struct auth_plugin));
+  if (auth_plugin == NULL)
+    {
+      /* FIXME: propagate an ENOMEM back to the app. */
+      return 0;
+    }
   auth_plugin->info = info;
   auth_plugin->module = module;
   auth_plugin->next = NULL;
@@ -91,6 +102,7 @@ append_plugin (lt_dlhandle module, const struct auth_client_plugin *info)
   else
     end_client_plugins->next = auth_plugin;
   end_client_plugins = auth_plugin;
+  return 1;
 }
 
 static const struct auth_client_plugin *
@@ -101,14 +113,16 @@ load_client_plugin (auth_context_t context, const char *name)
   const char *plugin;
   const struct auth_client_plugin *info;
 
+  assert (context != NULL && name != NULL);
+
   /* Try searching for a plugin. */
   plugin = plugin_name (buf, sizeof buf, name);
   module = lt_dlopenext (plugin);
   if (module == NULL)
-    return 0;
+    return NULL;
 
   info = lt_dlsym (module, "sasl_client");
-  if (info == NULL)
+  if (info == NULL || info->response == NULL)
     {
       lt_dlclose (module);
       return NULL;
@@ -127,7 +141,12 @@ load_client_plugin (auth_context_t context, const char *name)
 
   /* This plugin module is OK.  Add it to the list of loaded modules.
    */
-  append_plugin (module, info);
+  if (!append_plugin (module, info))
+    {
+      lt_dlclose (module);
+      return NULL;
+    }
+
   return info;
 }
 
@@ -228,7 +247,7 @@ auth_set_external_id (auth_context_t context, const char *identity)
       NULL,
       NULL,
     /* Authentication */
-      NULL,
+      (auth_response_t) 1,
       AUTH_PLUGIN_EXTERNAL,
     /* Security Layer */
       0,
@@ -298,7 +317,7 @@ auth_set_mechanism (auth_context_t context, const char *name)
   struct auth_plugin *plugin;
   const struct auth_client_plugin *info;
 
-  API_CHECK_ARGS (context != NULL, 0);
+  API_CHECK_ARGS (context != NULL && name != NULL, 0);
 
 #ifdef USE_PTHREADS
   pthread_mutex_lock (&plugin_mutex);
@@ -355,9 +374,22 @@ auth_set_mechanism (auth_context_t context, const char *name)
 }
 
 const char *
+auth_mechanism_name (auth_context_t context)
+{
+  API_CHECK_ARGS (context != NULL && context->client != NULL, NULL);
+
+  return context->client->keyw;
+}
+
+const char *
 auth_response (auth_context_t context, const char *challenge, int *len)
 {
-  API_CHECK_ARGS (context != NULL && context->client != NULL && len != NULL, NULL);
+  API_CHECK_ARGS (context != NULL
+                  && context->client != NULL
+                  && len != NULL
+		  && ((context->client->flags & AUTH_PLUGIN_EXTERNAL)
+		       || context->interact != NULL),
+		  NULL);
 
   if (challenge == NULL)
     {
@@ -373,6 +405,7 @@ auth_response (auth_context_t context, const char *challenge, int *len)
       *len = strlen (context->external_id);
       return context->external_id;
     }
+  assert (context->client->response != NULL);
   return (*context->client->response) (context->plugin_ctx,
   				       challenge, len,
 				       context->interact,

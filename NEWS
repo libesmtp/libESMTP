@@ -1,3 +1,22 @@
+* libESMTP 0.8.2 development release.	2000-06-26
+
+- See ChangeLog for details.
+
+  o Added lots of assertions in the code.
+
+  o Fixed a bad dangling pointer bug that could strike when sending
+    messages with lines > 510 characters.
+
+  o Fixed a polling bug that could cause deadlock.
+
+  o Resolver interface now uses Posix standard getaddrinfo.
+    Use of gethostbyname is deprecated.
+
+Please note that the current RFC 2822 header API is adequate but
+incomplete; for example, interactions between certain headers are not
+implemented.  This will not change for a while.  The current priority is
+to make the protocol engine robust.
+
 * libESMTP 0.8.1 development release.	2000-06-15
 
 - See ChangeLog for details.

@@ -25,16 +25,17 @@
 struct catbuf
   {
     char *buffer;
-    int string_length;
-    int allocated;
+    size_t string_length;
+    size_t allocated;
   };
 
-void cat_init (struct catbuf *catbuf, int minimum_length);
-void cat_reset (struct catbuf *catbuf, int minimum_length);
+void cat_init (struct catbuf *catbuf, size_t minimum_length);
+void cat_reset (struct catbuf *catbuf, size_t minimum_length);
 void cat_free (struct catbuf *catbuf);
 char *cat_buffer (struct catbuf *catbuf, int *len);
 char *concatenate (struct catbuf *catbuf, const char *string, int len);
 char *vconcatenate (struct catbuf *catbuf, ...);
-int cat_printf (struct catbuf *catbuf, const char *format, ...);
+int cat_printf (struct catbuf *catbuf, const char *format, ...)
+	__attribute__ ((format (printf, 2, 3))) ;
 
 #endif

@@ -42,14 +42,14 @@
 #endif
 
 /* Precompute HMAC-MD5 contexts from a secret. */
-void hmac_md5_pre (const void *secret, int secret_len,
+void hmac_md5_pre (const void *secret, size_t secret_len,
                    MD5_CTX *inner, MD5_CTX *outer);
 /* Finalise HMAC-MD5 contexts from a challenge.  */
-void hmac_md5_post (const void *challenge, int challenge_len,
+void hmac_md5_post (const void *challenge, size_t challenge_len,
                     MD5_CTX *inner, MD5_CTX *outer, unsigned char digest[16]);
 /* Digest a challenge and a secret.  */
-void hmac_md5 (const void *challenge, int challenge_len,
-	       const void *secret, int secret_len,
+void hmac_md5 (const void *challenge, size_t challenge_len,
+	       const void *secret, size_t secret_len,
 	       unsigned char digest[16]);
 
 #endif

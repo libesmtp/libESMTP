@@ -24,6 +24,8 @@
 #include <config.h>
 #endif
 
+#include <assert.h>
+
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -59,7 +61,7 @@ struct siobuf
     int sdr;			/* Socket descriptor being buffered. */
     int sdw;			/* Socket descriptor being buffered. */
 
-    int buffer_size;		/* size of buffers */
+    size_t buffer_size;		/* size of buffers */
     int milliseconds;		/* Timeout in ms */
 
     char *read_buffer;		/* client read buffer */
@@ -132,6 +134,8 @@ sio_attach (int sdr, int sdw, int buffer_size)
 void
 sio_detach (struct siobuf *sio)
 {
+  assert (sio != NULL);
+
 #ifdef USE_TLS
   if (sio->ssl != NULL)
     {
@@ -153,6 +157,8 @@ sio_detach (struct siobuf *sio)
 void
 sio_set_monitorcb (struct siobuf *sio, monitorcb_t cb, void *arg)
 {
+  assert (sio != NULL);
+
   sio->monitor_cb = cb;
   sio->cbarg = arg;
 }
@@ -160,6 +166,8 @@ sio_set_monitorcb (struct siobuf *sio, monitorcb_t cb, void *arg)
 void
 sio_set_timeout (struct siobuf *sio, int milliseconds)
 {
+  assert (sio != NULL);
+
   sio->milliseconds = milliseconds;
 #ifdef USE_TLS
   if (sio->ssl != NULL)
@@ -180,6 +188,8 @@ int
 sio_set_tlsclient_ctx (struct siobuf *sio, SSL_CTX *ctx)
 {
   int ret;
+
+  assert (sio != NULL);
 
   if (ctx != NULL)
     {
@@ -203,18 +213,24 @@ void
 sio_set_securitycb (struct siobuf *sio,
                     recodecb_t encode_cb, recodecb_t decode_cb, void *arg)
 {
+  assert (sio != NULL);
+
   sio->secarg = arg;
   sio->encode_cb = encode_cb;
   sio->decode_cb = decode_cb;
 }
 
 /* Return -1 on timeout or error.  Return 0 if nothing to poll.
-   Return OR of SIO_READ, SIO_WRITE as appropriate for request. */
+   Return OR of SIO_READ, SIO_WRITE as appropriate for request.
+   If the fast flag is set, poll does not block, otherwise it
+   blocks with the current timeout value. */
 int
-sio_poll (struct siobuf *sio, int want_read, int want_write)
+sio_poll (struct siobuf *sio, int want_read, int want_write, int fast)
 {
   int npoll, status, rval;
   struct pollfd pollfd[2];
+
+  assert (sio != NULL);
 
   if (want_read && sio->read_unread > 0)
     return SIO_READ;
@@ -246,9 +262,13 @@ sio_poll (struct siobuf *sio, int want_read, int want_write)
   if (npoll == 0)
     return 0;
 
-  while ((status = poll (pollfd, npoll, sio->milliseconds)) < 0)
+  while ((status = poll (pollfd, npoll, fast ? 0 : sio->milliseconds)) < 0)
     if (errno != EINTR)
       return -1;
+
+  /* Timeout is not an error on the fast poll */
+  if (status == 0 && fast)
+    return 0;
 
   rval = 0;
   while (--npoll >= 0)
@@ -267,6 +287,8 @@ sio_sslpoll (struct siobuf *sio, int ret)
 {
   int err, want_read, want_write;
 
+  assert (sio != NULL);
+
   err = SSL_get_error (sio->ssl, ret);
   want_read = want_write = 0;
   if (err == SSL_ERROR_WANT_READ)
@@ -275,13 +297,15 @@ sio_sslpoll (struct siobuf *sio, int ret)
     want_write = 1;
   else
     return -1;
-  return sio_poll (sio, want_read, want_write);
+  return sio_poll (sio, want_read, want_write, 0);
 }
 #endif
 
 void
 sio_write (struct siobuf *sio, const char *buf, int buflen)
 {
+  assert (sio != NULL && buf != NULL);
+
   if (buflen < 0)
     buflen = strlen (buf);
   while (buflen > sio->write_available)
@@ -302,6 +326,8 @@ raw_write (struct siobuf *sio, const char *buf, int len)
 {
   int n, total;
   struct pollfd pollfd;
+
+  assert (sio != NULL && buf != NULL);
 
   for (total = 0; total < len; total += n)
 #ifdef USE_TLS
@@ -343,6 +369,8 @@ void
 sio_flush (struct siobuf *sio)
 {
   int length;
+
+  assert (sio != NULL);
 
   if (sio->flush_mark != NULL && sio->flush_mark > sio->write_buffer)
     length = sio->flush_mark - sio->write_buffer;
@@ -389,6 +417,8 @@ sio_flush (struct siobuf *sio)
 void
 sio_mark (struct siobuf *sio)
 {
+  assert (sio != NULL);
+
   sio->flush_mark = sio->write_position;
 }
 
@@ -401,6 +431,8 @@ raw_read (struct siobuf *sio, char *buf, int len)
 {
   int n;
   struct pollfd pollfd;
+
+  assert (sio != NULL && buf != NULL && len > 0);
 
 #ifdef USE_TLS
   if (sio->ssl != NULL)
@@ -439,6 +471,8 @@ raw_read (struct siobuf *sio, char *buf, int len)
 int
 sio_fill (struct siobuf *sio)
 {
+  assert (sio != NULL);
+
   sio->read_unread = raw_read (sio, sio->read_buffer, sio->buffer_size);
   if (sio->read_unread <= 0)
     return 0;
@@ -468,6 +502,8 @@ sio_read (struct siobuf *sio, char buf[], int buflen)
 {
   int count, total;
 
+  assert (sio != NULL && buf != NULL && buflen > 0);
+
   if (sio->read_unread <= 0 && !sio_fill (sio))
     return -1;
 
@@ -495,6 +531,8 @@ sio_gets (struct siobuf *sio, char buf[], int buflen)
 {
   int c;
   char *p;
+
+  assert (sio != NULL && buf != NULL && buflen > 0);
 
   if (sio->read_unread <= 0 && !sio_fill (sio))
     return NULL;
@@ -524,6 +562,8 @@ sio_printf (struct siobuf *sio, const char *format, ...)
   va_list alist;
   char buf[1024];
   int len;
+
+  assert (sio != NULL && format != NULL);
 
   va_start (alist, format);
   len = vsnprintf (buf, sizeof buf, format, alist);

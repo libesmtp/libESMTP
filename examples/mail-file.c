@@ -49,8 +49,8 @@ struct option longopts[] =
     { NULL, },
   };
 
-char *readfp_cb (char **buf, int *len, void *arg);
-char *readlinefp_cb (char **buf, int *len, void *arg);
+const char *readfp_cb (void **buf, int *len, void *arg);
+const char *readlinefp_cb (void **buf, int *len, void *arg);
 void monitor_cb (const char *buf, int buflen, int writing, void *arg);
 void print_recipient_status (smtp_recipient_t recipient,
 			     const char *mailbox, void *arg);
@@ -239,8 +239,8 @@ print_recipient_status (smtp_recipient_t recipient,
  */
 #define BUFLEN	8192
 
-char *
-readfp_cb (char **buf, int *len, void *arg)
+const char *
+readfp_cb (void **buf, int *len, void *arg)
 {
   if (*buf == NULL)
     *buf = malloc (BUFLEN);
@@ -255,8 +255,8 @@ readfp_cb (char **buf, int *len, void *arg)
   return *buf;
 }
 
-char *
-readlinefp_cb (char **buf, int *len, void *arg)
+const char *
+readlinefp_cb (void **buf, int *len, void *arg)
 {
   int octets;
 
@@ -289,7 +289,7 @@ readlinefp_cb (char **buf, int *len, void *arg)
 	  strcpy (p - 1, "\r\n");
 	  p++;
         }
-      octets = p - *buf;
+      octets = p - (char *) *buf;
     }
   *len = octets;
   return *buf;

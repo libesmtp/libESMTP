@@ -24,6 +24,8 @@
 #include <config.h>
 #endif
 
+#include <assert.h>
+
 /* Routines to encode and decode base64 text.
  */
 #include <ctype.h>
@@ -59,6 +61,8 @@ b64_decode (void *dst, int dstlen, const char *src, int srclen)
   const unsigned char *p, *q;
   unsigned char *t;
   int c1, c2;
+
+  assert (dst != NULL && dstlen > 0 && src != NULL && srclen != 0);
 
   if (srclen < 0)
     srclen = strlen (src);
@@ -113,6 +117,8 @@ b64_encode (char *dst, int dstlen, const void *src, int srclen)
   const unsigned char *from;
   unsigned char c1, c2;
   int dst_needed;
+
+  assert (dst != NULL && dstlen > 0 && src != NULL && srclen > 0);
 
   dst_needed = (srclen + 2) / 3;
   dst_needed *= 4;
