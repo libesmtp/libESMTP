@@ -97,12 +97,15 @@ enum
   /* Extensions specific events */
     SMTP_EV_DELIVERBY_EXPIRED = 3000,
 
-    /* STARTTLS */
+  /* STARTTLS */
     SMTP_EV_WEAK_CIPHER = 3100,
     SMTP_EV_STARTTLS_OK,
     SMTP_EV_INVALID_PEER_CERTIFICATE,
     SMTP_EV_NO_PEER_CERTIFICATE,
-    SMTP_EV_WRONG_PEER_CERTIFICATE
+    SMTP_EV_WRONG_PEER_CERTIFICATE,
+    SMTP_EV_NO_CLIENT_CERTIFICATE,
+    SMTP_EV_UNUSABLE_CLIENT_CERTIFICATE,
+    SMTP_EV_UNUSABLE_CA_LIST
   };
 typedef void (*smtp_eventcb_t) (smtp_session_t session, int event_no,
 				void *arg, ...);

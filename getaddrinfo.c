@@ -207,6 +207,8 @@ getaddrinfo (const char *nodename, const char *servname,
       struct sockaddr sa;
       size_t addrlen;
 
+      if (hp->h_length < 1)
+        continue;
       sa.sa_family = hp->h_addrtype;
       switch (hp->h_addrtype)
         {

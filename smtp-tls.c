@@ -35,10 +35,12 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <errno.h>
 #include <string.h>
 #include <missing.h> /* declarations for missing library functions */
 /* ^^^^^^^^^^^ */
 
+#include <ctype.h>
 #include "libesmtp-private.h"
 #include "siobuf.h"
 #include "protocol.h"
@@ -115,17 +117,20 @@ user_pathname (char buf[], size_t buflen, const char *tail)
   return buf;
 }
 
+typedef enum { FILE_PROBLEM, FILE_NOT_PRESENT, FILE_OK } ckf_t;
+
 /* Check file exists, is a regular file and contains something */
-static int
+static ckf_t
 check_file (const char *file)
 {
   struct stat st;
 
+  errno = 0;
   if (stat (file, &st) < 0)
-    return 0;
+    return (errno == ENOENT) ? FILE_NOT_PRESENT : FILE_PROBLEM;
   /* File must be regular and contain something */
-  if (!S_ISREG (st.st_mode) && st.st_size > 0)
-    return 0;
+  if (!(S_ISREG (st.st_mode) && st.st_size > 0))
+    return FILE_PROBLEM;
   /* For now this check is paranoid.  The way I figure it, the passwords
      on the private keys will be intensely annoying, so people will
      remove them.  Therefore make them protect the files using very
@@ -133,25 +138,25 @@ check_file (const char *file)
      read or write the certificates and the user the app is running as
      should own the files. */
   if ((st.st_mode & (S_IXUSR | S_IRWXG | S_IRWXO)) || st.st_uid != getuid ())
-    return 0;
-  return 1;
+    return FILE_PROBLEM;
+  return FILE_OK;
 }
 
 /* Check directory exists */
-static int
+static ckf_t
 check_directory (const char *file)
 {
   struct stat st;
 
   if (stat (file, &st) < 0)
-    return 0;
+    return (errno == ENOENT) ? FILE_NOT_PRESENT : FILE_PROBLEM;
   /* File must be a directory */
   if (!S_ISDIR (st.st_mode))
-    return 0;
+    return FILE_PROBLEM;
   /* Paranoia - only permit owner rwx permissions */
   if ((st.st_mode & (S_IRWXG | S_IRWXO)) || st.st_uid != getuid ())
-    return 0;
-  return 1;
+    return FILE_PROBLEM;
+  return FILE_OK;
 }
 
 /* ^^^^^^^^^^^ */
@@ -181,12 +186,13 @@ smtp_starttls_set_password_cb (smtp_starttls_passwordcb_t cb, void *arg)
 }
 
 static SSL_CTX *
-starttls_create_ctx (void)
+starttls_create_ctx (smtp_session_t session)
 {
   SSL_CTX *ctx;
   char buf[2048];
   char buf2[2048];
   char *keyfile, *cafile, *capath;
+  ckf_t status;
 
   /* The decision not to support SSL v2 and v3 but instead to use only
      TLSv1 is deliberate.  This is in line with the intentions of RFC
@@ -251,7 +257,8 @@ starttls_create_ctx (void)
       SSL_CTX_set_default_passwd_cb_userdata (ctx, ctx_password_cb_arg); 
     }
   keyfile = user_pathname (buf, sizeof buf, "private/smtp-starttls.pem");
-  if (check_file (keyfile))
+  status = check_file (keyfile);
+  if (status == FILE_OK)
     {
       if (!SSL_CTX_use_certificate_file (ctx, keyfile, SSL_FILETYPE_PEM))
 	{
@@ -260,19 +267,47 @@ starttls_create_ctx (void)
 	}
       if (!SSL_CTX_use_PrivateKey_file (ctx, keyfile, SSL_FILETYPE_PEM))
 	{
-	  /* FIXME: set an error code */
-	  return NULL;
+	  int ok = 0;
+	  if (session->event_cb != NULL)
+	    (*session->event_cb) (session, SMTP_EV_NO_CLIENT_CERTIFICATE,
+				  session->event_cb_arg, &ok);
+	  if(!ok) 
+            return NULL;
 	}
+    }
+  else if (status == FILE_PROBLEM)
+    {
+      if (session->event_cb != NULL)
+	(*session->event_cb) (session, SMTP_EV_UNUSABLE_CLIENT_CERTIFICATE,
+			      session->event_cb_arg, NULL);
+      return NULL;
     }
 
   /* Server certificate policy: check the server certificate against the
      trusted CA list to a depth of 1. */
   cafile = user_pathname (buf, sizeof buf, "ca.pem");
-  if (!check_file (cafile))
+  status = check_file (cafile);
+  if (status == FILE_NOT_PRESENT)
     cafile = NULL;
+  else if (status == FILE_PROBLEM)
+    {
+      if (session->event_cb != NULL)
+	(*session->event_cb) (session, SMTP_EV_UNUSABLE_CA_LIST,
+			      session->event_cb_arg, NULL);
+      return NULL;
+    }
   capath = user_pathname (buf2, sizeof buf2, "ca");
-  if (!check_directory (capath))
+  status = check_directory (capath);
+  if (status == FILE_NOT_PRESENT)
     capath = NULL;
+  else if (status == FILE_PROBLEM)
+    {
+      if (session->event_cb != NULL)
+	(*session->event_cb) (session, SMTP_EV_UNUSABLE_CA_LIST,
+			      session->event_cb_arg, NULL);
+      return NULL;
+    }
+
   /* Load the CAs we trust */
   if (cafile != NULL || capath != NULL)
     SSL_CTX_load_verify_locations (ctx, cafile, capath);
@@ -291,6 +326,7 @@ starttls_create_ssl (smtp_session_t session)
   char buf2[2048];
   char *keyfile;
   SSL *ssl;
+  ckf_t status;
 
   ssl = SSL_new (session->starttls_ctx);
 
@@ -310,7 +346,8 @@ starttls_create_ssl (smtp_session_t session)
 	    by getaddrinfo.  Use that instead of session->host. */
   snprintf (buf2, sizeof buf2, "%s/private/smtp-starttls.pem", session->host);
   keyfile = user_pathname (buf, sizeof buf, buf2);
-  if (check_file (keyfile))
+  status = check_file (keyfile);
+  if (status == FILE_OK)
     {
       if (!SSL_use_certificate_file (ssl, keyfile, SSL_FILETYPE_PEM))
 	{
@@ -319,9 +356,20 @@ starttls_create_ssl (smtp_session_t session)
 	}
       if (!SSL_use_PrivateKey_file (ssl, keyfile, SSL_FILETYPE_PEM))
 	{
-	  /* FIXME: set an error code */
-	  return NULL;
+	  int ok = 0;
+	  if (session->event_cb != NULL)
+	    (*session->event_cb) (session, SMTP_EV_NO_CLIENT_CERTIFICATE,
+				  session->event_cb_arg, &ok);
+	  if(!ok) 
+            return NULL;
 	}
+    }
+  else if (status == FILE_PROBLEM)
+    {
+      if (session->event_cb != NULL)
+	(*session->event_cb) (session, SMTP_EV_UNUSABLE_CLIENT_CERTIFICATE,
+			      session->event_cb_arg, NULL);
+      return NULL;
     }
 
   return ssl;
@@ -365,7 +413,8 @@ select_starttls (smtp_session_t session)
             session promote Starttls_ENABLED to Starttls_REQUIRED.
             If this session does not offer STARTTLS, this will force
             protocol.c to report the extension as not available and QUIT
-            as reccommended in RFC 3207.  */
+            as reccommended in RFC 3207.  This requires some form of db
+	    storage to record this for future sessions. */
   /* if (...)
       session->starttls_enabled = Starttls_REQUIRED; */
   if (!(session->extensions & EXT_STARTTLS))
@@ -376,12 +425,65 @@ select_starttls (smtp_session_t session)
   pthread_mutex_lock (&starttls_mutex);
 #endif
   if (starttls_ctx == NULL && starttls_init ())
-    starttls_ctx = starttls_create_ctx ();
+    starttls_ctx = starttls_create_ctx (session);
 #ifdef USE_PTHREADS
   pthread_mutex_unlock (&starttls_mutex);
 #endif
   session->starttls_ctx = starttls_ctx;
   return session->starttls_ctx != NULL;
+}
+
+static int
+match_component (const char *dom, const char *edom,
+                 const char *ref, const char *eref)
+{
+  while (dom < edom && ref < eref)
+    {
+      /* Accept a final '*' in the reference as a wildcard */
+      if (*ref == '*' && ref + 1 == eref)
+        break;
+      /* compare the domain name case insensitive */
+      if (!(*dom == *ref || tolower (*dom) == tolower (*ref)))
+        return 0;
+      ref++, dom++;
+    }
+  return 1;
+}
+
+/* Perform a domain name comparison where the reference may contain
+   wildcards.  This implements the comparison from RFC 2818.
+   Each component of the domain name is matched separately, working from
+   right to left.
+ */
+static int
+match_domain (const char *domain, const char *reference)
+{
+  const char *dom, *edom, *ref, *eref;
+
+  eref = strchr (reference, '\0');
+  edom = strchr (domain, '\0');
+  while (eref > reference && edom > domain)
+    {
+      /* Find the rightmost component of the reference. */
+      ref = memrchr (reference, '.', eref - reference - 1);
+      if (ref != NULL)
+        ref++;
+      else
+        ref = reference;
+
+      /* Find the rightmost component of the domain name. */
+      dom = memrchr (domain, '.', edom - domain - 1);
+      if (dom != NULL)
+        dom++;
+      else
+        dom = domain;
+
+      if (!match_component (dom, edom, ref, eref))
+        return 0;
+      edom = dom - 1;
+      eref = ref - 1;
+    }
+  return eref < reference && edom < domain;
 }
 
 static int
@@ -434,9 +536,7 @@ check_acceptable_security (smtp_session_t session, SSL *ssl)
       /* FIXME: in protocol.c, record the canonic name of the host returned
                 by getaddrinfo.  Use that instead of session->host. */
 
-      /* FIXME: the host name in the certificate may have wild cards
-                present.  Use something better than strcasecmp!  */
-      if (strcasecmp (session->host, buf) != 0)
+      if (!match_domain (session->host, buf) != 0)
         {
 	  ok = 0;
 	  if (session->event_cb != NULL)
@@ -532,7 +632,7 @@ rsp_starttls (siobuf_t conn, smtp_session_t session)
   else
     {
       set_error (SMTP_ERR_CLIENT_ERROR);
-      session->rsp_state = S_quit;
+      session->rsp_state = -1;
     }
 }
 

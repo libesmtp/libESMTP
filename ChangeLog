@@ -1,4 +1,18 @@
-2002-09-12 Stable Version 1.0.1 released
+2004-01-06 Stable Version 1.0.1 released
+--------------------------------------
+2003-12-01 	Brian Stafford	<brian@stafford.uklinux.net>
+      * smtp-tls.c examples/mail-file.c
+	Applied patch from Pawel Salek.
+
+      * smtp-tls.c
+        Fixed typo in check_file() which prevented it from doing quite
+	the right thing.
+	The domain name check for the server certificate is now implemented
+	using the wildcard match described in RFC 2818.
+	Check_file() and check_directory() return different values for
+	unusable vs absent files.
+
+2003-09-12 Stable Version 1.0.1 released
 --------------------------------------
 2003-09-11 	Brian Stafford	<brian@stafford.uklinux.net>
       * protocol.c smtp-auth.c smtp-bdat.c smtp-etrn.c smtp-tls.c
