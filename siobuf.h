@@ -1,9 +1,9 @@
 #ifndef _siobuf_h
 #define _siobuf_h
 /*
- *  This file is part of libESMTP, a library for submission of RFC 822
+ *  This file is part of libESMTP, a library for submission of RFC 2822
  *  formatted electronic mail messages using the SMTP protocol described
- *  in RFC 821.
+ *  in RFC 2821.
  *
  *  Copyright (C) 2001  Brian Stafford  <brian@stafford.uklinux.net>
  *
@@ -40,17 +40,17 @@ void sio_set_timeout(struct siobuf *sio, int milliseconds);
 void sio_set_securitycb(struct siobuf *sio, recodecb_t encode_cb,
 		        recodecb_t decode_cb, void *arg);
 int sio_poll(struct siobuf *sio,int want_read, int want_write, int fast);
-void sio_write(struct siobuf *sio, const char *buf, int buflen);
+void sio_write(struct siobuf *sio, const void *bufp, int buflen);
 void sio_flush(struct siobuf *sio);
 void sio_mark(struct siobuf *sio);
 int sio_fill(struct siobuf *sio);
-int sio_read(struct siobuf *sio, char buf[], int buflen);
+int sio_read(struct siobuf *sio, void *bufp, int buflen);
 char *sio_gets(struct siobuf *sio, char buf[], int buflen);
 int sio_printf(struct siobuf *sio, const char *format, ...)
 	       __attribute__ ((format (printf, 2, 3))) ;
 
 
 #ifdef USE_TLS
-int sio_set_tlsclient_ctx (struct siobuf *sio, SSL_CTX *ctx);
+int sio_set_tlsclient_ssl (struct siobuf *sio, SSL *ssl);
 #endif
 #endif

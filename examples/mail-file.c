@@ -60,6 +60,7 @@ void print_recipient_status (smtp_recipient_t recipient,
 			     const char *mailbox, void *arg);
 int authinteract (auth_client_request_t request, char **result, int fields,
                   void *arg);
+int tlsinteract (char *buf, int buflen, int rwflag, void *arg);
 void usage (void);
 void version (void);
 
@@ -173,6 +174,10 @@ main (int argc, char **argv)
   auth_set_mechanism_flags (authctx, AUTH_PLUGIN_PLAIN, 0);
   auth_set_interact_cb (authctx, authinteract, NULL);
 
+  /* Use our callback for X.509 certificate passwords.  If STARTTLS is
+     not in use or disabled in configure, the following is harmless. */
+  smtp_starttls_set_password_cb (tlsinteract, NULL);
+
   /* Now tell libESMTP it can use the SMTP AUTH extension.
    */
   smtp_auth_set_context (session, authctx);
@@ -181,10 +186,14 @@ main (int argc, char **argv)
    */
   smtp_set_reverse_path (message, from);
 
-  /* RFC 822 doesn't actually require a message to have a Message-Id:
-     header.  libESMTP can generate one.  This is how to request the
-     library to do this */
+  /* RFC 2822 doesn't require a message to have a Message-Id: header.
+     libESMTP can generate one.  This is how to request the library to
+     do this. */
   smtp_set_header (message, "Message-Id", NULL);
+
+  /* Likewise, recipient headers are not required but a To: header would
+     be nice to have if not present. */
+  smtp_set_header (message, "To", NULL, NULL);
 
   /* Set the Subject: header.  For no reason, we want the supplied subject
      to override any subject line in the message headers. */
@@ -346,6 +355,20 @@ authinteract (auth_client_request_t request, char **result, int fields,
 	}
     }
   return 1;
+}
+
+int
+tlsinteract (char *buf, int buflen, int rwflag, void *arg)
+{
+  char *pw;
+  int len;
+
+  pw = getpass ("certificate password");
+  len = strlen (pw);
+  if (len + 1 > buflen)
+    return 0;
+  strcpy (buf, pw);
+  return len;
 }
 
 void

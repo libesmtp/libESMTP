@@ -1,7 +1,7 @@
 /*
- *  This file is part of libESMTP, a library for submission of RFC 822
+ *  This file is part of libESMTP, a library for submission of RFC 2822
  *  formatted electronic mail messages using the SMTP protocol described
- *  in RFC 821.
+ *  in RFC 2821.
  *
  *  Copyright (C) 2001  Brian Stafford  <brian@stafford.uklinux.net>
  *
@@ -36,14 +36,8 @@
 #include <fcntl.h>
 
 #include <sys/types.h>
-#include <sys/ioctl.h>
 #include <sys/poll.h>
 #include <unistd.h>
-
-#include <sys/socket.h>
-#include <net/if.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
 
 #ifdef USE_TLS
 # include <openssl/ssl.h>
@@ -185,15 +179,15 @@ sio_set_timeout (struct siobuf *sio, int milliseconds)
 
 #ifdef USE_TLS
 int
-sio_set_tlsclient_ctx (struct siobuf *sio, SSL_CTX *ctx)
+sio_set_tlsclient_ssl (struct siobuf *sio, SSL *ssl)
 {
   int ret;
 
   assert (sio != NULL);
 
-  if (ctx != NULL)
+  if (ssl != NULL)
     {
-      sio->ssl = SSL_new (ctx);
+      sio->ssl = ssl;
       SSL_set_rfd (sio->ssl, sio->sdr);
       SSL_set_wfd (sio->ssl, sio->sdw);
       while ((ret = SSL_connect (sio->ssl)) <= 0)
@@ -302,8 +296,10 @@ sio_sslpoll (struct siobuf *sio, int ret)
 #endif
 
 void
-sio_write (struct siobuf *sio, const char *buf, int buflen)
+sio_write (struct siobuf *sio, const void *bufp, int buflen)
 {
+  const char *buf = bufp;
+
   assert (sio != NULL && buf != NULL);
 
   if (buflen < 0)
@@ -516,8 +512,9 @@ sio_fill (struct siobuf *sio)
 }
 
 int
-sio_read (struct siobuf *sio, char buf[], int buflen)
+sio_read (struct siobuf *sio, void *bufp, int buflen)
 {
+  char *buf = bufp;
   int count, total;
 
   assert (sio != NULL && buf != NULL && buflen > 0);

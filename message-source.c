@@ -1,7 +1,7 @@
 /*
- *  This file is part of libESMTP, a library for submission of RFC 822
+ *  This file is part of libESMTP, a library for submission of RFC 2822
  *  formatted electronic mail messages using the SMTP protocol described
- *  in RFC 821.
+ *  in RFC 2821.
  *
  *  Copyright (C) 2001  Brian Stafford  <brian@stafford.uklinux.net>
  *
@@ -72,6 +72,7 @@ msg_source_destroy (msg_source_t source)
     free (source->ctx);
   if (source->buf != NULL)
     free (source->buf);
+  free (source);
 }
 
 void
@@ -186,7 +187,7 @@ msg_gets (msg_source_t source, int *len, int concatenate)
 
 /* Return the next character in the source, i.e. the first character
    that will be returned by the next call to msg_gets().  This is
-   currently only used to check for RFC 822 header continuation lines.
+   currently only used to check for RFC 2822 header continuation lines.
    It is not safe to use in conjunction with msg_getb().
  */
 int

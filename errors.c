@@ -1,7 +1,7 @@
 /*
- *  This file is part of libESMTP, a library for submission of RFC 822
+ *  This file is part of libESMTP, a library for submission of RFC 2822
  *  formatted electronic mail messages using the SMTP protocol described
- *  in RFC 821.
+ *  in RFC 2821.
  *
  *  Copyright (C) 2001  Brian Stafford  <brian@stafford.uklinux.net>
  *
@@ -30,7 +30,13 @@
 #include <errno.h>
 #include <string.h>
 #include <stdlib.h>
-#include <netdb.h>
+#if HAVE_LWRES_NETDB_H
+# include <lwres/netdb.h>
+#elif !HAVE_GETADDRINFO
+# include "getaddrinfo.h"
+#else
+# include <netdb.h>
+#endif
 #include "libesmtp-private.h"
 #include "api.h"
 
@@ -178,8 +184,7 @@ set_herror (int code)
 {
   int smtp_code;
 
-#ifdef HAVE_GETADDRINFO
-  /* Very crude mapping of the error codes on to existing ones.
+  /* Very crude mapping of the error codes on to libESMTP codes.
    */
   switch (code)
     {
@@ -210,16 +215,6 @@ set_herror (int code)
       smtp_code = SMTP_ERR_INVAL;
       break;
     }
-#else
-  switch (code)
-    {
-    case HOST_NOT_FOUND:	smtp_code = SMTP_ERR_HOST_NOT_FOUND; break;
-    case NO_ADDRESS:		smtp_code = SMTP_ERR_NO_ADDRESS; break;
-    case NO_RECOVERY:		smtp_code = SMTP_ERR_NO_RECOVERY; break;
-    case TRY_AGAIN:		smtp_code = SMTP_ERR_TRY_AGAIN; break;
-    default: /* desperation */	smtp_code = SMTP_ERR_INVAL; break;
-    }
-#endif
   set_error (smtp_code);
 }
 

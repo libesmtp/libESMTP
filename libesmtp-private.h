@@ -1,9 +1,9 @@
 #ifndef _libesmtp_private_h
 #define _libesmtp_private_h
 /*
- *  This file is part of libESMTP, a library for submission of RFC 822
+ *  This file is part of libESMTP, a library for submission of RFC 2822
  *  formatted electronic mail messages using the SMTP protocol described
- *  in RFC 821.
+ *  in RFC 2821.
  *
  *  Copyright (C) 2001  Brian Stafford  <brian@stafford.uklinux.net>
  *
@@ -56,11 +56,7 @@ struct smtp_session
 
   /* MTA */
     char *host;				/* Host domain name of SMTP server */
-#ifdef HAVE_GETADDRINFO
     const char *port;			/* Port number - default to 587 */
-#else
-    int port;				/* Port number - default to 587 */
-#endif
 
   /* Application data */
     void *application_data;		/* Pointer to data maintained by app */
@@ -148,9 +144,9 @@ struct smtp_message
 #endif
 
   /* Headers */
-    struct rfc822_header *headers;	/* List of headers to add to message */
-    struct rfc822_header *end_headers;
-    struct rfc822_header *current_header;
+    struct rfc2822_header *headers;	/* List of headers to add to message */
+    struct rfc2822_header *end_headers;
+    struct rfc2822_header *current_header;
     struct h_node **hdr_action;		/* Hash table for header action */
     struct catbuf hdr_buffer;		/* Buffer for printing headers */
 

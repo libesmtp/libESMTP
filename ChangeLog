@@ -1,3 +1,121 @@
+2001-10-05 	Brian Stafford	<brian@stafford.uklinux.net>
+      * libesmtp.spec.in
+      	Make sure libesmtp-config gets installed!
+
+      * configure.in
+	Removed STARTTLS's experimental status.  The code works and just
+	needs debugging.  Certificate management is basic but usable.
+      	Set defines for strict iso/posix/xopen in headers only when
+      	--enable-isoc is in force.  This helps avoid disabling the
+      	tm_gmtoff member in the BSD struct tm unnecessarily.
+
+      * siobuf.[ch]
+	sio_read/write use void buffers rather than char.
+
+2001-09-28 	Brian Stafford	<brian@stafford.uklinux.net>
+      * smtp-tls.c
+        Use the event callback to report STARTTLS in use if the security
+        level was OK.
+
+      * rfc2822date.c
+	Provide a function to portably calculate the timezone offset
+	when struct tm does not provide tm_gmtoff.
+
+      * configure.in
+      	Don't bother to check for gmtime[_r] since it isn't used any more.
+
+2001-09-26 	Brian Stafford	<brian@stafford.uklinux.net>
+      * headers.c
+	Make sure set_to accepts NULL for the mailbox value.  Added set_cc
+	which is same as set_to except it fails with a NULL mailbox.
+
+      * Most files.
+        Changed references to RFC 821/822 to RFC 2821/2822 respectively.
+
+2001-09-24 	Brian Stafford	<brian@stafford.uklinux.net>
+      * headers.c
+	RFC 2822 requires only the originator and date headers to
+	be present in a message.  In particular, the presence of the To:
+	header is no longer required.  RFC 2822's restriction that
+	headers may not appear multiple times in a messge is enforced
+	respecting certain special exceptions.
+
+      * examples/mail-file.c
+        Added API call to make sure a To: header is generated if not
+        in the message.
+
+2001-09-14 	Brian Stafford	<brian@stafford.uklinux.net>
+      * configure.in acinclude.m4 acconfig.h
+	Reverted to configure.in, reinstated acconfig.h and added
+	some compatibility stuff to acinclude.m4.  All this to try
+	and be compatible with autoconf 2.5 *and* 2.13.  I really
+	hate autoconf.
+
+2001-09-05 	Brian Stafford	<brian@stafford.uklinux.net>
+      * getaddrinfo.c
+	Check if NO_ADDRESS is defined and different to NO_DATA
+
+2001-08-27 	Brian Stafford	<brian@stafford.uklinux.net>
+      * protocol.c smtp-tls.c
+      	Move some detail of selecting STARTTLS to smtp-tls.c
+
+      * smtp-tls.c
+	Changed STARTTLS policy for Starttls_ENABLED.  If a server offers
+	STARTTLS, then it must be used and all security requirements must
+	be met.  If STARTTLS is not offered the session continues in
+	cleartext.  Previously, Starttls_ENABLED permitted a session to
+	continue with possibly compromised security.
+
+2001-08-22 	Brian Stafford	<brian@stafford.uklinux.net>
+      * smtp-tls.c libesmtp.h
+        More certificate management.  Added TLS event reporting.
+
+      * smtp-auth.c
+      	Fixed behaviour for zero length responses to server challenges.
+
+      * base64.c
+	Zero length passwords caused an assertion failure in
+	base64_encode.  base64_decode did not correctly strip blanks
+	from strings not terminated by \0.  Neither did it correctly
+	handle zero length strings.
+
+2001-08-21 	Brian Stafford	<brian@stafford.uklinux.net>
+      * smtp-tls.c libesmtp.h
+      	Added preliminary code for client certificate management.
+
+      * siobuf.[ch]
+	Changed sio_set_tlsclient_ctx to sio_set_tlsclient_ssl.  This
+	makes things slightly more flexible for supplying different
+	client certificates according to the remote host.
+
+2001-08-20 	Brian Stafford	<brian@stafford.uklinux.net>
+      * message-source.c
+	Fixed memory leak in msg_source_destroy. (Pawel Salek)
+
+2001-08-16 	Brian Stafford	<brian@stafford.uklinux.net>
+      * configure.ac Makefile.am
+      	Change from using LIBOBJS to LTLIBOBJS.  This prevents the
+      	wrong objects from being linked by libtool when building
+      	dynamic libraries.  Added code to configure.ac to correctly
+      	set LTLIBOBJS and LTALLOCA.
+
+      * smtp-api.c protocol.c errors.c libesmtp-private.h configure.ac
+        Code now exclusively uses getaddrinfo.  Removed #ifdef code for
+	gethostbyname.  Added conditionals for using alternative lwres
+	library distributed with recent versions of bind.  Delete
+	--enable-gethostbyname option.  Add --enable-emulate-getaddrinfo.
+
+2001-08-14 	Brian Stafford	<brian@stafford.uklinux.net>
+      * siobuf.c
+	Remove unnecessary socket include files.
+
+      * getaddrinfo.[ch]
+	Added emulation of the RFC 2553 getaddrinfo resolver interface
+	for systems that don't have it.
+
+2001-08-13 Version 0.8.4 released
+---------------------------------
+
 2001-08-13 	Brian Stafford	<brian@stafford.uklinux.net>
       * protocol.c
       	Completely ignore TLS extension if TLS is already in use.

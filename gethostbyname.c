@@ -36,12 +36,6 @@
 
 #if HAVE_GETIPNODEBYNAME
 
-struct ghbnctx
-  {
-    int h_err;
-    struct hostent *hostent;
-  };
-
 void
 free_ghbnctx (struct ghbnctx *ctx)
 {

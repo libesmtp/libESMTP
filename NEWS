@@ -1,4 +1,25 @@
-* libESMTP 0.8.3 development release.	2000-07-06
+* libESMTP 0.8.5 development release.	2001-10-04
+
+- See ChangeLog for details.
+
+  o Header code no longer enforces presence of recipient fields.
+
+  o Fixed some build issues related to the automake/libtool interaction.
+    Reverted to autoconf 2.13
+
+  o Removed support for gethostbyname resolver interface.  Please
+    refer to the 'Dependencies' section in README.
+
+  o Enhancements to STARTTLS support.
+
+  o Calculation of current timezone's offset from GMT (UTC) is now
+    portable and thread safe.
+
+* libESMTP 0.8.4 development release.	2001-08-13
+
+- See ChangeLog for details.
+
+* libESMTP 0.8.3 development release.	2001-07-06
 
 - See ChangeLog for details.
 
@@ -7,7 +28,7 @@
   o Fixed a bad bug which caused connections to the server to be dropped
     depending on the amount of buffering provided by the server.
 
-* libESMTP 0.8.2 development release.	2000-06-26
+* libESMTP 0.8.2 development release.	2001-06-26
 
 - See ChangeLog for details.
 
@@ -26,7 +47,7 @@ incomplete; for example, interactions between certain headers are not
 implemented.  This will not change for a while.  The current priority is
 to make the protocol engine robust.
 
-* libESMTP 0.8.1 development release.	2000-06-15
+* libESMTP 0.8.1 development release.	2001-06-15
 
 - See ChangeLog for details.
 
@@ -36,7 +57,7 @@ to quit without sending anything to the server.
 Enabled many more compiler warnings when compiling with gcc.  Compiles
 should now be much cleaner.
 
-* libESMTP 0.8.0 development release.	2000-06-12
+* libESMTP 0.8.0 development release.	2001-06-12
 
 - See ChangeLog for details.
 

@@ -1,7 +1,7 @@
 /*
- *  This file is part of libESMTP, a library for submission of RFC 822
+ *  This file is part of libESMTP, a library for submission of RFC 2822
  *  formatted electronic mail messages using the SMTP protocol described
- *  in RFC 821.
+ *  in RFC 2821.
  *
  *  Copyright (C) 2001  Brian Stafford  <brian@stafford.uklinux.net>
  *
@@ -35,11 +35,13 @@
 #include <unistd.h>
 #include <errno.h>
 
-#include <netdb.h>
 #include <sys/socket.h>
-#if !HAVE_GETADDRINFO
-#include "gethostbyname.h"
-#include <netinet/in.h>
+#if HAVE_LWRES_NETDB_H
+# include <lwres/netdb.h>
+#elif !HAVE_GETADDRINFO
+# include "getaddrinfo.h"
+#else
+# include <netdb.h>
 #endif
 
 #if HAVE_UNAME
@@ -127,15 +129,8 @@ set_first_message (smtp_session_t session)
 int
 do_session (smtp_session_t session)
 {
-#ifdef HAVE_GETADDRINFO
   struct addrinfo hints, *res, *addrs;
   int err;
-#else
-  struct ghbnctx ghbnctx;
-  struct hostent *hp;
-  struct sockaddr sa;
-  char **addrs;
-#endif
   int sd;
   siobuf_t conn;
   int nresp, status, want_flush, fast;
@@ -210,7 +205,6 @@ do_session (smtp_session_t session)
   errno = 0;
   nodename = (session->host == NULL || *session->host == '\0') ? NULL
 							       : session->host;
-#ifdef HAVE_GETADDRINFO
   /* Use the RFC 2553/Posix resolver interface.  This allows for much
      cleaner code, protocol independence and thread safety. */
   memset (&hints, 0, sizeof hints);
@@ -222,32 +216,11 @@ do_session (smtp_session_t session)
       set_herror (err);
       return 0;
     }
-#else
-  /* Use the deprecated, protocol specific BSD resolver interface.
-     This may not be thread safe and requires the use of a wrapper
-     function since the arguments vary in number and type on different
-     platforms.  */
-  hp = gethostbyname_ctx (nodename, &ghbnctx);
-  if (hp == NULL)
-    {
-      if (errno != 0)
-	set_errno (errno);
-      else
-	set_herror (h_error_ctx (&ghbnctx));
-      free_ghbnctx (&ghbnctx);
-      return 0;
-    }
-#endif
 
   /* Try to establish an SMTP session with each host in turn until one
      succeeds.  */
-#ifdef HAVE_GETADDRINFO
   for (addrs = res; addrs != NULL; addrs = addrs->ai_next)
-#else
-  for (addrs = hp->h_addr_list; *addrs != NULL; addrs++)
-#endif
     {
-#ifdef HAVE_GETADDRINFO
       sd = socket (addrs->ai_family, addrs->ai_socktype, addrs->ai_protocol);
       if (sd < 0)
 	{
@@ -261,54 +234,13 @@ do_session (smtp_session_t session)
 	  close (sd);
 	  continue;
 	}
-#else
-      sa.sa_family = hp->h_addrtype;
-      switch (sa.sa_family)
-        {
-        case AF_INET:
-	  ((struct sockaddr_in *) &sa)->sin_port = htons (session->port);
-	  memcpy (&((struct sockaddr_in *) &sa)->sin_addr,
-	          *addrs, hp->h_length);
-          break;
-#ifdef USE_IPV6
-        case AF_INET6:
-	  ((struct sockaddr_in6 *) &sa)->sin6_port = htons (session->port);
-	  memcpy (&((struct sockaddr_in6 *) &sa)->sin6_addr,
-	  	  *addrs, hp->h_length);
-          break;
-#endif
-        default:
-	  set_errno (EPROTONOSUPPORT);
-	  free_ghbnctx (&ghbnctx);
-	  return 0;
-        }
-
-      /* Create a socket and try to connect to the remote.  */
-      if ((sd = socket (sa.sa_family, SOCK_STREAM, 0)) < 0)
-	{
-	  set_errno (errno);
-	  free_ghbnctx (&ghbnctx);
-	  return 0;
-	}
-      if (connect (sd, &sa, sizeof sa) < 0)
-	{
-	  /* Failed to connect.  Close the socket and try again.  */
-	  set_errno (errno);
-	  close (sd);
-	  continue;
-	}
-#endif
 
       /* Add buffering to the socket */
       conn = sio_attach (sd, sd, SIO_BUFSIZE);
       if (conn == NULL)
 	{
 	  set_errno (ENOMEM);
-#ifdef HAVE_GETADDRINFO
 	  freeaddrinfo (res);
-#else
-	  free_ghbnctx (&ghbnctx);
-#endif
 	  close (sd);
 	  return 0;
 	}
@@ -353,7 +285,7 @@ do_session (smtp_session_t session)
 	 through the messages and recipients within the session.
 
 	 The protocol functions set a few timeouts as they progress.  The
-	 values set are those reccommended in RFC 1123 section 5.3.2.
+	 values set are those reccommended in RFC 2821.
 
 	 [is it just me, or does everybody find that it's easier to implement
 	  protocols on the server side?]
@@ -456,21 +388,13 @@ do_session (smtp_session_t session)
          not set the protocol must have concluded sucessfully. */
       if (!session->try_fallback_server)
 	{
-#ifdef HAVE_GETADDRINFO
 	  freeaddrinfo (res);
-#else
-	  free_ghbnctx (&ghbnctx);
-#endif
 	  return 1;
         }
     }
 
   /* If the loop terminated, couldn't work with any servers. */
-#ifdef HAVE_GETADDRINFO
   freeaddrinfo (res);
-#else
-  free_ghbnctx (&ghbnctx);
-#endif
   return 0;
 }
 
@@ -837,7 +761,7 @@ rsp_ehlo (siobuf_t conn, smtp_session_t session)
   /* Totally ignore the TLS stuff if it's already in use */
   if (!session->using_tls && session->starttls_enabled != Starttls_DISABLED)
     {
-      if ((session->extensions & EXT_STARTTLS) && select_starttls (session))
+      if (select_starttls (session))
 	{
 	  session->rsp_state = S_starttls;
 	  return;
@@ -1307,7 +1231,7 @@ cmd_data2 (siobuf_t conn, smtp_session_t session)
 	    goto break_2;
 	}
 
-      /* Line points to one or more lines of text forming an RFC 822
+      /* Line points to one or more lines of text forming an RFC 2822
 	 header. */
 
       /* Header processing.  This function takes the "raw" header from

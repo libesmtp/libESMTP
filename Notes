@@ -26,23 +26,7 @@ The resulting message should have only one X-My-Header.
 
 Implement Disposition-Notification-Options: not very urgent.
 
-There are interactions between headers which are not yet properly handled.
-E.g. if no To, but Cc *is* supplied.
-
-Also Resent-*: headers interact with their counterparts.  Forwarding
-messages might get confused concerning the Date, Resent-Date and originator
-recipient fields.  Suspect that a special option to the header processing
-is needed to convert various fields to resent- versions is needed.
-
 Sender: is required if there are multiple values to From:
-
-Bcc Mode
-========
-
-Bcc: headers.  These might benefit from some fancy processing.  Could have
-a bcc mode which has two sets of message recipients.  Message is sent twice
-with the Bcc header enforced to the Bcc recipients and stripped when sent
-to other recipients.
 
 Quoting
 =======
@@ -62,21 +46,15 @@ Auth
 
 Need to support client side for
    	EXTERNAL	RFC 2222 sect 7.4	(done - untested)
-	CRAM-MD5	RFC 2195		(done - untested)
+	CRAM-MD5	RFC 2195		(done)
 	PLAIN		RFC 2595		(done - untested)
-	LOGIN		undocumented		(done - minimal testing)
+	LOGIN		undocumented		(done)
 	ANONYMOUS	RFC 2245
 	OTP		RFC 2444
 	SecurID		RFC 2808
 	DIGEST-MD5	RFC 2831
 	Kerberos	RFC 2222 sect 7.1
 	GSSAPI		RFC 2222 sect 7.2
-
-Protocol Options
-================
-
-Add the ability Enable/Disable SMTP extensions.  Not sure about the value
-of doing this, except maybe for coping with buggy servers.
 
 TLS/SSL
 =======
@@ -86,12 +64,15 @@ what does STARTTLS achieve?  No real point authenticating the client
 to the server in general mail relay.
 
 Mail submission: is a client certificate useful?
-E.g. the server can authenticate the user based on the client certificate.
-However, server could ignore or not request the client certificate and
-use AUTH over the encrypted connection.
+  Client certificate provides authentication in conjunction with AUTH
+  (EXTERNAL) or as an alternative.
 
 Server certificate: should the client verify the server certificate or
 the CA?  What is gained by doing so?
+  Certainty that mail is submitted via an organisation's MTA.  Important
+  if disclaimers / signing etc. is done.
+
+S/MIME will protect the message content.  TLS will protect the envelope.
 
 Provides protection against passive attack.
 
@@ -105,4 +86,10 @@ and encrypting messages on the grounds that it is normally accepting
 connections from behind a firewall.  This is feasible using S/MIME or
 PGP MIME.  Without encrypting the first hop, this confidentiality measure
 is lost.  Client certificate is likely to be required in this scenario too.
+
+Auth + TLS
+==========
+
+Really need a mechanism to manage authentication tokens, e.g. SASL user/pw
+combos or X.509 certs/private keys.
 

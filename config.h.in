@@ -1,21 +1,18 @@
-/* config.h.in.  Generated automatically from configure.ac by autoheader.  */
-
-
+/* config.h.in.  Generated automatically from configure.in by autoheader.  */
 /* Turn off the GCC specific __attribute__ keyword */
 #if !defined (__GNUC__) || __GNUC__ < 2
 # define __attribute__(x)
 #endif
 
 
+
+#undef HAVE_GETIPNODEBYNAME
+
 /* location of authentication plugins. */
 #undef AUTHPLUGINDIR
 
 /* Enable additional debugging code */
 #undef DEBUG
-
-/* Define to 1 if you have the declaration of `strerror_r', and to 0 if you
-   don't. */
-#undef HAVE_DECL_STRERROR_R
 
 /* Define if you have the GNU dld library. */
 #undef HAVE_DLD
@@ -26,7 +23,7 @@
 /* Define if you have the <dlfcn.h> header file. */
 #undef HAVE_DLFCN_H
 
-/* Build with support for RFC 2553/Posix getaddrinfo */
+/* Does system provide RFC 2553/Posix getaddrinfo? */
 #undef HAVE_GETADDRINFO
 
 /* Number of parameters to gethostbyname_r or 0 if not available */
@@ -35,41 +32,29 @@
 /* Define if you have the `gethostname' function. */
 #undef HAVE_GETHOSTNAME
 
-/* Set when getipnodebyname is available */
-#undef HAVE_GETIPNODEBYNAME
-
-/* Define if you have the `gmtime' function. */
-#undef HAVE_GMTIME
-
-/* Set when localtime_r is available */
-#undef HAVE_GMTIME_R
-
-/* Define if you have the <inttypes.h> header file. */
-#undef HAVE_INTTYPES_H
-
 /* Set when -lcrypto from OpenSSL is available */
 #undef HAVE_LIBCRYPTO
 
 /* Define if you have the libdl library or equivalent. */
 #undef HAVE_LIBDL
 
+/* Define if you have the `lwres' library (-llwres). */
+#undef HAVE_LIBLWRES
+
 /* Define if you have the `localtime' function. */
 #undef HAVE_LOCALTIME
 
-/* Set when gmtime_r is available */
+/* Set when localtime_r is available */
 #undef HAVE_LOCALTIME_R
 
-/* Define if you have the <memory.h> header file. */
-#undef HAVE_MEMORY_H
+/* Define if you have the <lwres/netdb.h> header file. */
+#undef HAVE_LWRES_NETDB_H
 
 /* Define if you have the shl_load function. */
 #undef HAVE_SHL_LOAD
 
 /* Define if you have the `snprintf' function. */
 #undef HAVE_SNPRINTF
-
-/* Define if you have the <stdlib.h> header file. */
-#undef HAVE_STDLIB_H
 
 /* Define if you have the `strdup' function. */
 #undef HAVE_STRDUP
@@ -79,12 +64,6 @@
 
 /* Define if you have the `strerror_r' function. */
 #undef HAVE_STRERROR_R
-
-/* Define if you have the <strings.h> header file. */
-#undef HAVE_STRINGS_H
-
-/* Define if you have the <string.h> header file. */
-#undef HAVE_STRING_H
 
 /* Define if you have the `strndup' function. */
 #undef HAVE_STRNDUP
@@ -111,9 +90,6 @@
 
 /* Define if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H
-
-/* Define to 1 if `strerror_r' returns a string. */
-#undef HAVE_WORKING_STRERROR_R
 
 /* Disable assertions */
 #undef NDEBUG
@@ -154,10 +130,10 @@
 /* Version number of package */
 #undef VERSION
 
-/* Code is supposed to be ISO compliant */
+/* ISO compliant code */
 #undef _ISOC9X_SOURCE
 
-/* Code is supposed to be POSIX compliant */
+/* POSIX compliant code */
 #undef _POSIX_C_SOURCE
 
 /* Single Unix conformance */

@@ -1,7 +1,7 @@
 /*
- *  This file is part of libESMTP, a library for submission of RFC 822
+ *  This file is part of libESMTP, a library for submission of RFC 2822
  *  formatted electronic mail messages using the SMTP protocol described
- *  in RFC 821.
+ *  in RFC 2821.
  *
  *  Copyright (C) 2001  Brian Stafford  <brian@stafford.uklinux.net>
  *
@@ -28,12 +28,6 @@
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
-
-#if !HAVE_GETADDRINFO
-#include <sys/types.h>
-#include <netinet/in.h>
-#include <netdb.h>
-#endif
 
 #include <errno.h>
 #include "api.h"
@@ -77,30 +71,10 @@ smtp_set_server (smtp_session_t session, const char *hostport)
   if ((service = strchr (host, ':')) != NULL)
     *service++ = '\0';
 
-#if HAVE_GETADDRINFO
   if (service == NULL)
     session->port = "587";
   else
     session->port = service;
-#else
-  if (service == NULL)
-    session->port = 587;
-  else
-    {
-      struct servent *servent;
-
-      if (isdigit (*service))
-	session->port = strtol (service, NULL, 10);
-      else if ((servent = getservbyname (service, "tcp")) != NULL)
-	session->port = ntohs (servent->s_port);
-      else
-        {
-	  set_error (SMTP_ERR_INVAL);
-          free (host);
-          return 0;
-        }
-    }
-#endif
   session->host = host;
   return 1;
 }

@@ -4,7 +4,7 @@
 Summary:  	SMTP client library
 
 %define package	libesmtp
-%define ver	0.8.4
+%define ver	0.8.5
 %define rel    	1
 %define prefix 	/usr
 %define plugindir %{prefix}/lib/esmtp-plugins
@@ -37,7 +37,7 @@ functionality is not the program's primary purpose.
 #%patch
 
 %build
-CFLAGS="$RPM_OPT_FLAGS" ./configure --prefix=%{prefix} --with-auth-plugin-dir=%{plugindir} --enable-pthreads 
+CFLAGS="$RPM_OPT_FLAGS" ./configure --prefix=%{prefix} --enable-all --with-auth-plugin-dir=%{plugindir} --enable-pthreads 
 make
 
 %install
@@ -54,4 +54,5 @@ rm -rf $RPM_BUILD_ROOT
 %{prefix}/include/libesmtp.h
 %{prefix}/include/auth-client.h
 %{prefix}/lib/libesmtp.*
+%{prefix}/lib/libesmtp-config
 %{plugindir}/sasl-*

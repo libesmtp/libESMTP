@@ -1,7 +1,7 @@
 /*
- *  This file is part of libESMTP, a library for submission of RFC 822
+ *  This file is part of libESMTP, a library for submission of RFC 2822
  *  formatted electronic mail messages using the SMTP protocol described
- *  in RFC 821.
+ *  in RFC 2821.
  *
  *  Copyright (C) 2001  Brian Stafford  <brian@stafford.uklinux.net>
  *
@@ -147,7 +147,9 @@ cmd_auth (siobuf_t conn, smtp_session_t session)
     {
       /* Encode the response and send it back to the server */
       len = b64_encode (buf, sizeof buf, response, len);
-      if (len > 0)
+      if (len == 0)
+	sio_write (conn, " =", 2);
+      else if (len > 0)
 	{
 	  sio_write (conn, " ", 1);
 	  sio_write (conn, buf, len);
@@ -237,7 +239,8 @@ cmd_auth2 (siobuf_t conn, smtp_session_t session)
     sio_write (conn, "*\r\n", 3);
   else
     {
-      sio_write (conn, buf, len);
+      if (len > 0)
+	sio_write (conn, buf, len);
       sio_write (conn, "\r\n", 2);
     }
   session->cmd_state = -1;

@@ -15,13 +15,6 @@ functionality is not the program's primary purpose.
 LibESMTP is not intended to be used as part of a program that implements
 a Mail Transport Agent.
 
-LibESMTP is an attempt to provide a robust implementation of the SMTP
-protocol for use with mail clients.  It is being developed as a reaction
-to the experience of incomplete or buggy implementations of SMTP and
-also to help remove the need for the installation of MTAs on workstations
-which only need them to provide a sendmail command for a mail client to
-post its mail.
-
 It is hoped that the availability of a lightweight library implementing
 an SMTP client will both ease the task of coding for software authors
 and improve the quality of the resulting code.
@@ -50,7 +43,7 @@ library was too complex for the needs of a client only SASL
 implementation.
 
 If there is sufficient interest in a LGPL SASL library, the SASL client
-API will be split off into a speerate library in the future.  There may
+API will be split off into a seperate library in the future.  There may
 also be a case for implementing a server side SASL library along the
 same lines as the client implementation.
 
@@ -61,8 +54,20 @@ libESMTP requires that libltdl is installed on your system.  Libltdl is
 included in the libESMTP tarball.  Libltdl is distributed with GNU
 Libtool, which is available from http://www.gnu.org/software/libtool/
 
-No other packages are required, however if OpenSSL (http://www.openssl.org/)
-is installed, it will be used by the authentication code.
+You will need a modern resolver library providing the getaddrinfo API.
+getaddrinfo is easier to use, protocol independent, thread-safe and
+RFC 2553 and Posix standard.
+
+An emulation of this is provided for systems that do not have it, however
+it is reccommended that the version provided in recent versions of GNU
+libc or BIND is used.  Most people will already at least one of these
+(e.g. virtually every Linux distro).  There is also support for the
+lightweight resolver distributed with BIND 9.  BIND may be downloaded
+from the ISC (http://www.isc.org/).
+
+OpenSSL (http://www.openssl.org/) is required by the CRAM-MD5
+authentication module and by the STARTTLS SMTP extension.  If you have
+no need for either of these, you will not need OpenSSL to build libESMTP.
 
 Installation
 ------------
@@ -71,13 +76,11 @@ Please refer to INSTALL for generic installation instructions.  LibESMTP
 has a few options when configuring; ./configure --help will list them.
 
 Balsa users: be sure to use the --enable-require-all-recipients when running
-configure.
+configure (--enable-all turns this on as well).
 
 configure may complain that it cannot find getaddrinfo and suggest using
 the --enable-gethostbyname option.  This is not enabled automatically
-since the gethostbyname (or getipnodebyname) is deprecated in favour of the
-getaddrinfo, which is easier to use, protocol independent, thread-safe and
-Posix standard.
+since gethostbyname is deprecated in favour of the more modern function.
 
 If this happens, you have a choice.  Either take the easy option and do
 as configure suggests or get a modern resolver library which implements

@@ -49,6 +49,11 @@ while test $# -gt 0; do
 	exit 0
 	;;
 
+    --numeric-version)
+	echo @VERSION@ | awk -F '[a-z.]*' '{ print ($1 * 1000 +  $2) * 1000 + $3 }' 
+	exit 0
+	;;
+
     --lib-version)
 	echo @LIBESMTP_VERSION@
 	exit 0

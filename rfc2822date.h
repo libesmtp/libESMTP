@@ -1,5 +1,5 @@
-#ifndef _hmac_md5_h
-#define _hmac_md5_h
+#ifndef _rfc2822date_h
+#define _rfc2822date_h
 /*
  *  This file is part of libESMTP, a library for submission of RFC 2822
  *  formatted electronic mail messages using the SMTP protocol described
@@ -22,34 +22,6 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
-
-#if HAVE_LIBCRYPTO
-
-#include <openssl/md5.h>
-
-#elif HAVE_MD5GLOBAL_H
-
-#include <md5global.h>
-#include <md5.h>
-
-#define MD5_Init(c)		MD5Init((c))
-#define MD5_Update(c,d,l)	MD5Update((c),(d),(l))
-#define MD5_Final(md,c)	MD5Final((md),(c))
-
-#endif
-
-/* Precompute HMAC-MD5 contexts from a secret. */
-void hmac_md5_pre (const void *secret, size_t secret_len,
-                   MD5_CTX *inner, MD5_CTX *outer);
-/* Finalise HMAC-MD5 contexts from a challenge.  */
-void hmac_md5_post (const void *challenge, size_t challenge_len,
-                    MD5_CTX *inner, MD5_CTX *outer, unsigned char digest[16]);
-/* Digest a challenge and a secret.  */
-void hmac_md5 (const void *challenge, size_t challenge_len,
-	       const void *secret, size_t secret_len,
-	       unsigned char digest[16]);
+char *rfc2822date (char buf[], size_t buflen, time_t *timedate);
 
 #endif

@@ -1,7 +1,7 @@
 /*
- *  This file is part of libESMTP, a library for submission of RFC 822
+ *  This file is part of libESMTP, a library for submission of RFC 2822
  *  formatted electronic mail messages using the SMTP protocol described
- *  in RFC 821.
+ *  in RFC 2821.
  *
  *  Copyright (C) 2001  Brian Stafford  <brian@stafford.uklinux.net>
  *
@@ -62,15 +62,17 @@ b64_decode (void *dst, int dstlen, const char *src, int srclen)
   unsigned char *t;
   int c1, c2;
 
-  assert (dst != NULL && dstlen > 0 && src != NULL && srclen != 0);
+  assert (dst != NULL && dstlen > 0 && src != NULL);
 
   if (srclen < 0)
     srclen = strlen (src);
 
   /* Remove leading and trailing white space */
-  for (p = (const unsigned char *) src; isspace (*p); p++, srclen--)
+  for (p = (const unsigned char *) src;
+       srclen > 0 && isspace (*p);
+       p++, srclen--)
     ;
-  for (q = p + srclen - 1; isspace (*q) && q >= p; q--, srclen--)
+  for (q = p + srclen - 1; q >= p && isspace (*q); q--, srclen--)
     ;
 
   /* Length MUST be a multiple of 4 */
@@ -118,7 +120,7 @@ b64_encode (char *dst, int dstlen, const void *src, int srclen)
   unsigned char c1, c2;
   int dst_needed;
 
-  assert (dst != NULL && dstlen > 0 && src != NULL && srclen > 0);
+  assert (dst != NULL && dstlen > 0 && src != NULL && srclen >= 0);
 
   dst_needed = (srclen + 2) / 3;
   dst_needed *= 4;

@@ -1,9 +1,9 @@
 #ifndef _libesmtp_h
 #define _libesmtp_h
 /*
- *  This file is part of libESMTP, a library for submission of RFC 822
+ *  This file is part of libESMTP, a library for submission of RFC 2822
  *  formatted electronic mail messages using the SMTP protocol described
- *  in RFC 821.
+ *  in RFC 2821.
  *
  *  Copyright (C) 2001  Brian Stafford  <brian@stafford.uklinux.net>
  *
@@ -93,7 +93,14 @@ enum
     SMTP_EV_EXTNA_ETRN,
 
   /* Extensions specific events */
-    SMTP_EV_DELIVERBY_EXPIRED = 3000
+    SMTP_EV_DELIVERBY_EXPIRED = 3000,
+
+    /* STARTTLS */
+    SMTP_EV_WEAK_CIPHER = 3100,
+    SMTP_EV_STARTTLS_OK,
+    SMTP_EV_INVALID_PEER_CERTIFICATE,
+    SMTP_EV_NO_PEER_CERTIFICATE,
+    SMTP_EV_WRONG_PEER_CERTIFICATE
   };
 typedef void (*smtp_eventcb_t) (smtp_session_t session, int event_no,
 				void *arg, ...);
@@ -220,6 +227,11 @@ int smtp_starttls_enable (smtp_session_t session, enum starttls_option how);
 #ifdef SSL_SESSION_ASN1_VERSION
 int smtp_starttls_set_ctx (smtp_session_t session, SSL_CTX *ctx);
 #endif
+
+/* This is cleverly chosen to be the same as the OpenSSL declaration */
+typedef int (*smtp_starttls_passwordcb_t) (char *buf, int buflen,
+                                           int rwflag, void *arg);
+int smtp_starttls_set_password_cb (smtp_starttls_passwordcb_t cb, void *arg);
 
 /*
     	RFC 1985.  Remote Message Queue Starting (ETRN)
