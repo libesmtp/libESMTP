@@ -1,3 +1,13 @@
+* libESMTP 0.8.1 development release.	2000-06-15
+
+- See ChangeLog for details.
+
+Fixed two uninitialised variable bugs that might cause the protocol
+to quit without sending anything to the server.
+
+Enabled many more compiler warnings when compiling with gcc.  Compiles
+should now be much cleaner.
+
 * libESMTP 0.8.0 development release.	2000-06-12
 
 - See ChangeLog for details.

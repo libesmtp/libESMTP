@@ -63,7 +63,7 @@ while test $# -gt 0; do
        	;;
 
     --libs)
-       	echo -L@libdir@ -lesmtp @LIBS@ @LIBLTDL@ @LIBADD_DL@
+       	echo -L@libdir@ -lesmtp @LIBS@ @LIBADD_LTDL@ @LIBADD_DL@
        	;;
 
     --plugindir)

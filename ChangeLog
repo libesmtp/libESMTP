@@ -1,3 +1,53 @@
+2001-06-13 	Brian Stafford	<brian@stafford.uklinux.net>
+      * configure.in
+        is now configure.ac to suit autoconf 2.5
+	Eliminated some redundant stuff concerned with libtool.
+	Now uses AC_HELP_STRING macro where appropriate.
+	Now use standard AC_FUNC_STRERROR_R macro.
+	Improved checking for time.h and sys/time.h.
+
+      * libesmtp-config.in
+	If libltdl was installed, the list of libraries was set to the
+	wrong thing.
+
+      * errors.c
+        Only use strerror_r if it actually works.
+
+      * rfc822date.c
+      	Try sys/time for struct tm just in case!
+
+2001-06-12 	Brian Stafford	<brian@stafford.uklinux.net>
+      * configure.in
+      	Now checks -lnsl when seraching for gethostbyname_r.
+      	Only print a warning if strerror_r is not found.
+      	Chose much more picky compiler warnings when using gcc - this
+      	has knock on effects through many files.  Compiles should now
+      	be much cleaner on more platforms.
+
+      * siobuf.h
+        Gcc will now check sio_printf()'s argument types against the
+        format string.
+
+      * headers.c
+	Eliminated a variable which was set but not used.
+	The as yet unimplemented smtp_set_resent_headers API will
+	succeed if `onoff' is zero.
+
+      * protocol.c
+	Eliminated variables which were set but not used.
+	Fixed an uninitialised variable bug which might strike if the
+	EHLO command received a 5xx status code.  This is likely with
+	older servers and may result in libESMTP dropping the connection
+	instead of trying HELO.
+	Fixed an uninitialised variable bug which could cause the protocol
+	to QUIT inadvertently after processing the response to EHLO.
+
+      * errors.c
+        Rewrote handling of the thread specific data.
+
+2001-06-12 Version 0.8.0 released
+---------------------------------
+
 2001-06-11 	Brian Stafford	<brian@stafford.uklinux.net>
       * protocol.c smtp-api.c
 	DELIVERBY extension done - still to test.

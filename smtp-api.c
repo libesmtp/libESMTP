@@ -102,7 +102,7 @@ smtp_set_hostname (smtp_session_t session, const char *hostname)
 #endif
 
   if (session->localhost != NULL)
-    free ((void *) session->localhost);
+    free (session->localhost);
 #ifdef HAVE_GETHOSTNAME
   if (hostname == NULL)
     {
@@ -165,13 +165,14 @@ smtp_set_reverse_path (smtp_message_t message, const char *mailbox)
   SMTPAPI_CHECK_ARGS (message != NULL, 0);
 
   if (message->reverse_path_mailbox != NULL)
-    free ((void *) message->reverse_path_mailbox);
-  if (mailbox != NULL && (mailbox = strdup (mailbox)) == NULL)
+    free (message->reverse_path_mailbox);
+  if (mailbox == NULL)
+    message->reverse_path_mailbox = NULL;
+  else if ((message->reverse_path_mailbox = strdup (mailbox)) == NULL)
     {
       set_errno (ENOMEM);
       return 0;
     }
-  message->reverse_path_mailbox = mailbox;
   return 1;
 }
 
@@ -314,7 +315,7 @@ smtp_dsn_set_orcpt (smtp_recipient_t recipient,
   recipient->dsn_orcpt = strdup (address);
   if (recipient->dsn_orcpt == NULL)
     {
-      free ((void *) recipient->dsn_addrtype);
+      free (recipient->dsn_addrtype);
       set_errno (ENOMEM);
       return 0;
     }
@@ -427,9 +428,9 @@ smtp_destroy_session (smtp_session_t session)
 #endif
 
   if (session->host != NULL)
-    free ((void *) session->host);
+    free (session->host);
   if (session->localhost != NULL)
-    free ((void *) session->localhost);
+    free (session->localhost);
 
   if (session->msg_source != NULL)
     msg_source_destroy (session->msg_source);
@@ -439,19 +440,19 @@ smtp_destroy_session (smtp_session_t session)
       message = session->messages->next;
 
       reset_status (&session->messages->reverse_path_status);
-      free ((void *) session->messages->reverse_path_mailbox);
+      free (session->messages->reverse_path_mailbox);
 
       while (session->messages->recipients != NULL)
         {
 	  recipient = session->messages->recipients->next;
 
 	  reset_status (&session->messages->recipients->status);
-	  free ((void *) session->messages->recipients->mailbox);
+	  free (session->messages->recipients->mailbox);
 
 	  if (session->messages->recipients->dsn_addrtype != NULL)
-	    free ((void *) session->messages->recipients->dsn_addrtype);
+	    free (session->messages->recipients->dsn_addrtype);
 	  if (session->messages->recipients->dsn_orcpt != NULL)
-	    free ((void *) session->messages->recipients->dsn_orcpt);
+	    free (session->messages->recipients->dsn_orcpt);
 
 	  free (session->messages->recipients);
 	  session->messages->recipients = recipient;
@@ -460,7 +461,7 @@ smtp_destroy_session (smtp_session_t session)
       destroy_header_table (session->messages);
 
       if (session->messages->dsn_envid != NULL)
-	free ((void *) session->messages->dsn_envid);
+	free (session->messages->dsn_envid);
 
       free (session->messages);
       session->messages = message;
@@ -531,6 +532,8 @@ smtp_recipient_get_application_data (smtp_recipient_t recipient)
 }
 
 #ifdef USE_REQUIRE_ALL_RECIPIENTS
+/* Deprecated: do not use */
+
 /* Some applications can't handle one recipient from many failing
    particularly well.  If the 'require_all_recipients' option is
    set, this will fail the entire transaction even if some of the

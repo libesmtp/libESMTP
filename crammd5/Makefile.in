@@ -142,7 +142,7 @@ OBJECTS = $(am_sasl_cram_md5_la_OBJECTS)
 all: all-am
 .SUFFIXES:
 .SUFFIXES: .c .h .lo .o .obj
-$(srcdir)/Makefile.in: Makefile.am $(top_srcdir)/configure.in $(ACLOCAL_M4) 
+$(srcdir)/Makefile.in: Makefile.am $(top_srcdir)/configure.ac $(ACLOCAL_M4) 
 	cd $(top_srcdir) && $(AUTOMAKE) --gnu crammd5/Makefile
 
 Makefile: $(srcdir)/Makefile.in  $(top_builddir)/config.status

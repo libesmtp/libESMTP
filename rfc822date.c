@@ -26,7 +26,15 @@
 
 #include <stdio.h>
 #include <sys/types.h>
-#include <time.h>
+
+#if TM_IN_SYS_TIME
+# include <sys/time.h>
+# if TIME_WITH_SYS_TIME
+#  include <time.h>
+# endif
+#else
+# include <time.h>
+#endif
 
 #include "rfc822date.h"
 

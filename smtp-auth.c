@@ -56,7 +56,7 @@ smtp_auth_set_context (smtp_session_t session, auth_context_t context)
 struct mechanism
   {
     struct mechanism *next;
-    const char *name;
+    char *name;
   };
 
 void
@@ -67,7 +67,7 @@ destroy_auth_mechanisms (smtp_session_t session)
   for (mech = session->auth_mechanisms; mech != NULL; mech = next)
     {
       next = mech->next;
-      free ((void *) mech->name);
+      free (mech->name);
       free (mech);
     }
   session->current_mechanism = session->auth_mechanisms = NULL;

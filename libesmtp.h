@@ -106,7 +106,7 @@ int smtp_destroy_session (smtp_session_t session);
 struct smtp_status
   {
     int code;			/* SMTP protocol status code */
-    const char *text;		/* Text from the server */
+    char *text;			/* Text from the server */
     int enh_class;		/* RFC 2034 enhanced status code triplet */
     int enh_subject;
     int enh_detail;

@@ -56,7 +56,7 @@ struct auth_context
     void *plugin_ctx;
     auth_interact_t interact;
     void *interact_arg;
-    const char *external_id;
+    char *external_id;
   };
 
 #define mechanism_disabled(p,a,f)		\
@@ -240,7 +240,7 @@ auth_set_external_id (auth_context_t context, const char *identity)
   API_CHECK_ARGS (context != NULL, 0);
 
   if (context->external_id != NULL)
-    free ((void *) context->external_id);
+    free (context->external_id);
   if (identity != NULL)
     {
       /* Install external module if required */

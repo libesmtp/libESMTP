@@ -56,14 +56,15 @@ static const char index_64[128] =
 int
 b64_decode (void *dst, int dstlen, const char *src, int srclen)
 {
-  unsigned char *p, *q;
+  const unsigned char *p, *q;
+  unsigned char *t;
   int c1, c2;
 
   if (srclen < 0)
     srclen = strlen (src);
 
   /* Remove leading and trailing white space */
-  for (p = (unsigned char *) src; isspace (*p); p++, srclen--)
+  for (p = (const unsigned char *) src; isspace (*p); p++, srclen--)
     ;
   for (q = p + srclen - 1; isspace (*q) && q >= p; q--, srclen--)
     ;
@@ -76,7 +77,7 @@ b64_decode (void *dst, int dstlen, const char *src, int srclen)
   if (srclen / 4 * 3 + 1 > dstlen)
     return -1;
 
-  q = dst;
+  t = dst;
   while (srclen > 0)
     {
       srclen -= 4;
@@ -84,22 +85,22 @@ b64_decode (void *dst, int dstlen, const char *src, int srclen)
         return -1;
       if (*p >= 128 || (c2 = index_64[*p++]) == -1)
         return -1;
-      *q++ = (c1 << 2) | ((c2 & 0x30) >> 4);
+      *t++ = (c1 << 2) | ((c2 & 0x30) >> 4);
 
       if (p[0] == '=' && p[1] == '=')
         break;
       if (*p >= 128 || (c1 = index_64[*p++]) == -1)
 	return -1;
-      *q++ = ((c2 & 0x0f) << 4) | ((c1 & 0x3c) >> 2);
+      *t++ = ((c2 & 0x0f) << 4) | ((c1 & 0x3c) >> 2);
 
       if (p[0] == '=')
 	break;
       if (*p >= 128 || (c2 = index_64[*p++]) == -1)
         return -1;
-      *q++ = ((c1 & 0x03) << 6) | c2;
+      *t++ = ((c1 & 0x03) << 6) | c2;
     }
 
-  return q - (unsigned char *) dst;
+  return t - (unsigned char *) dst;
 }
 
 /* Return a pointer to a base 64 encoded string.  The input data is

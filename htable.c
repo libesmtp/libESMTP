@@ -109,7 +109,7 @@ strndup (const char *string, size_t length)
 /* Insert a new node into the table.  It is not an error for an entry with
    the same name to be already present in the table.  The new entry will
    be found when searching the table.  When removed, the former entry
-   will ve found on a subsequent search */
+   will be found on a subsequent search */
 struct h_node *
 h_insert (struct h_node **table, const char *name, int namelen, int size)
 {
@@ -152,7 +152,7 @@ h_remove (struct h_node **table, struct h_node *node)
 	  node->next = NULL;
 	  break;
 	}
-  free ((void *) node->name);
+  free (node->name);
   free (node);
 }
 
@@ -210,7 +210,7 @@ h_destroy (struct h_node **table,
 	next = p->next;
 	if (cb != NULL)
 	  (*cb) (p, arg);
-	free ((void *) p->name);
+	free (p->name);
 	free (p);
       }
   free (table);

@@ -22,14 +22,16 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#if !defined (__attribute__) && (!defined (__GNUC__) || __GNUC__ < 2)
+# define __attribute__(x)
+#endif
+
 typedef struct siobuf *siobuf_t;
 
 #define SIO_BUFSIZE	2048 /* arbitrary, not too short, not too long */
 #define SIO_READ	1
 #define SIO_WRITE	2
 
-/* N.B. if the recode callbacks allocate a buffer the application must
-        take steps to free it, sio will not do this. */
 typedef void (*recodecb_t) (char **dstbuf, int *dstlen,
 			    const char *srcbuf, int srclen, void *arg);
 typedef void (*monitorcb_t) (const char *buffer, int length, int direction,
@@ -48,7 +50,9 @@ void sio_mark(struct siobuf *sio);
 int sio_fill(struct siobuf *sio);
 int sio_read(struct siobuf *sio, char buf[], int buflen);
 char *sio_gets(struct siobuf *sio, char buf[], int buflen);
-int sio_printf(struct siobuf *sio, char *format, ...);
+int sio_printf(struct siobuf *sio, const char *format, ...)
+	       __attribute__ ((format (printf, 2, 3))) ;
+
 
 #ifdef USE_TLS
 int sio_set_tlsclient_ctx (struct siobuf *sio, SSL_CTX *ctx);

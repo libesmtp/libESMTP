@@ -22,6 +22,10 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#if !defined (__attribute__) && (!defined (__GNUC__) || __GNUC__ < 2)
+# define __attribute__(x)
+#endif
+
 #ifdef USE_TLS
 #include <openssl/ssl.h>
 #endif
@@ -49,10 +53,10 @@
 struct smtp_session
   {
   /* Local info */
-    const char *localhost;		/* Domain name of localhost */
+    char *localhost;			/* Domain name of localhost */
 
   /* MTA */
-    const char *host;			/* Host domain name of SMTP server */
+    char *host;				/* Host domain name of SMTP server */
     int port;				/* Port number - default to 587 */
 
   /* Application data */
@@ -85,7 +89,7 @@ struct smtp_session
     unsigned long extensions;
     unsigned long required_extensions;
     unsigned long size_limit;		/* RFC 1870 */
-    unsigned long min_by_time;		/* RFC 2852 */
+    long min_by_time;			/* RFC 2852 */
 
   /* Interface to RFC 2554 AUTH and SASL */
     auth_context_t auth_context;
@@ -126,7 +130,7 @@ struct smtp_message
     void *application_data;		/* Pointer to data maintained by app */
 
   /* Reverse Path */
-    const char *reverse_path_mailbox;	/* Reverse path */
+    char *reverse_path_mailbox;		/* Reverse path */
 
   /* Status */
     smtp_status_t reverse_path_status;	/* Reverse path status from MAIL */
@@ -152,7 +156,7 @@ struct smtp_message
     void *cb_arg;			/* Argument for above */
 
   /* DSN  (RFC 1891) */
-    const char *dsn_envid;		/* envelope identifier */
+    char *dsn_envid;			/* envelope identifier */
     enum ret_flags dsn_ret;		/* return headers or entire message */
 
   /* SIZE  (RFC 1870) */
@@ -176,14 +180,14 @@ struct smtp_recipient
     void *application_data;		/* Pointer to data maintained by app */
 
   /* Recipient Info */
-    const char *mailbox;		/* Envelope address */
+    char *mailbox;			/* Envelope address */
     smtp_status_t status;		/* Recipient status from RCPT */
     unsigned complete : 1;		/* Sent OK or permanent failure */
     /* more per recipient stuff */
 
   /* DSN  - (RFC 1891) */
-    const char *dsn_addrtype;		/* original recipient address type */
-    const char *dsn_orcpt;		/* original recipient */
+    char *dsn_addrtype;			/* original recipient address type */
+    char *dsn_orcpt;			/* original recipient */
     enum notify_flags dsn_notify;	/* notification options */
   };
 

@@ -43,7 +43,9 @@ static pthread_mutex_t starttls_mutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t *openssl_mutex;
 
 static void
-openssl_mutexcb (int mode, int n, const char *file, int line)
+openssl_mutexcb (int mode, int n,
+		 const char *file __attribute ((unused)),
+		 int line __attribute ((unused)))
 {
   if (mode & CRYPTO_LOCK)
     pthread_mutex_lock (&openssl_mutex[n]);

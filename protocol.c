@@ -596,7 +596,7 @@ static int
 report_extensions (smtp_session_t session)
 {
   int quit_now;
-  unsigned long exts;
+  unsigned long exts = 0;
 
   /* Report extensions that are required but not available.
    */
@@ -688,7 +688,6 @@ cb_ehlo (smtp_session_t session, char *buf)
 void
 rsp_ehlo (siobuf_t conn, smtp_session_t session)
 {
-  struct smtp_status status;
   int code;
 
   session->extensions = 0;
@@ -717,8 +716,8 @@ rsp_ehlo (siobuf_t conn, smtp_session_t session)
          a number of codes indicating that HELO is worth a try since
          the server did not understand EHLO.  Otherwise fail the entire
          session.  The application must correct something and retry later. */
-      if (status.code == 500 || status.code == 501
-          || status.code == 502 || status.code == 504)
+      if (session->mta_status.code == 500 || session->mta_status.code == 501
+          || session->mta_status.code == 502 || session->mta_status.code == 504)
 	session->rsp_state = S_helo;
       else
 	session->rsp_state = S_quit;
@@ -970,7 +969,7 @@ rsp_mail (siobuf_t conn, smtp_session_t session)
 void
 cmd_rcpt (siobuf_t conn, smtp_session_t session)
 {
-  static struct { enum notify_flags mask; char *flag; } masks[] =
+  static struct { enum notify_flags mask; const char *flag; } masks[] =
     {
       { Notify_SUCCESS, "SUCCESS", },
       { Notify_FAILURE, "FAILURE", },
@@ -994,7 +993,7 @@ cmd_rcpt (siobuf_t conn, smtp_session_t session)
 	  if (notify == Notify_NEVER)
 	    sio_write (conn, "NEVER", -1);
 	  else
-	    for (i = 0; i < sizeof masks / sizeof masks[0]; i++)
+	    for (i = 0; i < (int) (sizeof masks / sizeof masks[0]); i++)
 	      if (notify & masks[i].mask)
 		{
 		  notify &= ~masks[i].mask;
@@ -1345,12 +1344,11 @@ void
 rsp_rset (siobuf_t conn, smtp_session_t session)
 {
   struct smtp_status status;
-  int code;
 
   /* The RSET command should always succeed, since this client never
      attempts to sent trailing whitespace or parameters to the command */
   memset (&status, 0, sizeof status);
-  code = read_smtp_response (conn, session, &status, NULL);
+  read_smtp_response (conn, session, &status, NULL);
   reset_status (&status);
   if (session->current_message != NULL)
     session->rsp_state = S_mail;
@@ -1373,12 +1371,11 @@ void
 rsp_quit (siobuf_t conn, smtp_session_t session)
 {
   struct smtp_status status;
-  int code;
 
   /* The QUIT command should always succeed.
    */
   memset (&status, 0, sizeof status);
-  code = read_smtp_response (conn, session, &status, NULL);
+  read_smtp_response (conn, session, &status, NULL);
   reset_status (&status);
   session->rsp_state = -1;
 }

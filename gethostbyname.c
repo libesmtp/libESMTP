@@ -93,7 +93,6 @@ gethostbyname_ctx (const char *host, struct ghbnctx *ctx)
 {
   struct hostent *hp;
   char *tmp;
-  int err;
 
   memset (ctx, 0, sizeof (struct ghbnctx));
   ctx->hostbuf_len = 2048;

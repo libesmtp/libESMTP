@@ -519,7 +519,7 @@ sio_gets (struct siobuf *sio, char buf[], int buflen)
 }
 
 int
-sio_printf (struct siobuf *sio, char *format, ...)
+sio_printf (struct siobuf *sio, const char *format, ...)
 {
   va_list alist;
   char buf[1024];

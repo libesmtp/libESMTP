@@ -24,9 +24,14 @@ dnl Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 dnl 
 dnl #########################################################################
 
-AC_INIT(protocol.c)
-AM_INIT_AUTOMAKE(libesmtp,0.8.0)
+AC_INIT([libesmtp],[0.8.1],[brian@stafford.uklinux.net])
+AC_PREREQ(2.50)
+AM_INIT_AUTOMAKE(AC_PACKAGE_NAME,AC_PACKAGE_VERSION)
 AM_CONFIG_HEADER(config.h)
+AC_CONFIG_SRCDIR(smtp-api.c)
+AC_CONFIG_FILES(libesmtp-config libesmtp.spec
+                Makefile login/Makefile plain/Makefile crammd5/Makefile)
+
 EXTRA_CFLAGS=""
 
 dnl #########################################################################
@@ -34,7 +39,7 @@ dnl Library versioning
 dnl #########################################################################
 
 LIB_CURRENT=5
-LIB_REVISION=1
+LIB_REVISION=2
 LIB_AGE=0
 AC_SUBST(LIB_CURRENT)
 AC_SUBST(LIB_REVISION)
@@ -57,36 +62,42 @@ dnl #########################################################################
 dnl Checks for libraries and options.
 dnl #########################################################################
 
+AC_ARG_ENABLE([ltdl-install],AC_HELP_STRING([--enable-ltdl-install],[install libltdl]))
 AC_LIBLTDL_INSTALLABLE
-AC_CONFIG_SUBDIRS(libltdl)
+dnl When the installable (or installed) libltdl is used, programs linked
+dnl with -lesmtp also need -lltdl
+LIBADD_LTDL=-lltdl
+
+AC_LTDL_DLLIB
 AC_LIBTOOL_DLOPEN
 AM_PROG_LIBTOOL
-AC_LIB_LTDL
+AC_CONFIG_SUBDIRS(libltdl)
 
 dnl #########################################################################
 dnl Check if using Posix Threads
 dnl #########################################################################
 
 AC_ARG_ENABLE([pthreads],
-  [  --enable-pthreads	  Build with support for Posix threads  [default=auto]],
-  	      use_pthreads="$enableval", use_pthreads=auto)
+              AC_HELP_STRING([--enable-pthreads], [build with support for Posix threads  (default=auto)]),
+  	      ,
+  	      enable_pthreads=auto)
  
-dnl if test x"$use_pthreads" != xno ; then
+dnl if test x"$enable_pthreads" != xno ; then
 dnl 	ACX_PTHREAD(LIBS="$PTHREAD_LIBS $LIBS"
 dnl 		    CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
 dnl 		    CC="$PTHREAD_CC"
 dnl 		    AC_DEFINE(USE_PTHREADS,1,[Build with support for Posix threading]),
-dnl 		    if test x"$use_pthreads" = xyes ; then
+dnl 		    if test x"$enable_pthreads" = xyes ; then
 dnl 				AC_MSG_ERROR([Posix Threads build requested but not available.])
 dnl 		    fi
 dnl 	)
 dnl fi
 
 AC_MSG_CHECKING(whether to use Posix Threads)
-if test x"$use_pthreads" != xno ; then
+if test x"$enable_pthreads" != xno ; then
 	AC_SEARCH_LIBS(pthread_create, pthread pthreads c_r cr,[AC_MSG_RESULT([yes])
 		       AC_DEFINE(USE_PTHREADS,1,[Build with support for Posix threading])],
-		       if test x"$use_pthreads" = xyes ; then
+		       if test x"$enable_pthreads" = xyes ; then
 		       		AC_MSG_ERROR([Cannot find the pthread library.])
 		       else
 		       		AC_MSG_RESULT([no])
@@ -111,7 +122,8 @@ SASL_PLUGINS="login plain"
 dnl Set up the authentication plugin dircetory
 
 AC_ARG_WITH(auth-plugin-dir,
-  [  --with-auth-plugin-dir[=DIR] Set directory for SASL plugins [default=LIBDIR/esmtp]],
+	    AC_HELP_STRING([--with-auth-plugin-dir[=DIR]],
+			   [directory for SASL plugins (default=LIBDIR/esmtp)]),
 	    plugindir=$withval)
 if test x$plugindir = x ; then
 	plugindir=$libdir/esmtp
@@ -134,11 +146,12 @@ dnl Check if enabling STARTTLS
 dnl #########################################################################
 
 AC_ARG_ENABLE([starttls],
-  [  --enable-starttls	  Enable experimental support for STARTTLS  [default=no]],
-  	      use_starttls="$enableval", use_starttls=no)
+              AC_HELP_STRING([--enable-starttls],[experimental support for STARTTLS  (default=no)]),
+  	      ,
+  	      enable_starttls=no)
  
 AC_MSG_CHECKING(whether to enable STARTTLS)
-if test x"$use_starttls" = xyes ; then
+if test x"$enable_starttls" = xyes ; then
 	AC_MSG_RESULT([yes])
 	AC_CHECK_LIB(ssl, SSL_library_init,
 		     [
@@ -155,11 +168,12 @@ dnl Enable ETRN (experimental)
 dnl #########################################################################
 
 AC_ARG_ENABLE([etrn],
-  [  --enable-etrn		  Enable experimental support for ETRN  [default=no]],
-  	      use_etrn="$enableval", use_etrn=no)
+              AC_HELP_STRING([--enable-etrn],[experimental support for ETRN  (default=no)]),
+  	      ,
+  	      enable_etrn=no)
  
 AC_MSG_CHECKING(whether to enable ETRN)
-if test x"$use_etrn" = xyes ; then
+if test x"$enable_etrn" = xyes ; then
 	AC_MSG_RESULT([yes])
 	AC_DEFINE(USE_ETRN,1,[Enable experimental support for SMTP STARTTLS extension])
 else
@@ -171,11 +185,11 @@ dnl Provide standard callbacks for reading messages (experimental)
 dnl #########################################################################
 
 AC_ARG_ENABLE([message-callbacks],
-  [  --enable-message-callbacks Add standard callbacks for reading messages (experimental) [default=no]],
-  	      use_message_callbacks="$enableval",
-  	      use_message_callbacks=no)
+              AC_HELP_STRING([--enable-message-callbacks],[add standard message callbacks (experimental) (default=no)]),
+  	      ,
+  	      enable_message_callbacks=no)
  
-if test x"$use_message_callbacks" != xno ; then
+if test x"$enable_message_callbacks" != xno ; then
   AC_DEFINE(USE_MESSAGE_CALLBACKS,1,
             [Add standard callback functions to the library])
 fi
@@ -185,11 +199,11 @@ dnl Require all recipients hack (not reccommended)
 dnl #########################################################################
 
 AC_ARG_ENABLE([require-all-recipients],
-  [  --enable-require-all-recipients Add extra API call, needed for Balsa [default=no]],
-  	      use_require_all_recipients="$enableval",
-  	      use_require_all_recipients=no)
+              AC_HELP_STRING([--enable-require-all-recipients],[add extra API call, needed for Balsa (default=no)]),
+  	      ,
+  	      enable_require_all_recipients=no)
  
-if test x"$use_require_all_recipients" != xno ; then
+if test x"$enable_require_all_recipients" != xno ; then
   AC_DEFINE(USE_REQUIRE_ALL_RECIPIENTS,1,
             [Build smtp_option_require_all_recipients() API])
 fi
@@ -206,6 +220,8 @@ dnl Checks for typedefs, structures, and compiler characteristics.
 dnl #########################################################################
 
 AC_C_CONST
+AC_STRUCT_TM
+AC_HEADER_TIME
 AC_STRUCT_TIMEZONE
 
 AC_CACHE_CHECK([for IPv6 support], acx_cv_sys_use_ipv6, [
@@ -237,8 +253,8 @@ AC_CHECK_FUNCS(gethostname snprintf socket strdup strndup strerror strtol)
 
 dnl Conditional check for functions needed in threaded code
 
-if test x"$use_pthreads" != xno ; then
-	AC_SEARCH_LIBS(gethostbyname_r, resolv bind c_r cr,
+if test x"$enable_pthreads" != xno ; then
+	AC_SEARCH_LIBS(gethostbyname_r, resolv bind nsl c_r cr,
 		       [ACX_WHICH_GETHOSTBYNAME_R],
 		       AC_MSG_ERROR([Cannot find gethostbyname_r.]))
 	AC_SEARCH_LIBS(localtime_r, c_r cr,
@@ -247,28 +263,27 @@ if test x"$use_pthreads" != xno ; then
 	AC_SEARCH_LIBS(gmtime_r, c_r cr,
 		       AC_DEFINE(HAVE_GMTIME_R,1,[Set when localtime_r is available]),
 		       AC_MSG_ERROR([Cannot find localtime_r.]))
-	AC_SEARCH_LIBS(strerror_r, c_r cr,
-		       AC_DEFINE(HAVE_STRERROR_R,1,[Set when strerror_r is available]),
-		       AC_MSG_ERROR([Cannot find strerror_r.]))
+	AC_FUNC_STRERROR_R
 fi
 
 dnl #########################################################################
 dnl turn warnings into errors to enforce clean code
 dnl #########################################################################
 
-AC_ARG_ENABLE(more-warnings,
-[  --enable-more-warnings  Enable additional compiler warnings [default=yes]],
-set_more_warnings="$enableval", set_more_warnings=yes)
+AC_ARG_ENABLE([more-warnings],
+              AC_HELP_STRING([--enable-more-warnings=no/yes/picky],[additional compiler warnings (default=yes)]),
+	      ,
+	      enable_more_warnings=yes)
 
-if test "$GCC" = "yes" -a "$set_more_warnings" != "no"; then
+if test "$GCC" = "yes" -a "$enable_more_warnings" != "no"; then
         EXTRA_CFLAGS="$EXTRA_CFLAGS \
-        -Wall -Wno-uninitialized \
-        -Wchar-subscripts -Wmissing-declarations -Wmissing-prototypes \
-        -Wnested-externs -Wpointer-arith \
-        -Wno-sign-compare -Wsign-promo"
+        -Wall -Wchar-subscripts -Wmissing-declarations -Wmissing-prototypes \
+        -Wstrict-prototypes -Wnested-externs -Wpointer-arith \
+        -Wbad-function-cast -Wcast-align -Wsign-promo"
 fi
-if test "$GCC" = "yes" -a "$set_more_warnings" = "picky"; then
-        EXTRA_CFLAGS="$EXTRA_CFLAGS -fno-builtin -Werror"
+if test "$GCC" = "yes" -a "$enable_more_warnings" = "picky"; then
+        EXTRA_CFLAGS="$EXTRA_CFLAGS -fno-builtin -W -Werror -Wwrite-strings \
+        		-Wcast-qual"
 fi
 
 dnl #########################################################################
@@ -288,5 +303,4 @@ AC_SUBST(CC)
 AC_SUBST(RANLIB)
 AC_SUBST(subdirs)
 
-AC_OUTPUT(libesmtp-config libesmtp.spec
-          Makefile login/Makefile plain/Makefile crammd5/Makefile)
+AC_OUTPUT

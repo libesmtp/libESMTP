@@ -44,7 +44,7 @@ struct smtp_etrn_node
 
   /* Node Info */
     int option;				/* Option character */
-    const char *domain;			/* Remote queue to start */
+    char *domain;			/* Remote queue to start */
 
   /* Status */
     smtp_status_t status;		/* Status from MTA greeting */
@@ -54,7 +54,7 @@ smtp_etrn_node_t
 smtp_etrn_add_node (smtp_session_t session, int option, const char *domain)
 {
   smtp_etrn_node_t node;
-  const char *dup_domain;
+  char *dup_domain;
 
   SMTPAPI_CHECK_ARGS (session != NULL
                       && domain != NULL
@@ -136,7 +136,7 @@ destroy_etrn_nodes (smtp_session_t session)
   for (node = session->etrn_nodes; node != NULL; node = next)
     {
       next = node->next;
-      free ((void *) node->domain);
+      free (node->domain);
       free (node);
     }
   session->etrn_nodes = session->end_etrn_nodes = NULL;

@@ -28,13 +28,11 @@
 #include <config.h>
 #endif
 
-#ifdef USE_MESSAGE_CALLBACKS
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "libesmtp.h"
 
-/* XXX - strings with \n -> \r\n translation not done yet */
 const char *_smtp_message_str_nocrlf_cb (void **ctx, int *len, void *arg);
 #define smtp_set_message_str_nocrlf(message,str)	\
 		smtp_set_messagecb ((message), _smtp_message_str_nocrlf_cb, (str))
@@ -144,4 +142,3 @@ _smtp_message_str_cb (void **ctx, int *len, void *arg)
     }
   return string;
 }
-#endif

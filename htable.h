@@ -25,7 +25,7 @@
 struct h_node
   {
     struct h_node *next;	/* Next node in chain for this hash value */
-    const char *name;		/* Node name */
+    char *name;			/* Node name */
     char data[1];		/* Beginning of node data */
   };
 

@@ -42,7 +42,7 @@ struct rfc822_header
   {
     struct rfc822_header *next;
     struct header_info *info;		/* Info for setting and printing */
-    const char *header;			/* Header name */
+    char *header;			/* Header name */
     void *value;			/* Header value */
   };
 
@@ -68,7 +68,7 @@ struct header_info
     unsigned int prohibit : 1;	/* Header may not appear in the message */
   };
 
-#define NELT(x)		(sizeof x / sizeof x[0])
+#define NELT(x)		((int) (sizeof x / sizeof x[0]))
 
 #define OPTIONAL	0
 #define REQUIRE		1
@@ -133,10 +133,8 @@ print_string (smtp_message_t message, struct rfc822_header *header)
 void
 destroy_string (struct rfc822_header *header)
 {
-  const char *value = header->value;
-
-  if (value != NULL)
-    free ((void *) value);
+  if (header->value != NULL)
+    free (header->value);
 }
 
 /* Print header-name ": <" message-id ">\r\n" */
@@ -145,13 +143,12 @@ print_message_id (smtp_message_t message, struct rfc822_header *header)
 {
   const char *message_id = header->value;
   char buf[64];
-  int len;
   static int generation;
 
   if (message_id == NULL)
     {
-      len = snprintf (buf, sizeof buf, "%ld.%d@%s",
-                      time (NULL), generation++, message->session->localhost);
+      snprintf (buf, sizeof buf, "%ld.%d@%s",
+		time (NULL), generation++, message->session->localhost);
       message_id = buf;
     }
   /* TODO: implement line folding at white spaces */
@@ -194,8 +191,8 @@ print_date (smtp_message_t message, struct rfc822_header *header)
 struct mbox
   {
     struct mbox *next;
-    const char *mailbox;
-    const char *phrase;
+    char *mailbox;
+    char *phrase;
   };
 
 void
@@ -412,16 +409,16 @@ static const struct header_actions header_actions[] =
        should not be present in a message being posted or which
        is in transit.  If present in the message they will be stripped
        and if specified by the API, the relevant APIs will fail. */
-    { "Return-Path",	PROHIBIT, },
+    { "Return-Path",	PROHIBIT, NULL, NULL, NULL, },
     /* RFC 2298 - Delivering MTA may add the Original-Recipient: header
                   using DSN ORCPT parameter and may discard
                   Original-Recipient: headers present in the message.
                   No point in sending it then. */
-    { "Original-Recipient", PROHIBIT, },
+    { "Original-Recipient", PROHIBIT, NULL, NULL, NULL, },
     /* MIME-*: and Content-*: are MIME headers and must not be generated
        or processed by libESMTP */
-    { "Content-",	PRESERVE, },
-    { "MIME-",		PRESERVE, },
+    { "Content-",	PRESERVE, NULL, NULL, NULL, },
+    { "MIME-",		PRESERVE, NULL, NULL, NULL, },
     /* Remaining headers are known to libESMTP to simplify handling them
        for the application.   All other headers are reaated as simple
        string values. */
@@ -501,7 +498,7 @@ destroy_header_table (smtp_message_t message)
       next = header->next;
       if (header->info->action->destroy != NULL)
 	(*header->info->action->destroy) (header);
-      free ((void *) header->header);
+      free (header->header);
       free (header);
     }
   message->headers = message->end_headers = NULL;
@@ -558,7 +555,7 @@ create_header (smtp_message_t message, const char *header,
    Resets the seen flag for headers libESMTP is interested in */
 
 static void
-reset_headercb (struct h_node *node, void *arg)
+reset_headercb (struct h_node *node, void *arg __attribute__((unused)))
 {
   struct header_info *info = h_dptr (node, struct header_info);
 
@@ -764,8 +761,9 @@ smtp_set_resent_headers (smtp_message_t message, int onoff)
 {
   SMTPAPI_CHECK_ARGS (message != NULL, 0);
 
-  /* TODO: place holder, actually implement functionality here. */
+  /* TODO: place holder, implement real functionality here.
+           For now, succeed if the onoff argument is zero. */
+  SMTPAPI_CHECK_ARGS (onoff == 0, 0);
 
-  set_error (SMTP_ERR_INVAL);
-  return 0;
+  return 1;
 }

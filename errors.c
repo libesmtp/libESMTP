@@ -24,6 +24,7 @@
 #include <config.h>
 #endif
 
+#include <stdio.h>
 #include <errno.h>
 #include <string.h>
 #include <netdb.h>
@@ -56,26 +57,59 @@ smtp_errno (void)
 
 #include <pthread.h>
 
+struct errno_vars
+  {
+    int error;
+  };
+
 static pthread_key_t libesmtp_errno;
 static pthread_once_t libesmtp_errno_once = PTHREAD_ONCE_INIT;
 
 static void
-libesmtp_errno_alloc (void)
+errno_destroy (void *value)
 {
-  pthread_key_create (&libesmtp_errno, NULL);
+  if (value != NULL)
+    free (value);
+}
+
+static void
+errno_alloc (void)
+{
+  pthread_key_create (&libesmtp_errno, errno_destroy);
+}
+
+static struct errno_vars *
+errno_ptr (void)
+{
+  struct errno_vars *value;
+
+  pthread_once (&libesmtp_errno_once, errno_alloc);
+  value = pthread_getspecific (libesmtp_errno);
+  if (value == NULL)
+    {
+      value = malloc (sizeof (struct errno_vars));
+      /* FIXME: check for NULL malloc */
+      memset (value, 0, sizeof (struct errno_vars));
+      pthread_setspecific (libesmtp_errno, value);
+    }
+  return value;
 }
 
 void
 set_error (int code)
 {
-  pthread_once (&libesmtp_errno_once, libesmtp_errno_alloc);
-  pthread_setspecific (libesmtp_errno, (void *) code);
+  struct errno_vars *value = errno_ptr ();
+
+  if (value != NULL)
+    value->error = code;
 }
 
 int
 smtp_errno (void)
 {
-  return (int) pthread_getspecific (libesmtp_errno);
+  struct errno_vars *value = errno_ptr ();
+
+  return (value != NULL) ? value->error : 0;
 }
 
 #endif
@@ -104,12 +138,18 @@ smtp_strerror (int error, char buf[], int buflen)
   int len;
 
   if (error < 0)
-#ifdef HAVE_STRERROR_R
+#ifdef HAVE_WORKING_STRERROR_R
     return strerror_r (-error, buf, buflen);
 #else
+    /* Could end up here when threading is enabled but a working
+       strerror_r() is not found.  There will be a critical section
+       of code until the returned string is copied to the supplied
+       buffer.  This could be solved using a mutex but its hardly
+       worth it since even if libESMTP is protected against itself
+       the application could still call strerror anyway. */
     text = strerror (-error);
 #endif
-  else if (error < (sizeof libesmtp_errors / sizeof libesmtp_errors[0]))
+  else if (error < (int) (sizeof libesmtp_errors / sizeof libesmtp_errors[0]))
     text = libesmtp_errors[error];
   else
     text = (const char *) 0;
