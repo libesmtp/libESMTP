@@ -17,7 +17,7 @@
     </authorgroup>
 
     <copyright>
-      <year>2001</year>
+      <year>2001,2002</year>
       <holder>Brian Stafford</holder>
     </copyright>
 
@@ -93,7 +93,7 @@ remainder of the API is devoted to reporting on a completed SMTP session.
     <para>
 Although the API closely models the protocol itself, libESMTP relieves the
 programmer of all the work needed to properly implement RFC 2821 (formerly
-RFC 2821) and avoids many of the pitfalls in typical SMTP implementations.
+RFC 821) and avoids many of the pitfalls in typical SMTP implementations.
 It constructs SMTP commands, parses responses, provides socket buffering
 and pipelining, where appropriate provides for TLS connections and
 provides a failover mechanism based on DNS allowing multiple redundant
@@ -826,11 +826,10 @@ In addition, headers added to a message at delivery time such as
 Return-Path: are always deleted from the message.
       </para>
       <para>
-Certain headers may be specified multiple times and cause either one
-header listing all values specified or multiple headers with one value
-to be generated.  If the header may not be specified multiple times all
-calls to <function>smtp_set_header</function> but the first for a given
-header will fail.
+Certain headers may be specified multiple times and generate a single
+header listing all values specified.  If the header does not permit a
+list of values, calls to <function>smtp_set_header</function> but the
+first for a given header will fail.
       </para>
     </refsect1>
   </refentry>
@@ -861,11 +860,38 @@ header will fail.
 enum header_option
   {
     Hdr_OVERRIDE,
+    Hdr_PROHIBIT
   };
       </programlisting>
       <para>
 Set an RFC 2822 message header option.
       </para>
+      <variablelist>
+        <title>Header Options</title>
+	<varlistentry>
+	  <term>Hdr_OVERRIDE</term>
+	  <listitem>
+	    <para>
+Normally, a header set by <function>smtp_set_header</function> is used
+as a default if one is not supplied in the message.  When Hdr_OVERRIDE
+is set, the value supplied in the API overrides the value in the
+message.
+	    </para>
+	  </listitem>
+	</varlistentry>
+	<varlistentry>
+	  <term>Hdr_PROHIBIT</term>
+	  <listitem>
+	    <para>
+libESMTP generates certain headers automatically if not present in the
+message.  This is the default behaviour for headers that are RECOMMENDED
+but not REQUIRED by RFC 2822, such as Message-Id:.  Setting Hdr_PROHIBIT
+ensures the transmitted message does not contain the named header.  If the
+header is REQUIRED by RFC 2822, the API will fail.
+	    </para>
+	  </listitem>
+	</varlistentry>
+      </variablelist>
     </refsect1>
 
     <refsect1>
@@ -1018,14 +1044,21 @@ enum
   /* Protocol extension progress */
     SMTP_EV_ETRNSTATUS = 1000,
 
-  /* Informational extensions */
-    SMTP_EV_EXT_8BITMIME = 1100,
-    SMTP_EV_EXT_BINARYMIME,
-
   /* Required extensions */
-    SMTP_EV_EXTNA_DSN = 1200,
+    SMTP_EV_EXTNA_DSN = 2000,
+    SMTP_EV_EXTNA_8BITMIME,
     SMTP_EV_EXTNA_STARTTLS,
     SMTP_EV_EXTNA_ETRN,
+
+  /* Extensions specific events */
+    SMTP_EV_DELIVERBY_EXPIRED = 3000,
+
+    /* STARTTLS */
+    SMTP_EV_WEAK_CIPHER = 3100,
+    SMTP_EV_STARTTLS_OK,
+    SMTP_EV_INVALID_PEER_CERTIFICATE,
+    SMTP_EV_NO_PEER_CERTIFICATE,
+    SMTP_EV_WRONG_PEER_CERTIFICATE
   };
       </programlisting>
     </refsynopsisdiv>
@@ -1343,24 +1376,26 @@ libESMTP error code.
     <refsect1 id="errorcodes">
       <title>Error Codes</title>
 
-      <para>
-Much work needs to be done wrt. error codes.  ES_INVAL is
-badly overloaded.  In addition, there are many more things that can go
-wrong and for which extra codes are required.
-      </para>
-
       <programlisting>
-#define SMTP_ERR_NOTHING_TO_DO			2
-#define SMTP_ERR_DROPPED_CONNECTION		3
-#define SMTP_ERR_INVALID_RESPONSE_SYNTAX	4
-#define SMTP_ERR_STATUS_MISMATCH		5
-#define SMTP_ERR_INVALID_RESPONSE_STATUS	6
-#define SMTP_ERR_INVAL				7
-#define SMTP_ERR_EXTENSION_NOT_AVAILABLE	8
-#define SMTP_ERR_HOST_NOT_FOUND			9
-#define SMTP_ERR_NO_ADDRESS			10
-#define SMTP_ERR_NO_RECOVERY			11
-#define SMTP_ERR_TRY_AGAIN			12
+#define SMTP_ERR_NOTHING_TO_DO                  2
+#define SMTP_ERR_DROPPED_CONNECTION             3
+#define SMTP_ERR_INVALID_RESPONSE_SYNTAX        4
+#define SMTP_ERR_STATUS_MISMATCH                5
+#define SMTP_ERR_INVALID_RESPONSE_STATUS        6
+#define SMTP_ERR_INVAL                          7
+#define SMTP_ERR_EXTENSION_NOT_AVAILABLE        8
+
+/* libESMTP versions of some getaddrinfo error numbers */
+#define SMTP_ERR_EAI_ADDRFAMILY                 9
+#define SMTP_ERR_EAI_NODATA                     10
+#define SMTP_ERR_EAI_FAIL                       11
+#define SMTP_ERR_EAI_AGAIN                      12
+#define SMTP_ERR_EAI_MEMORY                     13
+#define SMTP_ERR_EAI_FAMILY                     14
+#define SMTP_ERR_EAI_BADFLAGS                   15
+#define SMTP_ERR_EAI_NONAME                     16
+#define SMTP_ERR_EAI_SERVICE                    17
+#define SMTP_ERR_EAI_SOCKTYPE                   18
       </programlisting>
 
       <para>

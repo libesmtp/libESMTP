@@ -1,3 +1,14 @@
+2002-01-30 Version 0.8.10p1 released
+------------------------------------
+
+2002-01-29 	Brian Stafford	<brian@stafford.uklinux.net>
+      * ntlm/Makefile.am
+	Added ntlm.h to list of sources.  This omission stopped 0.8.10
+	form building.
+
+2002-01-29 Version 0.8.10 released
+----------------------------------
+
 2002-01-26 	Brian Stafford	<brian@stafford.uklinux.net>
       * various files
 	Copyright messages now show the correct year.
