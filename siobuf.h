@@ -48,9 +48,12 @@ int sio_read(struct siobuf *sio, void *bufp, int buflen);
 char *sio_gets(struct siobuf *sio, char buf[], int buflen);
 int sio_printf(struct siobuf *sio, const char *format, ...)
 	       __attribute__ ((format (printf, 2, 3))) ;
+void *sio_set_userdata (struct siobuf *sio, void *user_data);
+void *sio_get_userdata (struct siobuf *io);
 
 
 #ifdef USE_TLS
 int sio_set_tlsclient_ssl (struct siobuf *sio, SSL *ssl);
+int sio_set_tlsserver_ssl (struct siobuf *sio, SSL *ssl);
 #endif
 #endif

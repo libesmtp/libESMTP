@@ -38,6 +38,11 @@
 #include <auth-client.h>
 #include <libesmtp.h>
 
+#if !defined (__GNUC__) || __GNUC__ < 2
+# define __attribute__(x)
+#endif
+#define unused      __attribute__((unused))
+
 struct option longopts[] =
   {
     { "help", no_argument, NULL, '?', }, 
@@ -51,7 +56,8 @@ struct option longopts[] =
     { "reverse-path", required_argument, NULL, 'f', }, 
     { "tls", no_argument, NULL, 't', }, 
     { "require-tls", no_argument, NULL, 'T', }, 
-    { NULL, },
+    { "noauth", no_argument, NULL, 1, }, 
+    { NULL, 0, NULL, 0, },
   };
 
 const char *readlinefp_cb (void **buf, int *len, void *arg);
@@ -77,6 +83,7 @@ main (int argc, char **argv)
   char *from = NULL;
   char *subject = NULL;
   int nocrlf = 0;
+  int noauth = 0;
   char *file;
   FILE *fp;
   int c;
@@ -140,6 +147,10 @@ main (int argc, char **argv)
         version ();
         exit (2);
 
+      case 1:
+        noauth = 1;
+        break;
+
       default:
         usage ();
         exit (2);
@@ -180,7 +191,8 @@ main (int argc, char **argv)
 
   /* Now tell libESMTP it can use the SMTP AUTH extension.
    */
-  smtp_auth_set_context (session, authctx);
+  if (!noauth)
+    smtp_auth_set_context (session, authctx);
 
   /* Set the reverse path for the mail envelope.  (NULL is ok)
    */
@@ -249,7 +261,8 @@ main (int argc, char **argv)
       /* Report on the success or otherwise of the mail transfer.
        */
       status = smtp_message_transfer_status (message);
-      printf ("%d %s", status->code, status->text);
+      printf ("%d %s", status->code,
+              (status->text != NULL) ? status->text : "\n");
       smtp_enumerate_recipients (message, print_recipient_status, NULL);
     }
 
@@ -265,7 +278,7 @@ main (int argc, char **argv)
 /* Callback to prnt the recipient status */
 void
 print_recipient_status (smtp_recipient_t recipient,
-			const char *mailbox, void *arg)
+			const char *mailbox, void *arg unused)
 {
   const smtp_status_t *status;
 
@@ -341,7 +354,7 @@ monitor_cb (const char *buf, int buflen, int writing, void *arg)
 /* Callback to request user/password info.  Not thread safe. */
 int
 authinteract (auth_client_request_t request, char **result, int fields,
-              void *arg)
+              void *arg unused)
 {
   char prompt[64];
   static char resp[512];
@@ -374,7 +387,7 @@ authinteract (auth_client_request_t request, char **result, int fields,
 }
 
 int
-tlsinteract (char *buf, int buflen, int rwflag, void *arg)
+tlsinteract (char *buf, int buflen, int rwflag unused, void *arg unused)
 {
   char *pw;
   int len;
@@ -416,6 +429,7 @@ usage (void)
          "\t-c,--crlf -- translate line endings from \\n to CR-LF\n"
          "\t-t,--tls -- use STARTTLS extension if possible\n"
          "\t-T,--require-tls -- require use of STARTTLS extension\n"
+         "\t   --noauth -- do not attempt to authenticate to the MSA\n"
          "\t--version -- show version info and exit\n"
          "\t--help -- this message\n"
          "\n"

@@ -61,7 +61,7 @@ lm_deshash (void *result, const_des_cblock *iv, const void *secret)
 
   /* paranoia */
   memset (key, 0, sizeof key);
-  memset (ks, 0, sizeof ks);
+  memset (&ks, 0, sizeof ks);
 }
 
 /* Copy and convert to upper case.  If supplied string is shorter than the

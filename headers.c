@@ -593,6 +593,10 @@ find_header (smtp_message_t message, const char *name, int len)
 
   assert (message != NULL && name != NULL);
 
+  if (len < 0)
+    len = strlen (name);
+  if (len == 0)
+    return NULL;
   info = h_search (message->hdr_action, name, len);
   if (info == NULL && (p = memchr (name, '-', len)) != NULL)
     info = h_search (message->hdr_action, name, p - name + 1);
@@ -674,7 +678,8 @@ process_header (smtp_message_t message, const char *header, int *len)
 
   assert (message != NULL && header != NULL && len != NULL);
 
-  if ((p = memchr (header, ':', *len)) != NULL
+  if (*len > 0
+      && (p = memchr (header, ':', *len)) != NULL
       && (info = find_header (message, header, p - header)) != NULL)
     {
       if ((action = info->action) != NULL)

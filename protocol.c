@@ -761,6 +761,8 @@ cb_ehlo (smtp_session_t session, char *buf)
     session->extensions |= EXT_ETRN;
   else if (strcasecmp (token, "XUSR") == 0)	/* sendmail (I feel ill) */
     session->extensions |= EXT_XUSR;
+  else if (strcasecmp (token, "XEXCH50") == 0)	/* exchange (I feel worse) */
+    session->extensions |= EXT_XEXCH50;
   return 1;
 }
 
@@ -773,9 +775,8 @@ rsp_ehlo (siobuf_t conn, smtp_session_t session)
   session->extensions = 0;
   destroy_auth_mechanisms (session);
   code = read_smtp_response (conn, session, &session->mta_status, cb_ehlo);
-  if (code == 0)
+  if (code < 0)
     {
-      set_error (SMTP_ERR_INVALID_RESPONSE_SYNTAX);
       session->rsp_state = S_quit;
       return;
     }
@@ -900,9 +901,8 @@ rsp_helo (siobuf_t conn, smtp_session_t session)
   session->extensions = 0;
   destroy_auth_mechanisms (session);
   code = read_smtp_response (conn, session, &session->mta_status, NULL);
-  if (code == 0)
+  if (code < 0)
     {
-      set_error (SMTP_ERR_INVALID_RESPONSE_SYNTAX);
       session->try_fallback_server = 1;
       session->rsp_state = S_quit;
       return;
@@ -1050,6 +1050,11 @@ rsp_mail (siobuf_t conn, smtp_session_t session)
   message = session->current_message;
   code = read_smtp_response (conn, session,
   		             &message->reverse_path_status, NULL);
+  if (code < 0)
+    {
+      session->rsp_state = S_quit;
+      return;
+    }
 
   /* Notify the MAIL FROM: status */
   if (session->event_cb != NULL)
@@ -1149,6 +1154,12 @@ rsp_rcpt (siobuf_t conn, smtp_session_t session)
 
   code = read_smtp_response (conn, session,
   			     &session->rsp_recipient->status, NULL);
+  if (code < 0)
+    {
+      session->rsp_state = S_quit;
+      return;
+    }
+
   if (code == 2)
     session->current_message->valid_recipients += 1;
   else
@@ -1202,6 +1213,11 @@ rsp_data (siobuf_t conn, smtp_session_t session)
 
   message = session->current_message;
   code = read_smtp_response (conn, session, &message->message_status, NULL);
+  if (code < 0)
+    {
+      session->rsp_state = S_quit;
+      return;
+    }
   if (code == 4 || code == 5)
     {
       /* The server will not accept this message.
@@ -1305,7 +1321,7 @@ cmd_data2 (siobuf_t conn, smtp_session_t session)
          deleted by the library.  If header == line it is passed
          unchanged otherwise, header must be freed after use. */
       header = process_header (session->current_message, line, &len);
-      if (header != NULL)
+      if (header != NULL && len > 0)
 	{
 	  /* Notify byte count to the application. */
 	  if (session->event_cb != NULL)
@@ -1360,30 +1376,31 @@ break_2:
      application might just send a CRLF followed by the message body.
      Libesmtp will then provide all the necessary headers. */
   while ((header = missing_header (session->current_message, &len)) != NULL)
-    {
-      /* Notify byte count to the application. */
-      if (session->event_cb != NULL)
-	(*session->event_cb) (session, SMTP_EV_MESSAGEDATA,
-	                      session->event_cb_arg,
-	                      session->current_message, len);
+    if (len > 0)
+      {
+	/* Notify byte count to the application. */
+	if (session->event_cb != NULL)
+	  (*session->event_cb) (session, SMTP_EV_MESSAGEDATA,
+				session->event_cb_arg,
+				session->current_message, len);
 
-      if (session->monitor_cb && session->monitor_cb_headers)
-	(*session->monitor_cb) (header, len, SMTP_CB_HEADERS,
-				session->monitor_cb_arg);
-      for (pline = header; pline < header + len; pline = p)
-	{
-	  p = memchr (pline, '\n', header + len - pline);
-	  if (p == NULL)
-	    {
-	      set_errno (ERANGE);
-	      session->cmd_state = session->rsp_state = -1;
-	      return;
-	    }
-	  if (pline[0] == '.')
-	    sio_write (conn, ".", 1);
-	  sio_write (conn, pline, ++p - pline);
-	}
-    }
+	if (session->monitor_cb && session->monitor_cb_headers)
+	  (*session->monitor_cb) (header, len, SMTP_CB_HEADERS,
+				  session->monitor_cb_arg);
+	for (pline = header; pline < header + len; pline = p)
+	  {
+	    p = memchr (pline, '\n', header + len - pline);
+	    if (p == NULL)
+	      {
+		set_errno (ERANGE);
+		session->cmd_state = session->rsp_state = -1;
+		return;
+	      }
+	    if (pline[0] == '.')
+	      sio_write (conn, ".", 1);
+	    sio_write (conn, pline, ++p - pline);
+	  }
+      }
 
   /* ... and finally terminate the message headers */
   sio_write (conn, "\r\n", 2);
@@ -1434,6 +1451,11 @@ rsp_data2 (siobuf_t conn, smtp_session_t session)
   code = read_smtp_response (conn, session,
 			     &session->current_message->message_status,
 			     NULL);
+  if (code < 0)
+    {
+      session->rsp_state = S_quit;
+      return;
+    }
 
   if (code == 2)
     {

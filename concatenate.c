@@ -135,24 +135,25 @@ concatenate (struct catbuf *catbuf, const char *string, int len)
 
   if (len < 0)
     len = strlen (string);
-
-  /* Ensure that the buffer is big enough to accept the string */
-  if (catbuf->buffer == NULL)
-    shortfall = 512;
-  else
-    shortfall = len - (catbuf->allocated - catbuf->string_length);
-  if (shortfall > 0)
+  if (len > 0)
     {
-      if (shortfall % 128 != 0)
-        shortfall += 128 - shortfall % 128;
-      if (!cat_alloc (catbuf, catbuf->allocated + shortfall))
-        return NULL;
+      /* Ensure that the buffer is big enough to accept the string */
+      if (catbuf->buffer == NULL)
+	shortfall = 512;
+      else
+	shortfall = len - (catbuf->allocated - catbuf->string_length);
+      if (shortfall > 0)
+	{
+	  if (shortfall % 128 != 0)
+	    shortfall += 128 - shortfall % 128;
+	  if (!cat_alloc (catbuf, catbuf->allocated + shortfall))
+	    return NULL;
+	}
+
+      /* Copy the string */
+      memcpy (catbuf->buffer + catbuf->string_length, string, len);
+      catbuf->string_length += len;
     }
-
-  /* Copy the string */
-  memcpy (catbuf->buffer + catbuf->string_length, string, len);
-  catbuf->string_length += len;
-
   return catbuf->buffer;
 }
 

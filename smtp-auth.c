@@ -177,6 +177,11 @@ rsp_auth (siobuf_t conn, smtp_session_t session)
   int code;
 
   code = read_smtp_response (conn, session, &session->mta_status, NULL);
+  if (code < 0)
+    {
+      session->rsp_state = S_quit;
+      return;
+    }
   if (code == 4 || code == 5)
     {
       /* If auth mechanism is too weak or encryption is required, give up.
@@ -223,7 +228,11 @@ rsp_auth (siobuf_t conn, smtp_session_t session)
     }
   else if (code == 3)
     session->rsp_state = S_auth2;
-  /* else errors */
+  else
+    {
+      set_error (SMTP_ERR_INVALID_RESPONSE_STATUS);
+      session->rsp_state = S_quit;
+    }
 }
 
 void

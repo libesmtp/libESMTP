@@ -79,6 +79,8 @@ struct siobuf
 #ifdef USE_TLS
     SSL *ssl;			/* The SSL connection */
 #endif
+
+    void *user_data;
   };
 
 /* Attach bi-directional buffering to the socket descriptor.
@@ -203,6 +205,30 @@ sio_set_tlsclient_ssl (struct siobuf *sio, SSL *ssl)
     }
   return sio->ssl != NULL;
 }
+
+int
+sio_set_tlsserver_ssl (struct siobuf *sio, SSL *ssl)
+{
+  int ret;
+
+  assert (sio != NULL);
+
+  if (ssl != NULL)
+    {
+      sio->ssl = ssl;
+      SSL_set_rfd (sio->ssl, sio->sdr);
+      SSL_set_wfd (sio->ssl, sio->sdw);
+      while ((ret = SSL_accept (sio->ssl)) <= 0)
+        if (sio_sslpoll (sio, ret) <= 0)
+	  {
+	    SSL_free (sio->ssl);
+	    sio->ssl = NULL;
+	    break;
+	  }
+      sio_set_timeout (sio, sio->milliseconds);
+    }
+  return sio->ssl != NULL;
+}
 #endif
 
 void
@@ -306,17 +332,30 @@ sio_write (struct siobuf *sio, const void *bufp, int buflen)
 
   if (buflen < 0)
     buflen = strlen (buf);
+  if (buflen == 0)
+    return;
+
   while (buflen > sio->write_available)
     {
-      memcpy (sio->write_position, buf, sio->write_available);
-      sio->write_position += sio->write_available;
-      buf += sio->write_available;
-      buflen -= sio->write_available;
+      if (sio->write_available > 0)
+	{
+	  memcpy (sio->write_position, buf, sio->write_available);
+	  sio->write_position += sio->write_available;
+	  buf += sio->write_available;
+	  buflen -= sio->write_available;
+	}
       sio_flush (sio);
+      assert (sio->write_available > 0);
     }
-  memcpy (sio->write_position, buf, buflen);
-  sio->write_position += buflen;
-  sio->write_available -= buflen;
+  if (buflen > 0)
+    {
+      memcpy (sio->write_position, buf, buflen);
+      sio->write_position += buflen;
+      sio->write_available -= buflen;
+      /* If the buffer is exactly filled, flush it */
+      if (sio->write_available == 0)
+	sio_flush (sio);
+    }
 }
 
 static void
@@ -571,6 +610,21 @@ sio_gets (struct siobuf *sio, char buf[], int buflen)
   while (sio_fill (sio));
   *p = '\0';
   return buf;
+}
+
+void *
+sio_set_userdata (struct siobuf *sio, void *user_data)
+{
+  void *old = sio->user_data;
+
+  sio->user_data = user_data;
+  return old;
+}
+
+void *
+sio_get_userdata (struct siobuf *sio)
+{
+  return sio->user_data;
 }
 
 int

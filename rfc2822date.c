@@ -62,10 +62,12 @@ libesmtp_mktime (struct tm *tm)
   year = tm->tm_year + 1900;
   day = days[tm->tm_mon] + tm->tm_mday - 1;
 
-  /* adjust for leap years */
+  /* adjust for leap years paying attention to January and February */
   day += (year - (EPOCH - (EPOCH % 4))) / 4;
   day -= (year - (EPOCH - (EPOCH % 100))) / 100;
   day += (year - (EPOCH - (EPOCH % 400))) / 400;
+  if (tm->tm_mon < 2 && (year % 4 == 0) && (year % 100 != 0 || year / 400 == 0))
+    day -= 1;
 
   when = ((year - EPOCH) * 365 + day) * 24 + tm->tm_hour;
   when = (when * 60 + tm->tm_min) * 60 + tm->tm_sec;

@@ -304,6 +304,7 @@ void *smtp_etrn_get_application_data (smtp_etrn_node_t node);
 #define SMTP_ERR_EAI_SOCKTYPE			18
 
 #define SMTP_ERR_UNTERMINATED_RESPONSE		19
+#define SMTP_ERR_CLIENT_ERROR			20
 
 /* Protocol monitor callback.  Values for writing */
 #define SMTP_CB_READING				0

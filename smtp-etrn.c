@@ -176,6 +176,11 @@ rsp_etrn (siobuf_t conn, smtp_session_t session)
     session->rsp_etrn_node = session->etrn_nodes;
   node = session->rsp_etrn_node;
   code = read_smtp_response (conn, session, &node->status, NULL);
+  if (code < 0)
+    {
+      session->rsp_state = S_quit;
+      return;
+    }
 
   /* Notify the ETRN status */
   if (session->event_cb != NULL)

@@ -216,7 +216,11 @@ cmd_bdat2 (siobuf_t conn, smtp_session_t session)
     }
   else
     {
-      sio_write (conn, "BDAT 0 LAST\r\n", -1);
+      /* Workaround - M$ Exchange is broken wrt RFC 3030 */
+      if (session->extensions & EXT_XEXCH50)
+	sio_write (conn, "BDAT 2 LAST\r\n\r\n", -1);
+      else
+	sio_write (conn, "BDAT 0 LAST\r\n", -1);
       sio_set_timeout (conn, session->data2_timeout);
       session->bdat_last_issued = 1;
       session->cmd_state = -1;

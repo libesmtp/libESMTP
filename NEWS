@@ -1,3 +1,13 @@
+* libESMTP 1.0.1 stable release. 2002-09-12
+
+- See ChangeLog for details.
+
+* libESMTP 1.0 stable release. 2002-11-09
+
+  Tarball builds correctly again!
+
+- See ChangeLog for details.
+
 * libESMTP 1.0 stable release. 2002-11-09
 
   LibESMTP is now considered stable.  Version 1.0 is the best available

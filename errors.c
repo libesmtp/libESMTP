@@ -235,6 +235,7 @@ static const char *libesmtp_errors[] =
     NULL,						/* EAI_SERVICE */
     NULL,						/* EAI_SOCKTYPE */
     "Unterminated server response",			/* UNTERMINATED_RESPONSE */
+    "Client error",					/* CLIENT_ERROR */
   };
 
 char *
@@ -279,7 +280,8 @@ smtp_strerror (int error, char buf[], size_t buflen)
       len = strlen (text);
       if (len > (int) buflen - 1)
         len = buflen - 1;
-      memcpy (buf, text, len);
+      if (len > 0)
+	memcpy (buf, text, len);
       buf[len] = '\0';
     }
   return len >= 0 ? buf : NULL;

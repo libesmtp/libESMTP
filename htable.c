@@ -116,6 +116,8 @@ h_insert (struct h_node **table, const char *name, int namelen, size_t size)
 
   if (namelen < 0)
     namelen = strlen (name);
+  if (namelen == 0)
+    return NULL;
   size += sizeof (struct h_node);
   if ((node = malloc (size)) == NULL)
     return NULL;

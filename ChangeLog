@@ -1,3 +1,63 @@
+2002-09-12 Stable Version 1.0.1 released
+--------------------------------------
+2003-09-11 	Brian Stafford	<brian@stafford.uklinux.net>
+      * protocol.c smtp-auth.c smtp-bdat.c smtp-etrn.c smtp-tls.c
+	More thoroughly check return value from read_smtp_response().
+
+      * libesmtp.h errors.c
+        Added new "Client error" error code.  This is just a cop-out,
+        used when an API called by libesmtp fails.
+
+      * base64.c
+	Make conversions immune to NULL source data,
+
+      * examples/mail-file.c
+	Cleaned up some compiler warnings
+
+2003-09-02 	Brian Stafford	<brian@stafford.uklinux.net>
+      * siobuf.[hc]
+	Added a few extra sio_ calls.  Not actually used in libESMTP though.
+
+2003-07-29 	Brian Stafford	<brian@stafford.uklinux.net>
+      * concatenate.c errors.c getaddrinfo.c headers.c htable.c
+      * protocol.c siobuf.c
+	Don't perform zero length operations using the memxxx() functions.
+	This may avoid segfaults on some platforms or libraries.
+
+      * siobuf.c
+        Improved handling of flushes in sio_write() particularly in the
+        case where data would exactly fill remaining space in the buffer.
+
+2003-07-27 	Brian Stafford	<brian@stafford.uklinux.net>
+      * rfc2822date.c
+	Correct leap year compensation for January and February in
+	libesmtp_mktime().
+
+2003-07-27 	Brian Stafford	<brian@stafford.uklinux.net>
+      * examples/Makefile
+	Changed compiler flags from -ansi to -std=c99 and added -W
+
+2003-03-04 	Brian Stafford	<brian@stafford.uklinux.net>
+      * headers.c
+	Eliminated bug where find_header() could pass -1 to the length
+	argument of memchr() causing a core dump on some architectures.
+
+2003-02-26 	Brian Stafford	<brian@stafford.uklinux.net>
+      * libesmtp-private.h protocol.c smtp-bdat.c
+	M$ Exchange does not accept a chunk size of 0 in BDAT 0 LAST as
+	explicitly permitted by RFC 3030, *sigh*.  Hackish workaround
+	implemented.
+
+2003-01-27 	Brian Stafford	<brian@stafford.uklinux.net>
+      * configure.in Makefile.am
+	Added DIST_SUBDIRS macro to make sure tarball gets built properly.
+	This one slipped past 'make distcheck' last time for some reason
+	but then autoconf & friends are totally inscruitable.
+
+      * ntlm/ntlmdes.c
+        OpenSSL 0.9.7 changes some typedefs.  Changed to suit, should
+        still be compatible with previous OpenSSL versions.
+
 2002-11-09 Stable Version 1.0 released
 --------------------------------------
 2002-11-09 	Brian Stafford	<brian@stafford.uklinux.net>

@@ -48,6 +48,7 @@
 #define EXT_DELIVERBY		_BIT(9)	/* RFC 2852 */
 #define EXT_ETRN		_BIT(10)/* RFC 1985 */
 #define EXT_XUSR		_BIT(11)/* sendmail */
+#define EXT_XEXCH50		_BIT(12)/* exchange */
 
 struct smtp_session
   {

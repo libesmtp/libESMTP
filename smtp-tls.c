@@ -482,8 +482,19 @@ rsp_starttls (siobuf_t conn, smtp_session_t session)
   char buf[256];
 
   code = read_smtp_response (conn, session, &session->mta_status, NULL);
-  if (code == 2
-      && sio_set_tlsclient_ssl (conn, (ssl = starttls_create_ssl (session))))
+  if (code < 0)
+    {
+      session->rsp_state = S_quit;
+      return;
+    }
+
+  if (code != 2)
+    {
+      if (code != 4 && code != 5)
+        set_error (SMTP_ERR_INVALID_RESPONSE_STATUS);
+      session->rsp_state = S_quit;
+    }
+  else if (sio_set_tlsclient_ssl (conn, (ssl = starttls_create_ssl (session))))
     {
       session->using_tls = 1;
 
@@ -519,7 +530,10 @@ rsp_starttls (siobuf_t conn, smtp_session_t session)
         }
     }
   else
-    session->rsp_state = S_quit;
+    {
+      set_error (SMTP_ERR_CLIENT_ERROR);
+      session->rsp_state = S_quit;
+    }
 }
 
 #else
