@@ -3,7 +3,7 @@
  *  formatted electronic mail messages using the SMTP protocol described
  *  in RFC 2821.
  *
- *  Copyright (C) 2001,2002  Brian Stafford  <brian@stafford.uklinux.net>
+ *  Copyright (C) 2001-2004  Brian Stafford  <brian@stafford.uklinux.net>
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
@@ -37,6 +37,8 @@
 #include <unistd.h>
 #include <errno.h>
 #include <string.h>
+#include <openssl/x509v3.h>
+#include <openssl/err.h>
 #include <missing.h> /* declarations for missing library functions */
 /* ^^^^^^^^^^^ */
 
@@ -503,9 +505,15 @@ check_acceptable_security (smtp_session_t session, SSL *ssl)
       ok = 0;
       if (session->event_cb != NULL)
 	(*session->event_cb) (session, SMTP_EV_INVALID_PEER_CERTIFICATE,
-	                      session->event_cb_arg, vfy_result, &ok);
+			      session->event_cb_arg, vfy_result, &ok, ssl);
       if (!ok)
 	return 0;
+#if 0
+      /* Not sure about the location of this call so leave it out for now
+         - from Pawel: the worst thing that can happen is that one can
+	 get non-empty  error log in wrong places. */
+      ERR_clear_error(); /* we know what is going on, clear the error log */
+#endif
     }
 
   /* Check cipher strength.  Since we use only TLSv1 the cipher should
@@ -516,54 +524,79 @@ check_acceptable_security (smtp_session_t session, SSL *ssl)
       ok = 0;
       if (session->event_cb != NULL)
 	(*session->event_cb) (session, SMTP_EV_WEAK_CIPHER,
-	                      session->event_cb_arg, bits, &ok);
+			      session->event_cb_arg, bits, &ok);
       if (!ok)
 	return 0;
     }
 
   /* Check server credentials stored in the certificate.
    */
+  ok = 0;
   cert = SSL_get_peer_certificate (ssl);
-  if (cert != NULL)
+  if (cert == NULL)
     {
-      /* FIXME: should retrieve each subjectAltName of type dNSName
-      		and compare them to the remote host name.  If any one
-      		of them matches, accept the certificate. */
-      X509_NAME_get_text_by_NID (X509_get_subject_name (cert),
-      				 NID_commonName, buf, sizeof buf);
-      X509_free (cert);
-
-      /* FIXME: in protocol.c, record the canonic name of the host returned
-                by getaddrinfo.  Use that instead of session->host. */
-
-      if (!match_domain (session->host, buf) != 0)
-        {
-	  ok = 0;
-	  if (session->event_cb != NULL)
-	    (*session->event_cb) (session, SMTP_EV_WRONG_PEER_CERTIFICATE,
-				  session->event_cb_arg, &ok);
-	  if (!ok)
-	    return 0;
-        }
+      if (session->event_cb != NULL)
+	(*session->event_cb) (session, SMTP_EV_NO_PEER_CERTIFICATE,
+			      session->event_cb_arg, &ok);
     }
   else
     {
-      ok = 0;
-      if (session->event_cb != NULL)
-	(*session->event_cb) (session, SMTP_EV_NO_PEER_CERTIFICATE,
-	                      session->event_cb_arg, &ok);
+      int i, j, extcount;
+
+      extcount = X509_get_ext_count (cert);
+      for (i = 0; i < extcount; i++)
+	{
+	  const char *extstr;
+	  X509_EXTENSION *ext = X509_get_ext (cert, i);
+
+	  extstr = OBJ_nid2sn (OBJ_obj2nid (X509_EXTENSION_get_object (ext)));
+	  if (strcmp (extstr, "subjectAltName") == 0)
+	    {
+	      unsigned char *data;
+	      STACK_OF(CONF_VALUE) *val;
+	      CONF_VALUE *nval;
+	      X509V3_EXT_METHOD *meth;
+	      int stack_len;
+
+	      meth = X509V3_EXT_get (ext);
+	      if (meth == NULL)
+		break;
+	      data = ext->value->data;
+	      val = (*meth->i2v) (meth, (*meth->d2i) (NULL, &data,
+						      ext->value->length),
+				  NULL);
+	      stack_len = sk_CONF_VALUE_num (val);
+	      for (j = 0; j < stack_len; j++)
+		{
+		  nval = sk_CONF_VALUE_value (val, j);
+		  if (strcmp (nval->name, "DNS") == 0
+		      && match_domain (session->host, nval->value))
+		    {
+		      ok = 1;
+		      break;
+		    }
+		}
+	    }
+	  if (ok)
+	    break;
+	}
       if (!ok)
-	return 0;
+	{
+	  /* Matching by subjectAltName failed, try commonName */
+	  X509_NAME_get_text_by_NID (X509_get_subject_name (cert),
+				     NID_commonName, buf, sizeof buf);
+	  if (!match_domain (session->host, buf) != 0)
+	    {
+	      if (session->event_cb != NULL)
+		(*session->event_cb) (session, SMTP_EV_WRONG_PEER_CERTIFICATE,
+				      session->event_cb_arg, &ok, buf, ssl);
+	    }
+	  else
+	    ok = 1;
+	}
+      X509_free (cert);
     }
-
-  /* Since the criteria for rejecting a certificate may be at the
-     user's discretion, a config file might be needed to configure
-     the client TLS (and SASL) options.
-
-     Yuck!  libESMTP has got on without bloody config files until now :(
-   */
-
-  return 1;
+  return ok;
 }
 
 void

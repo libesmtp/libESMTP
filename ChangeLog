@@ -1,4 +1,15 @@
-2004-01-06 Stable Version 1.0.1 released
+2004-04-20 Stable Version 1.0.3 released
+----------------------------------------
+2004-04-20 	Brian Stafford	<brian@stafford.uklinux.net>
+      * memrchr.c configure.in
+	Added memrchr() implementation for systems that don't have one.
+
+      * smtp-tls.c
+	Applied patches from Pawel Salek to check subjectAltName for
+	wildcarded domain name when validating server certificate.
+
+
+2004-01-06 Stable Version 1.0.2 released
 --------------------------------------
 2003-12-01 	Brian Stafford	<brian@stafford.uklinux.net>
       * smtp-tls.c examples/mail-file.c

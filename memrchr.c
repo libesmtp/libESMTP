@@ -1,11 +1,9 @@
-#ifndef _missing_h
-#define _missing_h
 /*
  *  This file is part of libESMTP, a library for submission of RFC 2822
  *  formatted electronic mail messages using the SMTP protocol described
  *  in RFC 2821.
  *
- *  Copyright (C) 2002-2004  Brian Stafford  <brian@stafford.uklinux.net>
+ *  Copyright (C) 2004  Brian Stafford  <brian@stafford.uklinux.net>
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
@@ -22,36 +20,24 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-/* Collect together some declarations that might not be present on
-   some systems */
-
-#ifndef HAVE_STRDUP
-char *strdup (const char *s1);
+#ifdef HAVE_CONFIG_H
+#include <config.h>
 #endif
+#undef HAVE_MEMRCHR
+#undef _GNU_SOURCE
+#undef _ISOC9X_SOURCE
+#undef _OSF_SOURCE
+#undef _XOPEN_SOURCE
+#undef __EXTENSIONS__
+#include <missing.h>
 
-#ifndef HAVE_STRCASECMP
-int strcasecmp (const char *a, const char *b);
-#endif
-
-#ifndef HAVE_STRNCASECMP
-#include <sys/types.h>
-int strncasecmp (const char *a, const char *b, size_t len);
-#endif
-
-#ifndef HAVE_MEMRCHR
-#include <sys/types.h>
-void *memrchr (const void *a, int c, size_t len);
-#endif
-
-#ifndef HAVE_SNPRINTF
-#include <sys/types.h>
-int snprintf(char *s, size_t n, const char *format, ...);
-#endif
-
-#ifndef HAVE_VSNPRINTF
-#include <stdarg.h>
-#include <sys/types.h>
-int vsnprintf(char *s, size_t n, const char *format, va_list ap);
-#endif
-
-#endif
+void *
+memrchr (const void *a, int c, size_t len)
+{
+  const unsigned char *p = a;
+  
+  for (p += len - 1; (const void *) p >= a; p--)
+    if (*p == c)
+      return (void *) p;
+  return (void *) 0;
+}

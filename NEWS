@@ -1,3 +1,13 @@
+* libESMTP 1.0.3 stable release. 2004-04-20
+
+- This release contains TLS improvements from
+  Pawel Salek <pawsa@theochem.kth.se>
+  See ChangeLog for details.
+
+* libESMTP 1.0.2 stable release. 2004-01-06
+
+- See ChangeLog for details.
+
 * libESMTP 1.0.2 stable release. 2004-01-06
 
 - See ChangeLog for details.
