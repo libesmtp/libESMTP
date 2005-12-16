@@ -273,7 +273,7 @@ starttls_create_ctx (smtp_session_t session)
 	  if (session->event_cb != NULL)
 	    (*session->event_cb) (session, SMTP_EV_NO_CLIENT_CERTIFICATE,
 				  session->event_cb_arg, &ok);
-	  if(!ok) 
+	  if (!ok) 
             return NULL;
 	}
     }
@@ -362,7 +362,7 @@ starttls_create_ssl (smtp_session_t session)
 	  if (session->event_cb != NULL)
 	    (*session->event_cb) (session, SMTP_EV_NO_CLIENT_CERTIFICATE,
 				  session->event_cb_arg, &ok);
-	  if(!ok) 
+	  if (!ok) 
             return NULL;
 	}
     }
@@ -512,7 +512,7 @@ check_acceptable_security (smtp_session_t session, SSL *ssl)
       /* Not sure about the location of this call so leave it out for now
          - from Pawel: the worst thing that can happen is that one can
 	 get non-empty  error log in wrong places. */
-      ERR_clear_error(); /* we know what is going on, clear the error log */
+      ERR_clear_error (); /* we know what is going on, clear the error log */
 #endif
     }
 
@@ -556,15 +556,21 @@ check_acceptable_security (smtp_session_t session, SSL *ssl)
 	      STACK_OF(CONF_VALUE) *val;
 	      CONF_VALUE *nval;
 	      X509V3_EXT_METHOD *meth;
+	      void *ext_str = NULL;
 	      int stack_len;
 
 	      meth = X509V3_EXT_get (ext);
 	      if (meth == NULL)
 		break;
 	      data = ext->value->data;
-	      val = (*meth->i2v) (meth, (*meth->d2i) (NULL, &data,
-						      ext->value->length),
-				  NULL);
+#if (OPENSSL_VERSION_NUMBER > 0x00907000L)
+	      if (meth->it)
+		ext_str = ASN1_item_d2i (NULL, &data, ext->value->length,
+		                         ASN1_ITEM_ptr (meth->it));
+	      else
+#endif
+	      ext_str = meth->d2i (NULL, &data, ext->value->length);
+	      val = meth->i2v (meth, ext_str, NULL);
 	      stack_len = sk_CONF_VALUE_num (val);
 	      for (j = 0; j < stack_len; j++)
 		{

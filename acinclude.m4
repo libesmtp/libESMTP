@@ -252,7 +252,7 @@ dnl
 dnl based on version by Caolan McNamara <caolan@skynet.ie>
 dnl based on David Arnold's autoconf suggestion in the threads faq
 dnl
-AC_DEFUN(ACX_WHICH_GETHOSTBYNAME_R,
+AC_DEFUN([ACX_WHICH_GETHOSTBYNAME_R],
 [AC_CACHE_CHECK(number of arguments to gethostbyname_r,
                 acx_which_gethostbyname_r, [
 	AC_TRY_COMPILE([
@@ -363,7 +363,7 @@ main ()
   exit ((buf[3] == '\0') ? 0 : 1);
 }
 
-	], acx_working_snprintf=yes, acx_working_snprintf=no)
+], acx_working_snprintf=yes, acx_working_snprintf=no, acx_working_snprintf=yes)
     ])
     if test x$acx_working_snprintf = xyes ; then
         ifelse([$1],,AC_DEFINE([HAVE_WORKING_SNPRINTF], 1,

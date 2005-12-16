@@ -4,7 +4,7 @@ AUTOMAKE_OPTIONS = gnu dist-bzip2
 INCLUDES = -I$(srcdir) $(VERSION_FLAGS)
 SUBDIRS = @subdirs@ @SASL_PLUGINS@
 DIST_SUBDIRS = @subdirs@ @DIST_PLUGINS@
-CFLAGS = @CFLAGS@ @EXTRA_CFLAGS@
+AM_CFLAGS = @CFLAGS@ @EXTRA_CFLAGS@
 
 lib_LTLIBRARIES = libesmtp.la
 
@@ -26,5 +26,5 @@ include_HEADERS = libesmtp.h auth-client.h auth-plugin.h
 
 bin_SCRIPTS = libesmtp-config
 
-EXTRA_DIST = libesmtp.spec libesmtp.spec.in COPYING.GPL Notes doc/api.xml \
+EXTRA_DIST = libesmtp.spec libesmtp.spec.in Notes doc/api.xml \
 	     examples/Makefile examples/mail-file.c examples/test-mail

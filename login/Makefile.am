@@ -5,7 +5,7 @@ libdir = @plugindir@
 INCLUDES = -I@srcdir@
 
 lib_LTLIBRARIES = sasl-login.la
-CFLAGS = @CFLAGS@ @EXTRA_CFLAGS@
+AM_CFLAGS = @CFLAGS@ @EXTRA_CFLAGS@
 
 sasl_login_la_SOURCES = client-login.c
 sasl_login_la_LDFLAGS = -module -avoid-version

@@ -3,7 +3,7 @@
 libdir = @plugindir@
 
 INCLUDES = -I@srcdir@
-CFLAGS = @CFLAGS@ @EXTRA_CFLAGS@
+AM_CFLAGS = @CFLAGS@ @EXTRA_CFLAGS@
 
 lib_LTLIBRARIES = sasl-ntlm.la
 

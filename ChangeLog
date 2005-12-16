@@ -1,3 +1,53 @@
+2005-12-16 Stable Version 1.0.4 released
+----------------------------------------
+2005-12-16 	Brian Stafford	<brian@stafford.uklinux.net>
+      * headers.c
+	Replaced static counter used when generating the default Message-Id
+	header with getpid() to minimise the risk of 2 processes generating
+	the same Message-Id.  If the platform provides gettimeofday() this is
+	used to further reduce the possibility of collision.
+	Thanks to Dmitry Maksyoma <dmaks@esphion.com> for spotting this and
+	suggesting the fix.
+
+      * Makefile.am */Makefile.am
+	Replace CFLAGS with AM_CFLAGS to silence warning from automake.
+	
+      * Makefile.am COPYING COPYING.LIB
+	Fixed the names of the files with the GPL and LGPL.  It seems
+	the LGPL version of COPYING got zapped by autoconf at some time
+	in the past.
+
+2005-08-29	Brian Stafford	<brian@stafford.uklinux.net>
+      * acinclude.m4
+	Fix underquoted definition of ACX_WHICH_GETHOSTBYNAME_R.  Thanks
+	to Matthias Andree <matthias.andree@gmx.de>.
+
+2005-07-25	Brian Stafford	<brian@stafford.uklinux.net>
+      * errors.c
+	Added #ifdefs for some of the EAI_ constants used by getaddrinfo()
+	which are not defined by OSX.
+	Thanks to Thomas Deselaers <deselaers@gmail.com>
+
+2005-07-21	Brian Stafford	<brian@stafford.uklinux.net>
+      * acinclude.m4
+	Fix cross compiling issue when detecting snprintf as suggested by
+	Chris Richards <Chris.Richards@red-m.com>
+
+2005-07-02	Brian Stafford	<brian@stafford.uklinux.net>
+      * smtp-api.c
+	Plug memory leaks in smtp_destroy_session() and smtp_set_server().
+	Thanks to Bas ten Berge <sam.ten.berge@hccnet.nl> for report and patch.
+	Also reported by Heikki Lindholm <heikki.lindholm@ipnetworks.fi>
+
+2005-02-03 	Brian Stafford	<brian@stafford.uklinux.net>
+      * protocol.c
+	exts was set with the wrong flag (DSN) when checking if CHUNKING
+	is a required extension.
+
+2004-07-16 	Brian Stafford	<brian@stafford.uklinux.net>
+      * smtp-tls.c
+	Applied OpenSSL patch from Pawel Salek when checking subjectAltName.
+
 2004-04-20 Stable Version 1.0.3 released
 ----------------------------------------
 2004-04-20 	Brian Stafford	<brian@stafford.uklinux.net>

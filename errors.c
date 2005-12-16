@@ -77,8 +77,12 @@ eai_to_libesmtp (int code)
     MAP(EAI_AGAIN)
     MAP(EAI_FAIL)
     MAP(EAI_MEMORY)
+#ifdef EAI_ADDRFAMILY	/* it seems OSX does not define this */
     MAP(EAI_ADDRFAMILY)
+#endif
+#ifdef EAI_NODATA	/* it seems OSX does not define this */
     MAP(EAI_NODATA)
+#endif
     MAP(EAI_FAMILY)
     MAP(EAI_BADFLAGS)
     MAP(EAI_NONAME)
@@ -98,8 +102,12 @@ libesmtp_to_eai (int code)
     MAP(EAI_AGAIN)
     MAP(EAI_FAIL)
     MAP(EAI_MEMORY)
+#ifdef EAI_ADDRFAMILY
     MAP(EAI_ADDRFAMILY)
+#endif
+#ifdef EAI_NODATA
     MAP(EAI_NODATA)
+#endif
     MAP(EAI_FAMILY)
     MAP(EAI_BADFLAGS)
     MAP(EAI_NONAME)

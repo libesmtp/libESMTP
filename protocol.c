@@ -671,7 +671,7 @@ report_extensions (smtp_session_t session)
 	(*session->event_cb) (session, SMTP_EV_EXTNA_CHUNKING,
 			      session->event_cb_arg, &quit_now);
       if (quit_now)
-        exts |= EXT_DSN;
+        exts |= EXT_CHUNKING;
     }
   if (no_required_extension (session, EXT_BINARYMIME))
     {

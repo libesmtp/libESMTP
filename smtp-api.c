@@ -72,6 +72,12 @@ smtp_set_server (smtp_session_t session, const char *hostport)
 
   SMTPAPI_CHECK_ARGS (session != NULL && hostport != NULL, 0);
 
+  if (session->host != NULL)
+    {
+      free (session->host);
+      session->port = session->host = NULL;
+    }
+
   if ((host = strdup (hostport)) == NULL)
     {
       set_errno (ENOMEM);
@@ -444,6 +450,7 @@ smtp_destroy_session (smtp_session_t session)
     {
       message = session->messages->next;
 
+      reset_status (&session->messages->message_status);
       reset_status (&session->messages->reverse_path_status);
       free (session->messages->reverse_path_mailbox);
 
