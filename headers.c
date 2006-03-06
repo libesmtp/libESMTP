@@ -167,7 +167,7 @@ print_message_id (smtp_message_t message, struct rfc2822_header *header)
   if (message_id == NULL)
     {
 #ifdef HAVE_GETTIMEOFDAY
-      if (gettimeofday (&tv, NULL) == -1) /* This shouldn't fail ... */
+      if (gettimeofday (&tv, NULL) != -1) /* This shouldn't fail ... */
 	snprintf (buf, sizeof buf, "%ld.%ld.%d@%s", tv.tv_sec, tv.tv_usec,
 		  getpid (), message->session->localhost);
       else /* ... but if it does fall back to using time() */
@@ -477,7 +477,7 @@ static const struct header_actions header_actions[] =
      */
     { "Date",		REQUIRE,
       set_date,		print_date, NULL, },
-    { "From",		REQUIRE,
+    { "From",		REQUIRE | LISTVALUE,
       set_from,		print_from,		destroy_mbox_list, },
     /* Certain headers are added when a message is delivered and
        should not be present in a message being posted or which
@@ -506,13 +506,13 @@ static const struct header_actions header_actions[] =
        string values. */
     { "Sender",		OPTIONAL,
       set_sender,	print_sender,		destroy_mbox_list, },
-    { "To",		OPTIONAL,
+    { "To",		OPTIONAL | LISTVALUE,
       set_to,		print_to,		destroy_mbox_list, },
-    { "Cc",		OPTIONAL,
+    { "Cc",		OPTIONAL | LISTVALUE,
       set_cc,		print_cc,		destroy_mbox_list, },
-    { "Bcc",		OPTIONAL,
+    { "Bcc",		OPTIONAL | LISTVALUE,
       set_cc,		print_cc,		destroy_mbox_list, },
-    { "Reply-To",	OPTIONAL,
+    { "Reply-To",	OPTIONAL | LISTVALUE,
       set_cc,		print_cc,		destroy_mbox_list, },
     /* RFC 2298 - MDN request.  Syntax is the same as the From: header and
                   default when set to NULL is the same as From: */

@@ -45,6 +45,8 @@
 #endif
 #define unused      __attribute__((unused))
 
+enum { TO = 10, CC, BCC, };
+
 struct option longopts[] =
   {
     { "help", no_argument, NULL, '?', }, 
@@ -59,6 +61,11 @@ struct option longopts[] =
     { "tls", no_argument, NULL, 't', }, 
     { "require-tls", no_argument, NULL, 'T', }, 
     { "noauth", no_argument, NULL, 1, }, 
+
+    { "to", required_argument, NULL, TO, },
+    { "cc", required_argument, NULL, CC, },
+    { "bcc", required_argument, NULL, BCC, },
+
     { NULL, 0, NULL, 0, },
   };
 
@@ -87,6 +94,7 @@ main (int argc, char **argv)
   char *subject = NULL;
   int nocrlf = 0;
   int noauth = 0;
+  int to_cc_bcc = 0;
   char *file;
   FILE *fp;
   int c;
@@ -154,6 +162,19 @@ main (int argc, char **argv)
         noauth = 1;
         break;
 
+      case TO:
+        smtp_set_header (message, "To", NULL, optarg);
+        to_cc_bcc = 1;
+        break;
+      case CC:
+        smtp_set_header (message, "Cc", NULL, optarg);
+        to_cc_bcc = 1;
+        break;
+      case BCC:
+        smtp_set_header (message, "Bcc", NULL, optarg);
+        to_cc_bcc = 1;
+        break;
+
       default:
         usage ();
         exit (2);
@@ -215,7 +236,8 @@ main (int argc, char **argv)
 
   /* RFC 2822 doesn't require recipient headers but a To: header would
      be nice to have if not present. */
-  smtp_set_header (message, "To", NULL, NULL);
+  if (!to_cc_bcc)
+    smtp_set_header (message, "To", NULL, NULL);
 
   /* Set the Subject: header.  For no reason, we want the supplied subject
      to override any subject line in the message headers. */
