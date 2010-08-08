@@ -1,3 +1,22 @@
+      * smtp-tls.c
+	Each component matched by match-domain() is either a single '*' which
+	matches anything or a case-insensitive comparison with a string of
+	alphanumeric characters or a '-'.  This is more restrictive than
+	RFC 2818 appears to allow and replaces the previous match which was
+	supposed to allow multiple wildcards but which just didn't work.
+	Revised check_acceptable_security() to check subjectAltName falling
+	back to commonName only if subjectAltName is not available.
+
+1.0.5 never released
+--------------------
+2006-10-31 	Brian Stafford	<brian@stafford.uklinux.net>
+
+      * protocol.c
+	The Gmail server reports enhanced status codes but then fails to
+	provide them in some cases.  The parser is now tolerant of this but
+	warns the application using a new event flag SMTP_EV_SYNTAXWARNING
+	that it is progressing despite the syntax error.
+
       * headers.c
 	Fixed bug where To, Cc, Bcc etc. accepted only single values instead
 	of a list.

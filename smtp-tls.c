@@ -439,15 +439,32 @@ static int
 match_component (const char *dom, const char *edom,
                  const char *ref, const char *eref)
 {
-  while (dom < edom && ref < eref)
+  /* If ref is the single character '*' then accept this as a wildcard
+     matching any valid domainname component, i.e. characters from the
+     range A-Z, a-z, 0-9, - or _ 
+     NB this is more restrictive than RFC 2818 which allows multiple
+     wildcard characters in the component pattern */
+  if (eref == ref + 1 && *ref == '*')
+    while (dom < edom)
+      {
+	if (!(isalnum (*dom) || *dom == '-' /*|| *dom == '_'*/))
+	  return 0;
+        dom++;
+      }
+  else
     {
-      /* Accept a final '*' in the reference as a wildcard */
-      if (*ref == '*' && ref + 1 == eref)
-        break;
-      /* compare the domain name case insensitive */
-      if (!(*dom == *ref || tolower (*dom) == tolower (*ref)))
-        return 0;
-      ref++, dom++;
+      while (dom < edom && ref < eref)
+	{
+	  /* check for valid domainname character */
+	  if (!(isalnum (*dom) || *dom == '-' /*|| *dom == '_'*/))
+	    return 0;
+	  /* compare the domain name case-insensitively */
+	  if (!(*dom == *ref || tolower (*dom) == tolower (*ref)))
+	    return 0;
+	  ref++, dom++;
+	}
+      if (dom < edom || ref < eref)
+	return 0;
     }
   return 1;
 }
@@ -492,7 +509,6 @@ static int
 check_acceptable_security (smtp_session_t session, SSL *ssl)
 {
   X509 *cert;
-  char buf[256];
   int bits;
   long vfy_result;
   int ok;
@@ -511,8 +527,8 @@ check_acceptable_security (smtp_session_t session, SSL *ssl)
 #if 0
       /* Not sure about the location of this call so leave it out for now
          - from Pawel: the worst thing that can happen is that one can
-	 get non-empty  error log in wrong places. */
-      ERR_clear_error (); /* we know what is going on, clear the error log */
+         get non-empty  error log in wrong places. */
+      ERR_clear_error ();	/* we know what is going on, clear the error log */
 #endif
     }
 
@@ -541,65 +557,83 @@ check_acceptable_security (smtp_session_t session, SSL *ssl)
     }
   else
     {
-      int i, j, extcount;
+      char buf[256] = { 0 };
+      STACK_OF(GENERAL_NAME) *altnames;
+      int hasaltname = 0;
 
-      extcount = X509_get_ext_count (cert);
-      for (i = 0; i < extcount; i++)
+      altnames = X509_get_ext_d2i (cert, NID_subject_alt_name, NULL, NULL);
+      if (altnames != NULL)
 	{
-	  const char *extstr;
-	  X509_EXTENSION *ext = X509_get_ext (cert, i);
+	  int i;
 
-	  extstr = OBJ_nid2sn (OBJ_obj2nid (X509_EXTENSION_get_object (ext)));
-	  if (strcmp (extstr, "subjectAltName") == 0)
+	  for (i = 0; i < sk_GENERAL_NAME_num (altnames); ++i)
 	    {
-	      unsigned char *data;
-	      STACK_OF(CONF_VALUE) *val;
-	      CONF_VALUE *nval;
-	      X509V3_EXT_METHOD *meth;
-	      void *ext_str = NULL;
-	      int stack_len;
+	      GENERAL_NAME *name = sk_GENERAL_NAME_value (altnames, i);
 
-	      meth = X509V3_EXT_get (ext);
-	      if (meth == NULL)
-		break;
-	      data = ext->value->data;
-#if (OPENSSL_VERSION_NUMBER > 0x00907000L)
-	      if (meth->it)
-		ext_str = ASN1_item_d2i (NULL, &data, ext->value->length,
-		                         ASN1_ITEM_ptr (meth->it));
-	      else
-#endif
-	      ext_str = meth->d2i (NULL, &data, ext->value->length);
-	      val = meth->i2v (meth, ext_str, NULL);
-	      stack_len = sk_CONF_VALUE_num (val);
-	      for (j = 0; j < stack_len; j++)
+	      if (name->type == GEN_DNS)
 		{
-		  nval = sk_CONF_VALUE_value (val, j);
-		  if (strcmp (nval->name, "DNS") == 0
-		      && match_domain (session->host, nval->value))
+		  const char *ia5str = (const char *) name->d.ia5->data;
+		  size_t ia5len = name->d.ia5->length;
+
+		  hasaltname = 1;
+		  if (strlen (ia5str) == ia5len
+		      && match_domain (session->host, ia5str))
+		    ok = 1;
+		  else
 		    {
-		      ok = 1;
-		      break;
+		      buf[0] = '\0';
+		      strncat (buf, ia5str, sizeof buf - 1);
+		    }
+		}
+	      // TODO: handle GEN_IPADD
+	    }
+	  sk_GENERAL_NAME_pop_free (altnames, GENERAL_NAME_free);
+	}
+
+      if (!hasaltname)
+	{
+	  X509_NAME *subj = X509_get_subject_name (cert);
+
+	  if (subj != NULL)
+	    {
+	      ASN1_STRING *cn;
+	      int idx, i = -1;
+
+	      do
+		{
+		  idx = i;
+		  i = X509_NAME_get_index_by_NID (subj, NID_commonName, i);
+		}
+	      while (i >= 0);
+
+	      if (idx >= 0
+		  && (cn = X509_NAME_ENTRY_get_data (
+						X509_NAME_get_entry (subj, idx)
+						     )) != NULL)
+		{
+		  unsigned char *str = NULL;
+		  size_t len = ASN1_STRING_to_UTF8 (&str, cn);
+
+		  if (str != NULL)
+		    {
+		      if (strlen ((char *) str) == len
+			  && match_domain (session->host, (char *) str))
+			ok = 1;
+		      else
+			{
+			  buf[0] = '\0';
+			  strncat (buf, (char *) str, sizeof buf - 1);
+			}
+		      OPENSSL_free (str);
 		    }
 		}
 	    }
-	  if (ok)
-	    break;
 	}
-      if (!ok)
-	{
-	  /* Matching by subjectAltName failed, try commonName */
-	  X509_NAME_get_text_by_NID (X509_get_subject_name (cert),
-				     NID_commonName, buf, sizeof buf);
-	  if (!match_domain (session->host, buf) != 0)
-	    {
-	      if (session->event_cb != NULL)
-		(*session->event_cb) (session, SMTP_EV_WRONG_PEER_CERTIFICATE,
-				      session->event_cb_arg, &ok, buf, ssl);
-	    }
-	  else
-	    ok = 1;
-	}
+
+      if (!ok && session->event_cb != NULL)
+	(*session->event_cb) (session, SMTP_EV_WRONG_PEER_CERTIFICATE,
+			      session->event_cb_arg, &ok, buf, ssl);
+
       X509_free (cert);
     }
   return ok;

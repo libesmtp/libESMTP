@@ -32,6 +32,9 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <time.h>
+#ifdef HAVE_GETTIMEOFDAY
+# include <sys/time.h>
+#endif
 #include <errno.h>
 
 #include <missing.h>

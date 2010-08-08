@@ -82,6 +82,7 @@ enum
     SMTP_EV_MESSAGEDATA,
     SMTP_EV_MESSAGESENT,
     SMTP_EV_DISCONNECT,
+    SMTP_EV_SYNTAXWARNING,
 
   /* Protocol extension progress */
     SMTP_EV_ETRNSTATUS = 1000,

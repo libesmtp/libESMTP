@@ -450,7 +450,7 @@ read_smtp_response (siobuf_t conn, smtp_session_t session,
   struct catbuf text;
   char buf[1024];
   char *p, *nul;
-  int code, more, want_enhanced, textlen;
+  int code, more, want_enhanced, textlen, quit_now;
   struct smtp_status triplet;
 
   /* First line of an SMTP response is the normal one.  Put it in a buffer.
@@ -485,8 +485,16 @@ read_smtp_response (siobuf_t conn, smtp_session_t session,
 
   if (want_enhanced && !parse_status_triplet (p, &p, status))
     {
-      set_error (SMTP_ERR_INVALID_RESPONSE_SYNTAX);
-      return -1;
+      quit_now = 0;	/* Be tolerant by default */
+      if (session->event_cb != NULL)
+	(*session->event_cb) (session, SMTP_EV_SYNTAXWARNING,
+			      session->event_cb_arg, &quit_now);
+      if (quit_now)
+	{
+	  set_error (SMTP_ERR_INVALID_RESPONSE_SYNTAX);
+	  return -1;
+	}
+      want_enhanced = 0;
     }
   while (isspace (*p))
     p++;
