@@ -134,7 +134,7 @@ msg_gets (msg_source_t source, int *len, int concatenate)
 
   if (source->buf == NULL)
     {
-      source->nalloc = 1023;	/* RFC 2821 max line length + slack */
+      source->nalloc = 1023;	/* RFC 5321 max line length + slack */
       source->buf = malloc (source->nalloc + 2);
       if (source->buf == NULL)
         return NULL;
@@ -187,7 +187,7 @@ msg_gets (msg_source_t source, int *len, int concatenate)
 
 /* Return the next character in the source, i.e. the first character
    that will be returned by the next call to msg_gets().  This is
-   currently only used to check for RFC 2822 header continuation lines.
+   currently only used to check for RFC 5322 header continuation lines.
    It is not safe to use in conjunction with msg_getb().
  */
 int

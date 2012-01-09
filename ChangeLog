@@ -1,3 +1,18 @@
+2012-01-09 Version 1.0.7rc1 released
+----------------------------------------
+      * all files
+	Update RFC references - many have progressed along the standards track.
+
+      * smtp-auth.c, smtp-tls.c
+	Added code to use libgsasl.
+
+      * configure.ac
+	Added --enable-deprecated-features.
+	Added check for libgsasl
+
+2010-08-10 Stable Version 1.0.6 released
+----------------------------------------
+2010-08-10 	Brian Stafford	<brian@stafford.uklinux.net>
       * smtp-tls.c
 	Each component matched by match-domain() is either a single '*' which
 	matches anything or a case-insensitive comparison with a string of

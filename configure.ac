@@ -24,9 +24,10 @@ dnl Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 dnl 
 dnl #########################################################################
 
-AC_INIT(smtp-api.c)
-AM_CONFIG_HEADER(config.h)
-AM_INIT_AUTOMAKE([libesmtp],[1.0.6])
+AC_INIT
+AC_CONFIG_SRCDIR([smtp-api.c])
+AC_CONFIG_HEADERS([config.h])
+AM_INIT_AUTOMAKE([libesmtp],[1.0.7rc1])
 AC_CANONICAL_HOST
 AC_CONFIG_MACRO_DIR([m4])
 
@@ -35,7 +36,7 @@ dnl Library versioning
 dnl #########################################################################
 
 LIB_CURRENT=7
-LIB_REVISION=6
+LIB_REVISION=7
 LIB_AGE=1
 AC_SUBST(LIB_CURRENT)
 AC_SUBST(LIB_REVISION)
@@ -51,7 +52,7 @@ dnl #########################################################################
 AC_PROG_CC
 AC_PROG_INSTALL
 AC_PROG_MAKE_SET
-AM_PROG_LIBTOOL
+LT_INIT
 
 dnl #########################################################################
 dnl Miscellaneous stuff
@@ -111,6 +112,19 @@ dnl #########################################################################
 AC_ARG_ENABLE([all],ACX_HELP_STRING([--enable-all], [convenience: enable all experimental features]),
               ,
               enable_all=no)
+
+dnl #########################################################################
+dnl Enable deprecated features
+dnl #########################################################################
+
+AC_ARG_ENABLE([deprecated-features],
+              ACX_HELP_STRING([--enable-deprecated-features],[inconvenience: support for deprecated features  (default=yes)]),
+  	      ,
+  	      enable_deprecated_features=yes)
+ 
+if test x"$enable_deprecated_features" = xyes ; then
+	AC_DEFINE(ENABLE_DEPRECATED_FEATURES,1,[Enable support for deprecated features])
+fi
 
 dnl #########################################################################
 dnl Check whether to use SUS functions or libltdl for loading plugins.
@@ -207,17 +221,17 @@ dnl # Special nonsense for systems that actually have getaddrinfo but
 dnl # redefine the name to something else, e.g. OSF
 if test x$have_getaddrinfo != xyes ; then
 	AC_MSG_CHECKING(if getaddrinfo is redefined in netdb.h)
-	AC_TRY_LINK([
+	AC_LINK_IFELSE([AC_LANG_PROGRAM([[
 #		include <netdb.h>
-	], [
+	]], [[
   		struct addrinfo hints, *res;
 		int err;
 
   		err = getaddrinfo ("host", "service", &hints, &res);
-	], [
+	]])],[
 		have_getaddrinfo=yes
 		AC_MSG_RESULT(yes)
-	], [AC_MSG_RESULT(no)])
+	],[AC_MSG_RESULT(no)])
 fi
 
 fi
@@ -263,16 +277,16 @@ if test x"$enable_emulate_getaddrinfo" != xno ; then
     AC_LIBOBJ(gethostbyname)
 
     AC_CACHE_CHECK([for IPv6 support], acx_cv_sys_use_ipv6, [
-	    AC_TRY_COMPILE([
+	    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
 #		include <netinet/in.h>
-	    ], [
+	    ]], [[
 		struct sockaddr_in6 sin6;
 		void *p;
 
 		sin6.sin6_family = AF_INET6;
 		sin6.sin6_port = 587;
 		p = &sin6.sin6_addr;
-	    ], [acx_cv_sys_use_ipv6=yes], [acx_cv_sys_use_ipv6=no])
+	    ]])],[acx_cv_sys_use_ipv6=yes],[acx_cv_sys_use_ipv6=no])
     ])
     if test x"$acx_cv_sys_use_ipv6" != xno ; then
 	    AC_DEFINE(USE_IPV6,1,[Enable IPv6 support])
@@ -336,13 +350,28 @@ AC_SUBST(RPM_OPENSSL)
 AC_SUBST(RPM_OPENSSLDEVEL)
 
 dnl #########################################################################
-dnl Check if using SMTP AUTH using SASL
+dnl Check for GSASL
+dnl #########################################################################
+AC_CHECK_HEADER(gsasl.h,
+ AC_CHECK_LIB(gsasl, gsasl_check_version,
+   	      [
+		gsasl=yes
+		LIBS="-lgsasl $LIBS"
+	      ],
+   gsasl=no),
+ gsasl=no)
+if test x$gsasl = xno ; then
+ AC_MSG_ERROR([GSASL not found (available from http://www.gnu.org/software/gsasl/)])
+fi
+
+if test x"$enable_deprecated_features" = xyes ; then
+dnl #########################################################################
+dnl Check if using old SASL code
 dnl #########################################################################
 
 dnl Force use of SMTP AUTH for now.  Eventually it is hoped that
 dnl the SASL API will move into a library of its own.
 
-AC_DEFINE(USE_SASL,1,[Build with support for SMTP AUTH using SASL])
 SASL_PLUGINS="login plain crammd5"
 DIST_PLUGINS="login plain crammd5"
 
@@ -406,6 +435,8 @@ if test x$with_openssl != xno -a x"$enable_ntlm" = xyes ; then
 else
 	AC_MSG_RESULT([no])
 fi
+
+fi # with_deprecated_features
 
 if test x$have_libcrypto != xno ; then
    AC_DEFINE(HAVE_LIBCRYPTO,1,[Set when -lcrypto from OpenSSL is available])
@@ -551,16 +582,14 @@ if test x"$enable_pthreads" != xno ; then
 	AC_CHECK_FUNCS(strerror_r,[
 	    AC_CACHE_CHECK([for working strerror_r],
 	                   acx_cv_sys_working_strerror_r, [
-		AC_TRY_COMPILE([
+		AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
 #			define _SVID_SOURCE	1
 #			include <string.h>
-		], [
+		]], [[
 		    	char *s;
 
 		    	s = strerror_r (0, (char *) 0, 0);
-		],
-		[acx_cv_sys_working_strerror_r=yes],
-		[acx_cv_working_strerror_r=no])
+		]])],[acx_cv_sys_working_strerror_r=yes],[acx_cv_working_strerror_r=no])
 	    ])
 	    if test x$acx_cv_sys_working_strerror_r = xyes ; then
 	    	AC_DEFINE(HAVE_WORKING_STRERROR_R,1,[strerror_r works!])
@@ -594,8 +623,9 @@ AC_SUBST(LTLIBOBJS)
 LTALLOCA=`echo "$ALLOCA" | sed ['s/\.[^.]* /.lo /g;s/\.[^.]*$/.lo/']`
 AC_SUBST(LTALLOCA)
 
-AC_OUTPUT([libesmtp-config libesmtp.spec
+AC_CONFIG_FILES([libesmtp-config libesmtp.spec
 	   Makefile login/Makefile plain/Makefile crammd5/Makefile ntlm/Makefile])
+AC_OUTPUT
 
 dnl #########################################################################
 dnl Feature synopsis
@@ -614,6 +644,7 @@ ACX_FEATURE([enable],[etrn])
 ACX_FEATURE([enable],[ntlm])
 ACX_FEATURE([enable],[chunking])
 ACX_FEATURE([enable],[xusr])
+ACX_FEATURE([enable],[deprecated-features])
 ACX_FEATURE([enable],[nsauth])
 ACX_FEATURE([enable],[debug])
 

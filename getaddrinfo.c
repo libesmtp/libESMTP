@@ -20,7 +20,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-/* An emulation of the RFC 2553 / Posix getaddrinfo resolver interface.
+/* An emulation of the RFC 3493 / Posix getaddrinfo resolver interface.
  */
 
 #ifdef HAVE_CONFIG_H

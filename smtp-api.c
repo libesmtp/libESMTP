@@ -55,7 +55,8 @@ smtp_create_session (void)
 
   memset (session, 0, sizeof (struct smtp_session));
 
-  /* Set the default timeouts to the minimum values described in RFC 2822 */
+  //XXX
+  /* Set the default timeouts to the minimum values described in RFC 5322 */
   session->greeting_timeout = GREETING_DEFAULT;
   session->envelope_timeout = ENVELOPE_DEFAULT;
   session->data_timeout = DATA_DEFAULT;
@@ -265,7 +266,7 @@ smtp_recipient_reset_status (smtp_recipient_t recipient)
   return 1;
 }
 
-/* DSN (RFC 1891) */
+/* DSN (RFC 3461) */
 int
 smtp_dsn_set_ret (smtp_message_t message, enum ret_flags flags)
 {
@@ -336,7 +337,7 @@ smtp_size_set_estimate (smtp_message_t message, unsigned long size)
   return 1;
 }
 
-/* 8BITMIME (RFC 1652) */
+/* 8BITMIME (RFC 6152) */
 int
 smtp_8bitmime_set_body (smtp_message_t message, enum e8bitmime_body body)
 {
@@ -573,9 +574,10 @@ smtp_option_require_all_recipients (smtp_session_t session, int state)
   return 1;
 }
 
+//XXX
 /* Set the timeouts.  An absolute minumum timeout of one second is imposed.
    Unless overriden using the OVERRIDE_RFC2822_MINIMUM flag, the minimum
-   values recommended in RFC 2822 are enforced.  Return value is the actual
+   values recommended in RFC 5322 are enforced.  Return value is the actual
    timeout set or zero on error. */
 long
 smtp_set_timeout (smtp_session_t session, int which, long value)

@@ -102,7 +102,7 @@ cmd_bdat (siobuf_t conn, smtp_session_t session)
 	    goto break_2;
 	}
 
-      /* Line points to one or more lines of text forming an RFC 2822
+      /* Line points to one or more lines of text forming an RFC 5322
 	 header. */
 
       /* Header processing.  This function takes the "raw" header from

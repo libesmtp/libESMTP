@@ -33,9 +33,10 @@
 #include "libesmtp.h"
 
 /* Callback function to read the message from a file.  The file MUST be
-   formatted according to RFC 2822 and lines MUST be terminated with the
-   canonical CRLF sequence.  Furthermore, RFC 2821 line length
+   formatted according to RFC 5322 and lines MUST be terminated with the
+   canonical CRLF sequence.  Furthermore, RFC 5321 line length
    limitations must be observed (1000 octets maximum). */
+//XXX check the line length
 #define BUFLEN	8192
 
 const char *

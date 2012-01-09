@@ -694,8 +694,7 @@ rsp_starttls (siobuf_t conn, smtp_session_t session)
 	      X509_NAME_get_text_by_NID (X509_get_subject_name (cert),
 					 NID_commonName, buf, sizeof buf);
 	      X509_free (cert);
-	      if (session->auth_context != NULL)
-		auth_set_external_id (session->auth_context, buf);
+	      set_external_id (session, buf);
 	    }
 
 	  /* Next state is EHLO */

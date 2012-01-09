@@ -1,13 +1,14 @@
-<?xml version="1.0"?>
-<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
- "/usr/local/share/docbook-dtd/4.1.2/docbookx.dtd" [
-]>
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xml" href="api.xsl"?>
+<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+ "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd">
 <article id="index">
 
   <articleinfo>
     <authorgroup>
       <author>
-	<firstname>Brian</firstname> <surname>Stafford</surname>
+	<firstname>Brian</firstname>
+	<surname>Stafford</surname>
 	<affiliation>
 	  <address>
 	    <email>brian@stafford.uklinux.net</email>
@@ -17,7 +18,7 @@
     </authorgroup>
 
     <copyright>
-      <year>2001,2002</year>
+      <year>2001-2011</year>
       <holder>Brian Stafford</holder>
     </copyright>
 
@@ -51,29 +52,15 @@ Message Submission Agent (MSA).
 <!-- ====================================================================== -->
 
   <sect1 id="important">
-    <title>Important</title>
+    <title>Caveat Programmer</title>
     <para>
-libESMTP is currently under development.  Consequently certain parts
-of the API are subject to change between releases of the library and
-certain APIs and SMTP extensions have not yet been fully implemented.
-    </para>
-
-    <para>
-Furthermore, the descriptions in this document do not necessarily reflect
-currently implemented functionality.  For now, regard this document more
-as a statement of intent than an accurate description, or to quote
+This document is believed to be accurate but may not necessarily reflect actual
+behaviour; to quote
 <citetitle pubwork="book">The Hitch Hikers' Guide to the Galaxy</citetitle>,
-<quote>Much of it is apocryphal or, at the very least, wildly
-inaccurate</quote>.  However, where it is inaccurate, it is
-<quote>definitively inaccurate</quote>.
-    </para>
-
-    <para>
-If in doubt, consult the source.  The API and documentation will stabilise
-as version 1.0 approaches.
-    </para>
-
-    <para>
+<blockquote>Much of it is apocryphal or, at the very least, wildly
+inaccurate.  However, where it is inaccurate, it is
+<emphasis>definitively inaccurate</emphasis>.</blockquote>
+If in doubt, consult the source.
     </para>
   </sect1>
 
@@ -92,17 +79,17 @@ remainder of the API is devoted to reporting on a completed SMTP session.
 
     <para>
 Although the API closely models the protocol itself, libESMTP relieves the
-programmer of all the work needed to properly implement RFC 2821 (formerly
-RFC 821) and avoids many of the pitfalls in typical SMTP implementations.
-It constructs SMTP commands, parses responses, provides socket buffering
-and pipelining, where appropriate provides for TLS connections and
-provides a failover mechanism based on DNS allowing multiple redundant
+programmer of all the work needed to properly implement RFC 5321 (formerly
+RFC2821, formerly RFC 821) and avoids many of the pitfalls in typical SMTP
+implementations.  It constructs SMTP commands, parses responses, provides
+socket buffering and pipelining, where appropriate provides for TLS connections
+and provides a failover mechanism based on DNS allowing multiple redundant
 MSAs.  Furthermore, support for the SMTP extension mechanism is
 incorporated by design rather than as an afterthought.
     </para>
 
     <para>
-There is limited support for processing RFC 2822 message headers.  This
+There is limited support for processing RFC 5322 message headers.  This
 is intended to ensure that messages copied to the SMTP server have their
 correct complement of headers.  Headers that should not be present are
 stripped and reasonable defaults are provided for missing headers.  In
@@ -112,9 +99,11 @@ directly in the message data.
     </para>
 
     <para>
-libESMTP does not implement MIME [RFC 2045] since MIME is orthogonal
-to RFC 2822.  It is expected that a separate library will be used to
-construct MIME documents.  libESMTP ensures that top level MIME headers
+libESMTP <emphasis>does not implement MIME [RFC 2045]</emphasis> since MIME is,
+in the words of RFC 2045, <quote>orthogonal</quote> to RFC 5322.
+The developer is expected to use a separate library to
+construct MIME documents or the application should construct them directly.
+libESMTP ensures that top level MIME headers
 are passed unaltered and the header API functions are guaranteed to fail
 if any header in the name space reserved for MIME is specified, thus
 ensuring that MIME documents are not accidentally corrupted.
@@ -131,114 +120,115 @@ in libESMTP.
     </para>
 
     <itemizedlist>
-    <listitem><simpara>[RFC 1893] ENHANCEDSTATUSCODES</simpara></listitem>
+    <listitem><simpara>[RFC 3463, RFC 2034] ENHANCEDSTATUSCODES</simpara></listitem>
     <listitem><simpara>[RFC 2920] PIPELINING</simpara></listitem>
-    <listitem><simpara>[RFC 1891] DSN</simpara></listitem>
-    <listitem><simpara>[RFC 2554] AUTH (SASL)</simpara></listitem>
-    <listitem><simpara>[RFC 2487] STARTTLS</simpara></listitem>
+    <listitem><simpara>[RFC 3461] DSN</simpara></listitem>
+    <listitem><simpara>[RFC 4954] AUTH (SASL)</simpara></listitem>
+    <listitem><simpara>[RFC 3207] STARTTLS</simpara></listitem>
     <listitem><simpara>[RFC 1870] SIZE</simpara></listitem>
-    <listitem><simpara>[RFC 1985] ETRN</simpara></listitem>
-    <listitem><simpara>[RFC 1652] 8BITMIME</simpara></listitem>
-    <listitem><simpara>[RFC 2852] DELIVERBY</simpara></listitem>
-    </itemizedlist>
-
-    <para>
-Supports is planned for the following SMTP extensions.  As new SMTP
-extensions are defined, they will be implemented if they are relevant
-for use in programs that submit mail.
-    </para>
-
-    <itemizedlist>
     <listitem><simpara>[RFC 3030] CHUNKING</simpara></listitem>
     <listitem><simpara>[RFC 3030] BINARYMIME</simpara></listitem>
+    <listitem><simpara>[RFC 6152] 8BITMIME</simpara></listitem>
+    <listitem><simpara>[RFC 2852] DELIVERBY</simpara></listitem>
+    <listitem><simpara>[RFC 1985] ETRN</simpara></listitem>
+    <listitem><simpara>[sendmail] XUSR</simpara></listitem>
+    <listitem><simpara>[exchange] XEXCH50</simpara></listitem>
     </itemizedlist>
 
     <para>
-Please note that certain of the SMTP extensions are processed internally
+Please note that certain SMTP extensions are processed internally
 to libESMTP and do not require corresponding API functions.
     </para>
   </sect1>
 
+<!--
   <sect1 id="api">
     <title>API</title>
-
-    <para>
-The libESMTP API is intended to be a relatively small and lightweight
-interface to the SMTP protocol and its extensions.  However, given the
-number of API functions in libESMTP, this assertion is questionable.  In
-mitigation, many of these are necessary because the internal structures
-are opaque to the application and most of them are used to define the
-messages and recipients to be transferred to the SMTP server during the
-protocol session.  Similarly a significant number of functions are used
-to query the status of the transfer after the event.  The entire SMTP
-protocol session is performed by only one function call.
-    </para>
-
-    <sect2>
-      <title>Functions</title>
-      <programlisting>
-<!-- smtp_add_message -->smtp_message_t <link linkend="smtp_add_message">smtp_add_message</link> (smtp_session_t session);
-<!-- smtp_add_recipient -->smtp_recipient_t <link linkend="smtp_add_recipient">smtp_add_recipient</link> (smtp_message_t message, const char *mailbox);
-<!-- smtp_auth_set_context -->int <link linkend="smtp_auth_set_context">smtp_auth_set_context</link> (smtp_session_t session, auth_context_t context);
-<!-- smtp_create_session -->smtp_session_t <link linkend="smtp_create_session">smtp_create_session</link> (void);
-<!-- smtp_destroy_session -->int <link linkend="smtp_destroy_session">smtp_destroy_session</link> (smtp_session_t session);
-<!-- smtp_dsn_set_envid -->int <link linkend="smtp_dsn_set_envid">smtp_dsn_set_envid</link> (smtp_message_t message, const char *envid);
-<!-- smtp_dsn_set_notify -->int <link linkend="smtp_dsn_set_notify">smtp_dsn_set_notify</link> (smtp_recipient_t recipient, enum notify_flags flags);
-<!-- smtp_dsn_set_orcpt -->int <link linkend="smtp_dsn_set_orcpt">smtp_dsn_set_orcpt</link> (smtp_recipient_t recipient, const char *address_type, const char *address);
-<!-- smtp_dsn_set_ret -->int <link linkend="smtp_dsn_set_ret">smtp_dsn_set_ret</link> (smtp_message_t message, enum ret_flags flags);
-<!-- smtp_enumerate_messages -->int <link linkend="smtp_enumerate_messages">smtp_enumerate_messages</link> (smtp_session_t session, smtp_enumerate_messagecb_t cb, void *arg);
-<!-- smtp_enumerate_recipients -->int <link linkend="smtp_enumerate_recipients">smtp_enumerate_recipients</link> (smtp_message_t message, smtp_enumerate_recipientcb_t cb, void *arg);
-<!-- smtp_errno -->int <link linkend="smtp_errno">smtp_errno</link> (void);
-<!-- smtp_etrn_add_node -->smtp_etrn_node_t <link linkend="smtp_etrn_add_node">smtp_etrn_add_node</link> (smtp_session_t session, int option, const char *node);
-<!-- smtp_etrn_enumerate_nodes -->int <link linkend="smtp_etrn_enumerate_nodes">smtp_etrn_enumerate_nodes</link> (smtp_session_t session, smtp_etrn_enumerate_nodecb_t cb, void *arg);
-<!-- smtp_etrn_get_application_data -->void *<link linkend="smtp_etrn_set_application_data">smtp_etrn_get_application_data</link> (smtp_etrn_node_t node);
-<!-- smtp_etrn_node_status -->const smtp_status_t *<link linkend="smtp_etrn_node_status">smtp_etrn_node_status</link> (smtp_etrn_node_t node);
-<!-- smtp_etrn_set_application_data -->void *<link linkend="smtp_etrn_set_application_data">smtp_etrn_set_application_data</link> (smtp_etrn_node_t node, void *data);
-<!-- smtp_get_application_data -->void *<link linkend="smtp_set_application_data">smtp_get_application_data</link> (smtp_session_t session);
-<!-- smtp_message_get_application_data -->void *<link linkend="smtp_set_application_data">smtp_message_get_application_data</link> (smtp_message_t message);
-<!-- smtp_message_reset_status -->int <link linkend="smtp_message_reset_status">smtp_message_reset_status</link> (smtp_message_t recipient);
-<!-- smtp_message_set_application_data -->void *<link linkend="smtp_set_application_data">smtp_message_set_application_data</link> (smtp_message_t message, void *data);
-<!-- smtp_message_transfer_status -->const smtp_status_t *<link linkend="smtp_message_transfer_status">smtp_message_transfer_status</link> (smtp_message_t message);
-<!-- smtp_recipient_check_complete -->int <link linkend="smtp_recipient_check_complete">smtp_recipient_check_complete</link> (smtp_recipient_t recipient);
-<!-- smtp_recipient_get_application_data -->void *<link linkend="smtp_set_application_data">smtp_recipient_get_application_data</link> (smtp_recipient_t recipient);
-<!-- smtp_recipient_reset_status -->int <link linkend="smtp_recipient_reset_status">smtp_recipient_reset_status</link> (smtp_recipient_t recipient);
-<!-- smtp_recipient_set_application_data -->void *<link linkend="smtp_set_application_data">smtp_recipient_set_application_data</link> (smtp_recipient_t recipient, void *data);
-<!-- smtp_recipient_status -->const smtp_status_t *<link linkend="smtp_recipient_status">smtp_recipient_status</link> (smtp_recipient_t recipient);
-<!-- smtp_reverse_path_status -->const smtp_status_t *<link linkend="smtp_reverse_path_status">smtp_reverse_path_status</link> (smtp_message_t message);
-<!-- smtp_set_application_data -->void *<link linkend="smtp_set_application_data">smtp_set_application_data</link> (smtp_session_t session, void *data);
-<!-- smtp_set_eventcb -->int <link linkend="smtp_set_eventcb">smtp_set_eventcb</link> (smtp_session_t session, smtp_eventcb_t cb, void *arg);
-<!-- smtp_set_header -->int <link linkend="smtp_set_header">smtp_set_header</link> (smtp_message_t message, const char *header, ...);
-<!-- smtp_set_header_option -->int <link linkend="smtp_set_header_option">smtp_set_header_option</link> (smtp_message_t message, const char *header, enum header_option option, ...);
-<!-- smtp_set_hostname -->int <link linkend="smtp_set_hostname">smtp_set_hostname</link> (smtp_session_t session, const char *hostname);
-<!-- smtp_set_messagecb -->int <link linkend="smtp_set_messagecb">smtp_set_messagecb</link> (smtp_message_t message, smtp_messagecb_t cb, void *arg);
-<!-- smtp_set_monitorcb -->int <link linkend="smtp_set_monitorcb">smtp_set_monitorcb</link> (smtp_session_t session, smtp_monitorcb_t cb, void *arg, int headers);
-<!-- smtp_set_resent_headers -->int <link linkend="smtp_set_resent_headers">smtp_set_resent_headers</link> (smtp_message_t message, int onoff);
-<!-- smtp_set_reverse_path -->int <link linkend="smtp_set_reverse_path">smtp_set_reverse_path</link> (smtp_message_t message, const char *mailbox);
-<!-- smtp_set_server -->int <link linkend="smtp_set_server">smtp_set_server</link> (smtp_session_t session, const char *hostport);
-<!-- smtp_size_set_estimate -->int <link linkend="smtp_size_set_estimate">smtp_size_set_estimate</link> (smtp_message_t message, unsigned long size);
-<!-- smtp_start_session -->int <link linkend="smtp_start_session">smtp_start_session</link> (smtp_session_t session);
-<!-- smtp_starttls_enable -->int <link linkend="smtp_starttls_enable">smtp_starttls_enable</link> (smtp_session_t session, int how);
-<!-- smtp_starttls_set_ctx -->int <link linkend="smtp_starttls_set_ctx">smtp_starttls_set_ctx</link> (smtp_session_t session, SSL_CTX *ctx);
-<!-- smtp_strerror -->char *<link linkend="smtp_strerror">smtp_strerror</link> (int error, char buf[], size_t buflen);
-      </programlisting>
-    </sect2>
 
     <sect2>
       <title>Types</title>
       <programlisting>
-<!-- smtp_enumerate_messagecb_t -->typedef void (*<link linkend="smtp_enumerate_messages">smtp_enumerate_messagecb_t</link>) (smtp_message_t message, void *arg);
-<!-- smtp_enumerate_recipientcb_t -->typedef void (*<link linkend="smtp_enumerate_recipients">smtp_enumerate_recipientcb_t</link>) (smtp_recipient_t recipient, const char *mailbox, void *arg);
-<!-- smtp_etrn_enumerate_nodecb_t -->typedef void (*<link linkend="smtp_etrn_enumerate_nodes">smtp_etrn_enumerate_nodecb_t</link>) (smtp_etrn_node_t node, int option, const char *domain, void *arg)
-<!-- smtp_etrn_node_t -->typedef struct smtp_etrn_node *<link linkend="smtp_etrn_add_node">smtp_etrn_node_t</link>;
-<!-- smtp_eventcb_t -->typedef void (*<link linkend="smtp_set_eventcb">smtp_eventcb_t</link>) (smtp_session_t session, smtp_message_t message, smtp_recipient_t recipient, int event_no, void *arg);
-<!-- smtp_messagecb_t -->typedef char *(*<link linkend="smtp_set_messagecb">smtp_messagecb_t</link>) (char **buf, int *len, void *arg);
-<!-- smtp_message_t -->typedef struct smtp_message *<link linkend="smtp_message_t">smtp_message_t</link>;
-<!-- smtp_monitorcb_t -->typedef void (*<link linkend="smtp_set_monitorcb">smtp_monitorcb_t</link>) (const char *buf, int buflen, int writing, void *arg);
-<!-- smtp_recipient_t -->typedef struct smtp_recipient *<link linkend="smtp_recipient_t">smtp_recipient_t</link>;
-<!-- smtp_session_t -->typedef struct smtp_session *<link linkend="smtp_session_t">smtp_session_t</link>;
-<!-- smtp_status_t -->typedef struct smtp_status <link linkend="smtp_status_t">smtp_status_t</link>;
+typedef void (*<link linkend="smtp_enumerate_messages">smtp_enumerate_messagecb_t</link>) (smtp_message_t message, void *arg);
+typedef void (*<link linkend="smtp_enumerate_recipients">smtp_enumerate_recipientcb_t</link>) (smtp_recipient_t recipient, const char *mailbox, void *arg);
+typedef void (*<link linkend="smtp_etrn_enumerate_nodes">smtp_etrn_enumerate_nodecb_t</link>) (smtp_etrn_node_t node, int option, const char *domain, void *arg)
+typedef struct smtp_etrn_node *<link linkend="smtp_etrn_add_node">smtp_etrn_node_t</link>;
+typedef void (*<link linkend="smtp_set_eventcb">smtp_eventcb_t</link>) (smtp_session_t session, smtp_message_t message, smtp_recipient_t recipient, int event_no, void *arg);
+typedef char *(*<link linkend="smtp_set_messagecb">smtp_messagecb_t</link>) (char **buf, int *len, void *arg);
+typedef struct smtp_message *<link linkend="smtp_message_t">smtp_message_t</link>;
+typedef void (*<link linkend="smtp_set_monitorcb">smtp_monitorcb_t</link>) (const char *buf, int buflen, int writing, void *arg);
+typedef struct smtp_recipient *<link linkend="smtp_recipient_t">smtp_recipient_t</link>;
+typedef struct smtp_session *<link linkend="smtp_session_t">smtp_session_t</link>;
+typedef struct smtp_status <link linkend="smtp_status_t">smtp_status_t</link>;
       </programlisting>
     </sect2>
+
+    <sect2>
+      <title>Functions</title>
+      <programlisting>
+smtp_message_t <link linkend="smtp_add_message">smtp_add_message</link> (smtp_session_t session);
+smtp_recipient_t <link linkend="smtp_add_recipient">smtp_add_recipient</link> (smtp_message_t message, const char *mailbox);
+int <link linkend="smtp_auth_set_context">smtp_auth_set_context</link> (smtp_session_t session, auth_context_t context);
+smtp_session_t <link linkend="smtp_create_session">smtp_create_session</link> (void);
+int <link linkend="smtp_destroy_session">smtp_destroy_session</link> (smtp_session_t session);
+int <link linkend="smtp_dsn_set_envid">smtp_dsn_set_envid</link> (smtp_message_t message, const char *envid);
+int <link linkend="smtp_dsn_set_notify">smtp_dsn_set_notify</link> (smtp_recipient_t recipient, enum notify_flags flags);
+int <link linkend="smtp_dsn_set_orcpt">smtp_dsn_set_orcpt</link> (smtp_recipient_t recipient, const char *address_type, const char *address);
+int <link linkend="smtp_dsn_set_ret">smtp_dsn_set_ret</link> (smtp_message_t message, enum ret_flags flags);
+int <link linkend="smtp_enumerate_messages">smtp_enumerate_messages</link> (smtp_session_t session, smtp_enumerate_messagecb_t cb, void *arg);
+int <link linkend="smtp_enumerate_recipients">smtp_enumerate_recipients</link> (smtp_message_t message, smtp_enumerate_recipientcb_t cb, void *arg);
+int <link linkend="smtp_errno">smtp_errno</link> (void);
+smtp_etrn_node_t <link linkend="smtp_etrn_add_node">smtp_etrn_add_node</link> (smtp_session_t session, int option, const char *node);
+int <link linkend="smtp_etrn_enumerate_nodes">smtp_etrn_enumerate_nodes</link> (smtp_session_t session, smtp_etrn_enumerate_nodecb_t cb, void *arg);
+void *<link linkend="smtp_etrn_set_application_data">smtp_etrn_get_application_data</link> (smtp_etrn_node_t node);
+const smtp_status_t *<link linkend="smtp_etrn_node_status">smtp_etrn_node_status</link> (smtp_etrn_node_t node);
+void *<link linkend="smtp_etrn_set_application_data">smtp_etrn_set_application_data</link> (smtp_etrn_node_t node, void *data);
+void *<link linkend="smtp_set_application_data">smtp_get_application_data</link> (smtp_session_t session);
+void *<link linkend="smtp_set_application_data">smtp_message_get_application_data</link> (smtp_message_t message);
+int <link linkend="smtp_message_reset_status">smtp_message_reset_status</link> (smtp_message_t recipient);
+void *<link linkend="smtp_set_application_data">smtp_message_set_application_data</link> (smtp_message_t message, void *data);
+const smtp_status_t *<link linkend="smtp_message_transfer_status">smtp_message_transfer_status</link> (smtp_message_t message);
+int <link linkend="smtp_recipient_check_complete">smtp_recipient_check_complete</link> (smtp_recipient_t recipient);
+void *<link linkend="smtp_set_application_data">smtp_recipient_get_application_data</link> (smtp_recipient_t recipient);
+int <link linkend="smtp_recipient_reset_status">smtp_recipient_reset_status</link> (smtp_recipient_t recipient);
+void *<link linkend="smtp_set_application_data">smtp_recipient_set_application_data</link> (smtp_recipient_t recipient, void *data);
+const smtp_status_t *<link linkend="smtp_recipient_status">smtp_recipient_status</link> (smtp_recipient_t recipient);
+const smtp_status_t *<link linkend="smtp_reverse_path_status">smtp_reverse_path_status</link> (smtp_message_t message);
+void *<link linkend="smtp_set_application_data">smtp_set_application_data</link> (smtp_session_t session, void *data);
+int <link linkend="smtp_set_eventcb">smtp_set_eventcb</link> (smtp_session_t session, smtp_eventcb_t cb, void *arg);
+int <link linkend="smtp_set_header">smtp_set_header</link> (smtp_message_t message, const char *header, ...);
+int <link linkend="smtp_set_header_option">smtp_set_header_option</link> (smtp_message_t message, const char *header, enum header_option option, ...);
+int <link linkend="smtp_set_hostname">smtp_set_hostname</link> (smtp_session_t session, const char *hostname);
+int <link linkend="smtp_set_messagecb">smtp_set_messagecb</link> (smtp_message_t message, smtp_messagecb_t cb, void *arg);
+int <link linkend="smtp_set_monitorcb">smtp_set_monitorcb</link> (smtp_session_t session, smtp_monitorcb_t cb, void *arg, int headers);
+int <link linkend="smtp_set_resent_headers">smtp_set_resent_headers</link> (smtp_message_t message, int onoff);
+int <link linkend="smtp_set_reverse_path">smtp_set_reverse_path</link> (smtp_message_t message, const char *mailbox);
+int <link linkend="smtp_set_server">smtp_set_server</link> (smtp_session_t session, const char *hostport);
+int <link linkend="smtp_size_set_estimate">smtp_size_set_estimate</link> (smtp_message_t message, unsigned long size);
+int <link linkend="smtp_start_session">smtp_start_session</link> (smtp_session_t session);
+int <link linkend="smtp_starttls_enable">smtp_starttls_enable</link> (smtp_session_t session, int how);
+int <link linkend="smtp_starttls_set_ctx">smtp_starttls_set_ctx</link> (smtp_session_t session, SSL_CTX *ctx);
+char *<link linkend="smtp_strerror">smtp_strerror</link> (int error, char buf[], size_t buflen);
+      </programlisting>
+    </sect2>
+
+<sect2>
+      <programlisting>
+int smtp_deliverby_set_mode (smtp_message_t message,
+			     long time, enum by_mode mode, int trace);
+long smtp_set_timeout (smtp_session_t session, int which, long value);
+int smtp_option_require_all_recipients (smtp_session_t session, int state);
+const char *_smtp_message_fp_cb (void **ctx, int *len, void *arg);
+#define smtp_set_message_fp(message,fp)	\
+		smtp_set_messagecb ((message), _smtp_message_fp_cb, (fp))
+
+const char *_smtp_message_str_cb (void **ctx, int *len, void *arg);
+#define smtp_set_message_str(message,str)	\
+		smtp_set_messagecb ((message), _smtp_message_str_cb, (str))
+typedef int (*smtp_starttls_passwordcb_t) (char *buf, int buflen,
+                                           int rwflag, void *arg);
+int smtp_starttls_set_password_cb (smtp_starttls_passwordcb_t cb, void *arg);
+      </programlisting>
+</sect2>
 
     <sect2>
       <title>Enumerations</title>
@@ -249,6 +239,7 @@ enum <link linkend="smtp_set_header_option">header_option</link>;
       </programlisting>
     </sect2>
   </sect1>
+-->
 
 <!-- ====================================================================== -->
 
@@ -256,15 +247,21 @@ enum <link linkend="smtp_set_header_option">header_option</link>;
     <title>Reference</title>
 
     <para>
-To use the libESMTP  API, you must include libesmtp.h in all source
-files calling the API functions.
+To use the libESMTP API, include <filename>libesmtp.h</filename>.
+Declarations for deprecated symbols must be requested explicitly;
+define the macro <token>LIBESMTP_ENABLE_DEPRECATED_SYMBOLS</token>
+to be non-zero before including <filename>libesmtp.h</filename>.
     </para>
 
     <para>
-Internally libESMTP creates and maintains three types of structures to
-build and track the state of an SMTP protocol session.  Pointers
-to these structures are passed back to the application by the API and
-must be supplied in various other API calls.
+Internally libESMTP creates and maintains structures to track the state
+of an SMTP protocol session.  Opaque pointers to these structures are passed
+back to the application by the API and must be supplied in various other API
+calls.  The API provides for a callback functions or a simple event reporting
+mechanism as appropriate so that the application can provide data to libESMTP
+or track the session's progress.  Further API functions allow the session status
+to be queried after the event.
+The entire SMTP protocol session is performed by only one function call.
     </para>
 
     <note>
@@ -272,19 +269,36 @@ must be supplied in various other API calls.
       <para>
 All structures and pointers maintained by libESMTP are opaque, that is,
 the internal detail of libESMTP structures is not made available to the
-application.
+application.  Object oriented programmers may wish to regard the pointers
+as instances of private classes within libESMTP.
       </para>
-    </note>
 
-    <para>
-The pointers are declared as follows.
-    </para>
-
-    <programlisting>
+      <para>
+Three pointer types are declared as follows:
+	<programlisting>
 typedef struct smtp_session *<anchor id="smtp_session_t"/>smtp_session_t;
 typedef struct smtp_message *<anchor id="smtp_message_t"/>smtp_message_t;
 typedef struct smtp_recipient *<anchor id="smtp_recipient_t"/>smtp_recipient_t;
-    </programlisting>
+	</programlisting>
+      </para>
+    </note>
+
+    <note>
+      <title>Thread Safety</title>
+      <para>
+LibESMTP is thread-aware, however the application is responsible for
+observing the restrictions below to ensure full thread safety.
+      </para>
+
+      <para>
+Do not access a <type>smtp_session_t</type>, <type>smtp_message_t</type>
+or <type>smtp_recipient_t</type> from more than one thread at a time.
+A mutex can be used to protect API calls
+if the application logic cannot guarantee this.
+It is especially important to observe this restriction during a call to
+<function>smtp_start_session</function>.
+      </para>
+    </note>
 
     <important>
       <title>Signal Handling</title>
@@ -298,7 +312,7 @@ killed accidentally when this happens during the protocol session.
       </para>
 
       <para>
-Code similar to the following may be used to do this.
+Code similar to the following may be used to do this:
       </para>
       <programlisting>
 #include &lt;signal.h&gt;
@@ -411,7 +425,9 @@ The descriptor for the message state, or <constant>NULL</constant> on failure.
     <refsect1>
       <title>Description</title>
       <para>
-Call the callback function once for each message in an smtp session.
+Call the callback function once for each message in an smtp session.  The arg
+parameter is passed back to the application via the callback's parameter of the
+same name.
       </para>
     </refsect1>
 
@@ -445,8 +461,10 @@ Zero on failure, non-zero on success.
     <refsect1>
       <title>Description</title>
       <para>
-Set the name of the localhost.  If one is not specified, the local host
-name will be determined using <function>uname</function>.
+Set the name of the localhost.  If <token>hostname</token> is NULL, the local host
+name will be determined using <function>uname</function>.  If the system does
+not provide <function>uname</function> or equivalent, the <token>hostname</token>
+parameter may not be NULL.
       </para>
     </refsect1>
 
@@ -500,7 +518,7 @@ Zero on failure, non-zero on success.
       <title>Notes</title>
       <para>
 The default port number is set to 587 since this is the port that should
-be used for mail submission, see RFC 2476.  By choosing this default
+be used for mail submission, see RFC 4409.  By choosing this default
 now, the API does not change behaviour unexpectedly in the future as
 use of the new standard becomes commonplace.  The hostport nototion
 simplifies things for the application, the user can type
@@ -534,15 +552,14 @@ name.
       <para>
 Set the reverse path (envelope sender) mailbox address.
 <parameter>mailbox</parameter> must be an address using the syntax
-specified in RFC 2821.  If a null reverse path is required, specify
+specified in RFC 5321.  If a null reverse path is required, specify
 <parameter>mailbox</parameter> as <constant>NULL</constant> or
 <constant>""</constant>.
       </para>
       <para>
-If the value is a non-empty string and neither the message contains
-a From: header nor a From: is specified using
-<function>smtp_set_header</function>, the reverse path mailbox address
-specified with this API will be used to generate one.
+The reverse path mailbox address is used to generate a <token>From:</token>
+header when the message neither contains a <token>From:</token> header
+nor has one been specified using <function>smtp_set_header</function>.
       </para>
       <para>
 It is strongly reccommended that the message supplies a From:
@@ -591,19 +608,19 @@ Not calling this API has the same effect as specifing
       <title>Description</title>
       <para>
 Add a recipient to the message.  <parameter>mailbox</parameter> must be an address
-using the syntax specified in RFC 2821.
+using the syntax specified in RFC 5321.
       </para>
 
       <para>
-If neither the message contains a To: header nor a
-To: is specified using <function>smtp_set_header</function>, a
-To: header will be automatically generated using the list
+If neither the message contains a <token>To:</token> header nor a
+<token>To:</token> is specified using <function>smtp_set_header</function>,
+one header will be automatically generated using the list
 of envelope recipients.
       </para>
 
       <para>
-It is strongly reccommended that the message supplies To:,
-Cc: and Bcc: headers or that the
+It is strongly reccommended that the message supplies <token>To:</token>,
+<token>Cc:</token> and <token>Bcc:</token> headers or that the
 libESMTP header APIs are used to create them.
       </para>
     </refsect1>
@@ -674,7 +691,7 @@ Zero on failure, non-zero on success.
   <refentry id="smtp_set_header">
     <refnamediv>
       <refname>smtp_set_header</refname>
-      <refpurpose>set an RFC 2822 message header</refpurpose>
+      <refpurpose>set an RFC 5322 message header</refpurpose>
     </refnamediv>
 
     <refsynopsisdiv>
@@ -691,7 +708,7 @@ Zero on failure, non-zero on success.
     <refsect1>
       <title>Description</title>
       <para>
-Set an RFC 2822 message header.
+Set an RFC 5322 message header.
       </para>
       <para>
 If a value is supplied using <function>smtp_set_header</function> the header
@@ -713,14 +730,13 @@ Zero on failure, non-zero on success.
     </refsect1>
 
     <refsect1>
-      <title>Headers</title>
+      <title>Function Arguments</title>
       <para>
 This section lists the additional function arguments for individual
-RFC 2822 headers.
+RFC 5322 headers.
       </para>
 
       <variablelist>
-        <title>Function Arguments</title>
 	<varlistentry>
 	  <term>default</term>
 	<listitem>
@@ -738,7 +754,7 @@ simple string values.
 	  <programlisting>const time_t *value</programlisting>
 	  <para>
 A pointer to a <type>time_t</type> supplies the value for this header.
-The time pointed to is copied and is formatted according to RFC 2822 when
+The time pointed to is copied and is formatted according to RFC 5322 when
 the value is required.
 	  </para>
 	  <para>
@@ -772,11 +788,11 @@ real name of the recipient specified in <parameter>mailbox</parameter>, for exam
 Brian Stafford.
 	    </para>
 	    <para>
-<parameter>mailbox</parameter> is as defined in RFC 2822, for example
+<parameter>mailbox</parameter> is as defined in RFC 5322, for example
 brian@stafford.uklinux.net.
 	    </para>
 	    <para>
-The From: header is automatically generated if one is not
+The <token>From:</token> header is automatically generated if one is not
 supplied either in the message or via the API.
 Refer to <function>smtp_set_reverse_path</function> for a
 description of the action taken by libESMTP.
@@ -789,6 +805,7 @@ description of the action taken by libESMTP.
 	  <term>Cc:</term>
 	  <term>Bcc:</term>
 	  <term>Reply-To:</term>
+	  <term>Sender:</term>
 	  <listitem>
 	    <programlisting>const char *phrase, const char *address</programlisting>
 	    <para>
@@ -797,13 +814,13 @@ real name of the recipient specified in <parameter>address</parameter>,
 for example Brian Stafford.
 	    </para>
 	    <para>
-<parameter>address</parameter> is as defined in RFC 2822, for example
+<parameter>address</parameter> is as defined in RFC 5322, for example
 brian@stafford.uklinux.net.
 These headers may be set multiple times, however only one copy of each
 header listing all the values is actually created in the message.
 	    </para>
 	    <para>
-The To: header is automatically generated if one is not
+The <token>To:</token> header is automatically generated if one is not
 supplied either in the message or via the API.  Refer to
 <function>smtp_add_recipient</function> for a description of the action taken
 by libESMTP.
@@ -819,9 +836,8 @@ by libESMTP.
       <para>
 Certain headers may not be set using this call.  In particular, MIME
 headers cannot be set, the values in the message are always used.
-This is because, in the words of RFC 2045, MIME (RFC 2045 -
-RFC 2049) is &quot;orthogonal&quot; to RFC 2822 and
-libESMTP strives to preserve this condition.
+This is because MIME [RFC 2045 - RFC 2049] is &quot;orthogonal&quot;
+to RFC 5322 and libESMTP strives to preserve this condition.
 In addition, headers added to a message at delivery time such as
 Return-Path: are always deleted from the message.
       </para>
@@ -864,7 +880,7 @@ enum header_option
   };
       </programlisting>
       <para>
-Set an RFC 2822 message header option.
+Set an RFC 5322 message header option.
       </para>
       <variablelist>
         <title>Header Options</title>
@@ -885,9 +901,9 @@ message.
 	    <para>
 libESMTP generates certain headers automatically if not present in the
 message.  This is the default behaviour for headers that are RECOMMENDED
-but not REQUIRED by RFC 2822, such as Message-Id:.  Setting Hdr_PROHIBIT
+but not REQUIRED by RFC 5322, such as Message-Id:.  Setting Hdr_PROHIBIT
 ensures the transmitted message does not contain the named header.  If the
-header is REQUIRED by RFC 2822, the API will fail.
+header is REQUIRED by RFC 5322, the API will fail.
 	    </para>
 	  </listitem>
 	</varlistentry>
@@ -929,7 +945,7 @@ Zero on failure, non-zero on success.
       <para>
 Request special processing of headers which have a Resent-
 variation.  This option is used when resending messages as described in
-RFC 2822.
+RFC 5322.
       </para>
     </refsect1>
 
@@ -937,6 +953,88 @@ RFC 2822.
       <title>Return Value</title>
       <para>
 Zero on failure, non-zero on success.
+      </para>
+    </refsect1>
+
+    <refsect1>
+      <title>Warning</title>
+      <para>
+Currently not implemented
+      </para>
+    </refsect1>
+  </refentry>
+
+<!-- ====================================================================== -->
+
+  <refentry id="smtp_set_timeout">
+    <refmeta>
+      <refentrytitle>smtp_set_timeout</refentrytitle>
+    </refmeta>
+
+    <refnamediv>
+      <refname>smtp_set_timeout</refname>
+      <refpurpose></refpurpose>
+    </refnamediv>
+
+    <refsynopsisdiv>
+      <funcsynopsis>
+	<funcprototype>
+	  <funcdef>long <function>smtp_set_timeout</function></funcdef>
+	  <paramdef>smtp_session_t <parameter>session</parameter></paramdef>
+	  <paramdef>int <parameter>which</parameter></paramdef>
+	  <paramdef>long <parameter>value</parameter></paramdef>
+	</funcprototype>
+      </funcsynopsis>
+    </refsynopsisdiv>
+
+    <refsect1>
+      <title>Description</title>
+      <para>
+      </para>
+    </refsect1>
+
+    <refsect1>
+      <title>Return Value</title>
+      <para>
+Non zero on success, zero on failure.
+      </para>
+    </refsect1>
+  </refentry>
+
+<!-- ====================================================================== -->
+
+  <refentry id="smtp_option_require_all_recipients">
+    <refmeta>
+      <refentrytitle>smtp_option_require_all_recipients</refentrytitle>
+    </refmeta>
+
+    <refnamediv>
+      <refname>smtp_option_require_all_recipients</refname>
+      <refpurpose></refpurpose>
+    </refnamediv>
+
+    <refsynopsisdiv>
+      <programlisting>
+      </programlisting>
+      <funcsynopsis>
+	<funcprototype>
+	  <funcdef>int <function>smtp_option_require_all_recipients</function></funcdef>
+	  <paramdef>smtp_session_t <parameter>session</parameter></paramdef>
+	  <paramdef>int <parameter>state</parameter></paramdef>
+	</funcprototype>
+      </funcsynopsis>
+    </refsynopsisdiv>
+
+    <refsect1>
+      <title>Description</title>
+      <para>
+      </para>
+    </refsect1>
+
+    <refsect1>
+      <title>Return Value</title>
+      <para>
+Non zero on success, zero on failure.
       </para>
     </refsect1>
   </refentry>
@@ -969,7 +1067,7 @@ Zero on failure, non-zero on success.
     <refsect1>
       <title>Description</title>
       <para>
-Set a callback function to read an RFC 2822 formatted message
+Set a callback function to read an RFC 5322 formatted message
 from the application.
       </para>
 
@@ -1000,6 +1098,80 @@ automatically by libESMTP.
       <title>Return Value</title>
       <para>
 Zero on failure, non-zero on success.
+      </para>
+    </refsect1>
+  </refentry>
+
+<!-- ====================================================================== -->
+
+  <refentry id="smtp_set_message_fp">
+    <refmeta>
+      <refentrytitle>smtp_set_message_fp</refentrytitle>
+    </refmeta>
+
+    <refnamediv>
+      <refname>smtp_set_message_fp</refname>
+      <refpurpose></refpurpose>
+    </refnamediv>
+
+    <refsynopsisdiv>
+      <programlisting>
+      </programlisting>
+      <funcsynopsis>
+	<funcprototype>
+	  <funcdef>int <function>smtp_set_message_fp</function></funcdef>
+	  <paramdef>smtp_message_t <parameter>message</parameter></paramdef>
+	  <paramdef>FILE *<parameter>fp</parameter></paramdef>
+	</funcprototype>
+      </funcsynopsis>
+    </refsynopsisdiv>
+
+    <refsect1>
+      <title>Description</title>
+      <para>
+      </para>
+    </refsect1>
+
+    <refsect1>
+      <title>Return Value</title>
+      <para>
+Non zero on success, zero on failure.
+      </para>
+    </refsect1>
+  </refentry>
+
+<!-- ====================================================================== -->
+
+  <refentry id="smtp_set_message_str">
+    <refmeta>
+      <refentrytitle>smtp_set_message_str</refentrytitle>
+    </refmeta>
+
+    <refnamediv>
+      <refname>smtp_set_message_str</refname>
+      <refpurpose></refpurpose>
+    </refnamediv>
+
+    <refsynopsisdiv>
+      <funcsynopsis>
+	<funcprototype>
+	  <funcdef>int <function>smtp_set_message_str</function></funcdef>
+	  <paramdef>smtp_message_t <parameter>message</parameter></paramdef>
+	  <paramdef>const char *<parameter>string</parameter></paramdef>
+	</funcprototype>
+      </funcsynopsis>
+    </refsynopsisdiv>
+
+    <refsect1>
+      <title>Description</title>
+      <para>
+      </para>
+    </refsect1>
+
+    <refsect1>
+      <title>Return Value</title>
+      <para>
+Non zero on success, zero on failure.
       </para>
     </refsect1>
   </refentry>
@@ -1040,25 +1212,31 @@ enum
     SMTP_EV_MESSAGEDATA,
     SMTP_EV_MESSAGESENT,
     SMTP_EV_DISCONNECT,
+    SMTP_EV_SYNTAXWARNING,
 
   /* Protocol extension progress */
-    SMTP_EV_ETRNSTATUS = 1000,
+    SMTP_EV_ETRNSTATUS,
 
   /* Required extensions */
-    SMTP_EV_EXTNA_DSN = 2000,
+    SMTP_EV_EXTNA_DSN,
     SMTP_EV_EXTNA_8BITMIME,
     SMTP_EV_EXTNA_STARTTLS,
     SMTP_EV_EXTNA_ETRN,
+    SMTP_EV_EXTNA_CHUNKING,
+    SMTP_EV_EXTNA_BINARYMIME,
 
   /* Extensions specific events */
-    SMTP_EV_DELIVERBY_EXPIRED = 3000,
+    SMTP_EV_DELIVERBY_EXPIRED,
 
-    /* STARTTLS */
-    SMTP_EV_WEAK_CIPHER = 3100,
+  /* STARTTLS */
+    SMTP_EV_WEAK_CIPHER,
     SMTP_EV_STARTTLS_OK,
     SMTP_EV_INVALID_PEER_CERTIFICATE,
     SMTP_EV_NO_PEER_CERTIFICATE,
-    SMTP_EV_WRONG_PEER_CERTIFICATE
+    SMTP_EV_WRONG_PEER_CERTIFICATE,
+    SMTP_EV_NO_CLIENT_CERTIFICATE,
+    SMTP_EV_UNUSABLE_CLIENT_CERTIFICATE,
+    SMTP_EV_UNUSABLE_CA_LIST
   };
       </programlisting>
     </refsynopsisdiv>
@@ -1253,7 +1431,7 @@ This connects to an SMTP server and transfers the messages in
 the session.  The SMTP envelope is constructed using the message
 and recipient parameters set up previously.  The message
 callback is then used to read the message contents to the
-server.  As the RFC 2822 headers are read from the application,
+server.  As the RFC 5322 headers are read from the application,
 they may be processed.  Header processing terminates when the
 first line containing only CR-LF is encountered.  The remainder of
 the message is copied verbatim.
@@ -1376,30 +1554,35 @@ libESMTP error code.
     <refsect1 id="errorcodes">
       <title>Error Codes</title>
 
+      <para>
+The following error codes are defined:
+
       <programlisting>
-#define SMTP_ERR_NOTHING_TO_DO                  2
-#define SMTP_ERR_DROPPED_CONNECTION             3
-#define SMTP_ERR_INVALID_RESPONSE_SYNTAX        4
-#define SMTP_ERR_STATUS_MISMATCH                5
-#define SMTP_ERR_INVALID_RESPONSE_STATUS        6
-#define SMTP_ERR_INVAL                          7
-#define SMTP_ERR_EXTENSION_NOT_AVAILABLE        8
+#define SMTP_ERR_NOTHING_TO_DO
+#define SMTP_ERR_DROPPED_CONNECTION
+#define SMTP_ERR_INVALID_RESPONSE_SYNTAX
+#define SMTP_ERR_STATUS_MISMATCH
+#define SMTP_ERR_INVALID_RESPONSE_STATUS
+#define SMTP_ERR_INVAL
+#define SMTP_ERR_EXTENSION_NOT_AVAILABLE
 
 /* libESMTP versions of some getaddrinfo error numbers */
-#define SMTP_ERR_EAI_ADDRFAMILY                 9
-#define SMTP_ERR_EAI_NODATA                     10
-#define SMTP_ERR_EAI_FAIL                       11
-#define SMTP_ERR_EAI_AGAIN                      12
-#define SMTP_ERR_EAI_MEMORY                     13
-#define SMTP_ERR_EAI_FAMILY                     14
-#define SMTP_ERR_EAI_BADFLAGS                   15
-#define SMTP_ERR_EAI_NONAME                     16
-#define SMTP_ERR_EAI_SERVICE                    17
-#define SMTP_ERR_EAI_SOCKTYPE                   18
+#define SMTP_ERR_EAI_ADDRFAMILY
+#define SMTP_ERR_EAI_NODATA
+#define SMTP_ERR_EAI_FAIL
+#define SMTP_ERR_EAI_AGAIN
+#define SMTP_ERR_EAI_MEMORY
+#define SMTP_ERR_EAI_FAMILY
+#define SMTP_ERR_EAI_BADFLAGS
+#define SMTP_ERR_EAI_NONAME
+#define SMTP_ERR_EAI_SERVICE
+#define SMTP_ERR_EAI_SOCKTYPE
+
+#define SMTP_ERR_UNTERMINATED_RESPONSE
+#define SMTP_ERR_CLIENT_ERROR
       </programlisting>
 
-      <para>
-SMTP_ERR_INVAL means that an API was called with invalid arguments.
+<token>SMTP_ERR_INVAL</token> means that an API was called with invalid arguments.
       </para>
     </refsect1>
   </refentry>
@@ -1604,8 +1787,8 @@ session. This includes SMTP status codes, RFC 2034 enhanced status
 codes, if available and text from the server describing the status.
 If a recipient is marked with a success or permanent failure status,
 it will not be resent if <function>smtp_start_session</function> is
-called again, however it may be used when generating To: or Cc: headers
-if required.
+called again, however it may be used when generating <token>To:</token>
+or <token>Cc:</token> headers if required.
       </para>
     </refsect1>
 
@@ -1643,7 +1826,7 @@ next call to libESMTP in the same thread.
     <refsect1>
       <title>Description</title>
       <para>
-Check whether processing is complete dor the specified recipient of the
+Check whether processing is complete for the specified recipient of the
 message.  Processing is considered complete when an MTA has assumed
 responsibility for delivering the message, or if it has indicated a
 permanent failure.
@@ -1710,7 +1893,7 @@ supported extensions require corresponding API functions.
   </sect1>
 
   <sect1 id="dsn">
-    <title>RFC 1891.  Delivery Status Notification (DSN)</title>
+    <title>RFC 3461.  Delivery Status Notification (DSN)</title>
 
     <para>
     </para>
@@ -1820,10 +2003,10 @@ Non zero on success, zero on failure.
 enum notify_flags
   {
     Notify_NOTSET,
-    Notify_NEVER	= -1,
-    Notify_SUCCESS	= 1,
-    Notify_FAILURE	= 2,
-    Notify_DELAY	= 4
+    Notify_NEVER,
+    Notify_SUCCESS,
+    Notify_FAILURE,
+    Notify_DELAY
   };
       </programlisting>
     </refsynopsisdiv>
@@ -1831,9 +2014,10 @@ enum notify_flags
     <refsect1>
       <title>Description</title>
       <para>
-Set the DSN notify options.  Flags may be Notify_NOTSET
-or Notify_NEVER or any combination of Notify_SUCCESS,
-Notify_FAILURE and Notify_DELAY.
+Set the DSN notify options.  Flags may be <constant>Notify_NOTSET</constant>
+or <constant>Notify_NEVER</constant> or the bitwise OR of any combination of
+<constant>Notify_SUCCESS</constant>, <constant>Notify_FAILURE</constant> and
+<constant>Notify_DELAY</constant>.
       </para>
     </refsect1>
 
@@ -1940,7 +2124,7 @@ Non zero on success, zero on failure.
 <!-- ====================================================================== -->
 
 <sect1 id="e8bitmime">
-<title>RFC 1652.  SMTP 8bit-MIME Transport Extension</title>
+<title>RFC 6152.  SMTP 8bit-MIME Transport Extension</title>
 
     <para>
     </para>
@@ -1977,7 +2161,7 @@ enum e8bitmime_body
       <title>Description</title>
       <para>
 The 8-bit MIME extension allows an SMTP client to declare the message
-body is either in strict conformance with RFC 2822
+body is either in strict conformance with RFC 5322
 (<constant>E8bitmime_7BIT</constant>) or that it is a MIME document
 where some or all of the MIME parts use 8bit encoding
 (<constant>E8bitmime_8BITMIME</constant>).  If this API sets the body
@@ -2186,7 +2370,7 @@ The get variant returns the current value of the application data.
 <!-- ====================================================================== -->
 
 <sect1 id="auth">
-<title>RFC 2554.  SMTP Auth Extension</title>
+<title>RFC 4954.  SMTP Auth Extension</title>
 <para>
 </para>
 
@@ -2224,7 +2408,7 @@ The authentication API is described separately.
       <para>
 When enabled and the SMTP server advertises the AUTH extension, libESMTP
 will attempt to authenticate to the SMTP server before transferring
-any messages.  context must be obtained from the SASL (RFC 2222) client
+any messages.  context must be obtained from the SASL (RFC 4422) client
 library API defined in <filename>auth-client.h</filename>.
       </para>
 
@@ -2344,6 +2528,89 @@ Use an <type>SSL_CTX</type> created by the application.  The
 to have initialised the OpenSSL library.  If not used, OpenSSL is
 automatically initialised before calling any of the OpenSSL API
 functions.
+      </para>
+    </refsect1>
+
+    <refsect1>
+      <title>Return Value</title>
+      <para>
+Non zero on success, zero on failure.
+      </para>
+    </refsect1>
+  </refentry>
+
+<!-- ====================================================================== -->
+
+  <refentry id="smtp_starttls_set_password_cb">
+    <refmeta>
+      <refentrytitle>smtp_starttls_set_password_cb</refentrytitle>
+    </refmeta>
+
+    <refnamediv>
+      <refname>smtp_starttls_set_password_cb</refname>
+      <refpurpose>set password callback function for OpenSSL</refpurpose>
+    </refnamediv>
+
+    <refsynopsisdiv>
+      <programlisting>
+typedef int (*smtp_starttls_passwordcb_t) (char *buf, int buflen,
+                                           int rwflag, void *arg);
+      </programlisting>
+      <funcsynopsis>
+	<funcprototype>
+	  <funcdef>int <function>smtp_starttls_set_password_cb</function></funcdef>
+	  <paramdef>smtp_session_t <parameter>session</parameter></paramdef>
+	  <paramdef>void *<parameter>arg</parameter></paramdef>
+	</funcprototype>
+      </funcsynopsis>
+    </refsynopsisdiv>
+
+    <refsect1>
+      <title>Description</title>
+      <para>
+      </para>
+    </refsect1>
+
+    <refsect1>
+      <title>Return Value</title>
+      <para>
+Non zero on success, zero on failure.
+      </para>
+    </refsect1>
+  </refentry>
+</sect1>
+<!-- ====================================================================== -->
+
+<sect1 id="deliverby">
+<title>RFC 2852. SMTP Deliver By Extension</title>
+
+  <refentry id="smtp_deliverby_set_mode">
+    <refmeta>
+      <refentrytitle>smtp_deliverby_set_mode</refentrytitle>
+    </refmeta>
+
+    <refnamediv>
+      <refname>smtp_deliverby_set_mode</refname>
+      <refpurpose></refpurpose>
+    </refnamediv>
+
+    <refsynopsisdiv>
+      <programlisting>
+      </programlisting>
+      <funcsynopsis>
+	<funcprototype>
+	  <funcdef>int <function>smtp_deliverby_set_mode</function></funcdef>
+	  <paramdef>smtp_message_t <parameter>message</parameter></paramdef>
+	  <paramdef>long <parameter>time</parameter></paramdef>
+	  <paramdef>enum by_mode <parameter>mode</parameter></paramdef>
+	  <paramdef>int <parameter>trace</parameter></paramdef>
+	</funcprototype>
+      </funcsynopsis>
+    </refsynopsisdiv>
+
+    <refsect1>
+      <title>Description</title>
+      <para>
       </para>
     </refsect1>
 

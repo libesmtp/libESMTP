@@ -37,7 +37,7 @@
 #include <stdarg.h>
 
 #include <openssl/ssl.h>
-#include <auth-client.h>
+#include <gsasl.h>
 #include <libesmtp.h>
 
 #if !defined (__GNUC__) || __GNUC__ < 2
@@ -73,10 +73,9 @@ const char *readlinefp_cb (void **buf, int *len, void *arg);
 void monitor_cb (const char *buf, int buflen, int writing, void *arg);
 void print_recipient_status (smtp_recipient_t recipient,
 			     const char *mailbox, void *arg);
-int authinteract (auth_client_request_t request, char **result, int fields,
-                  void *arg);
+static int gsaslinteract (Gsasl *ctx, Gsasl_session *sctx, Gsasl_property prop);
 int tlsinteract (char *buf, int buflen, int rwflag, void *arg);
- void event_cb (smtp_session_t session, int event_no, void *arg, ...);
+void event_cb (smtp_session_t session, int event_no, void *arg, ...);
 void usage (void);
 void version (void);
 
@@ -86,7 +85,7 @@ main (int argc, char **argv)
   smtp_session_t session;
   smtp_message_t message;
   smtp_recipient_t recipient;
-  auth_context_t authctx;
+  Gsasl *gsaslctx;
   const smtp_status_t *status;
   struct sigaction sa;
   char *host = NULL;
@@ -102,7 +101,6 @@ main (int argc, char **argv)
 
   /* This program sends only one message at a time.  Create an SMTP
      session and add a message to it. */
-  auth_client_init ();
   session = smtp_create_session ();
   message = smtp_add_message (session);
 
@@ -205,19 +203,18 @@ main (int argc, char **argv)
 
   /* Do what's needed at application level to use authentication.
    */
-  authctx = auth_create_context ();
-  auth_set_mechanism_flags (authctx, AUTH_PLUGIN_PLAIN, 0);
-  auth_set_interact_cb (authctx, authinteract, NULL);
+  gsasl_init (&gsaslctx);
+  gsasl_callback_set (gsaslctx, gsaslinteract);
 
   /* Use our callback for X.509 certificate passwords.  If STARTTLS is
      not in use or disabled in configure, the following is harmless. */
   smtp_starttls_set_password_cb (tlsinteract, NULL);
-  smtp_set_eventcb(session, event_cb, NULL);
+  smtp_set_eventcb (session, event_cb, NULL);
 
   /* Now tell libESMTP it can use the SMTP AUTH extension.
    */
   if (!noauth)
-    smtp_auth_set_context (session, authctx);
+    smtp_gsasl_set_context (session, gsaslctx);
 
   /* Set the reverse path for the mail envelope.  (NULL is ok)
    */
@@ -295,9 +292,8 @@ main (int argc, char **argv)
   /* Free resources consumed by the program.
    */
   smtp_destroy_session (session);
-  auth_destroy_context (authctx);
+  gsasl_done (gsaslctx);
   fclose (fp);
-  auth_client_exit ();
   exit (0);
 }
 
@@ -377,39 +373,51 @@ monitor_cb (const char *buf, int buflen, int writing, void *arg)
    putc ('\n', fp);
 }
 
-/* Callback to request user/password info.  Not thread safe. */
-int
-authinteract (auth_client_request_t request, char **result, int fields,
-              void *arg unused)
+static char *
+getdevtty (char buf[], size_t bufsize, const char *prompt)
 {
-  char prompt[64];
-  static char resp[512];
-  char *p, *rp;
-  int i, n, tty;
+  int tty, n;
+  char *p;
 
-  rp = resp;
-  for (i = 0; i < fields; i++)
+  if ((tty = open ("/dev/tty", O_RDWR)) < 0)
+    return NULL;
+  write (tty, prompt, strlen (prompt));
+  n = read (tty, buf, bufsize);
+  close (tty);
+  if (n < 0)
+    return NULL;
+
+  for (p = &buf[n]; isspace (p[-1]); p--)
+    ;
+  *p = '\0';
+  return buf;
+}
+
+static int 
+gsaslinteract (Gsasl *ctx, Gsasl_session *sctx, Gsasl_property prop) 
+{
+  char buf[BUFSIZ];
+  
+  switch (prop)
     {
-      n = snprintf (prompt, sizeof prompt, "%s%s: ", request[i].prompt,
-		    (request[i].flags & AUTH_CLEARTEXT) ? " (not encrypted)"
-		    					: "");
-      if (request[i].flags & AUTH_PASS)
-	result[i] = getpass (prompt);
-      else
-	{
-	  tty = open ("/dev/tty", O_RDWR);
-	  write (tty, prompt, n);
-	  n = read (tty, rp, sizeof resp - (rp - resp));
-	  close (tty);
-	  p = rp + n;
-	  while (isspace (p[-1]))
-	    p--;
-	  *p++ = '\0';
-	  result[i] = rp;
-	  rp = p;
-	}
+    case GSASL_PASSWORD:
+      gsasl_property_set (sctx, prop,
+      			  getdevtty (buf, sizeof buf, "Pass phrase: "));
+      return GSASL_OK;
+
+    case GSASL_PASSCODE:
+      gsasl_property_set (sctx, prop,
+      			  getdevtty (buf, sizeof buf, "Pass code: "));
+      return GSASL_OK;
+
+    case GSASL_AUTHID:
+      gsasl_property_set (sctx, prop,
+      			  getdevtty (buf, sizeof buf, "User name: "));
+      return GSASL_OK;
+
+    default:
+      return GSASL_NO_CALLBACK;
     }
-  return 1;
 }
 
 int
@@ -425,6 +433,7 @@ tlsinteract (char *buf, int buflen, int rwflag unused, void *arg unused)
   strcpy (buf, pw);
   return len;
 }
+
 int
 handle_invalid_peer_certificate(long vfy_result)
 {

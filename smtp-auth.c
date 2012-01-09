@@ -24,29 +24,40 @@
 #include <config.h>
 #endif
 
-#include <assert.h>
-
-#ifdef USE_SASL
 /* Support for the SMTP AUTH verb.
  */
-#include <stdlib.h>
+#include <assert.h>
 #include <string.h>
 #include <ctype.h>
 #include <stdarg.h>
+#include <stdlib.h>
 #include <unistd.h>
 #include <errno.h>
 
 #include <missing.h> /* declarations for missing library functions */
 
-#include "auth-client.h"
 #include "libesmtp-private.h"
-#include "api.h"
 
+#include "api.h"
 #include "message-source.h"
 #include "siobuf.h"
 #include "tokens.h"
 #include "base64.h"
 #include "protocol.h"
+
+#include <gsasl.h>
+
+int
+smtp_gsasl_set_context (smtp_session_t session, Gsasl *context)
+{
+  SMTPAPI_CHECK_ARGS (session != NULL, 0);
+
+  session->gsasl_context = context;
+  return 1;
+}
+
+#if ENABLE_DEPRECATED_FEATURES
+#include "auth-client.h"
 
 int
 smtp_auth_set_context (smtp_session_t session, auth_context_t context)
@@ -56,6 +67,7 @@ smtp_auth_set_context (smtp_session_t session, auth_context_t context)
   session->auth_context = context;
   return 1;
 }
+#endif
 
 struct mechanism
   {
@@ -111,11 +123,36 @@ set_auth_mechanisms (smtp_session_t session, const char *mechanisms)
     }
 }
 
-int
-select_auth_mechanism (smtp_session_t session)
+static int
+gsasl_select_auth_mechanism (smtp_session_t session)
 {
-  if (session->authenticated)
+  if (session->gsasl_context == NULL)
     return 0;
+  /* find the first usable SASL mechanism */
+  for (session->current_mechanism = session->auth_mechanisms;
+       session->current_mechanism != NULL;
+       session->current_mechanism = session->current_mechanism->next)
+    if (gsasl_client_support_p (session->gsasl_context,
+				session->current_mechanism->name))
+      return 1;
+  return 0;
+}
+
+static int
+gsasl_next_auth_mechanism (smtp_session_t session)
+{
+  /* find the next usable auth mechanism */
+  while ((session->current_mechanism = session->current_mechanism->next) != NULL)
+    if (gsasl_client_support_p (session->gsasl_context,
+				session->current_mechanism->name))
+      return 1;
+  return 0;
+}
+
+#if ENABLE_DEPRECATED_FEATURES
+static int
+auth_select_auth_mechanism (smtp_session_t session)
+{
   if (session->auth_context == NULL)
     return 0;
   if (!auth_client_enabled (session->auth_context))
@@ -131,7 +168,7 @@ select_auth_mechanism (smtp_session_t session)
 }
 
 static int
-next_auth_mechanism (smtp_session_t session)
+auth_next_auth_mechanism (smtp_session_t session)
 {
   /* find the next usable auth mechanism */
   while ((session->current_mechanism = session->current_mechanism->next) != NULL)
@@ -140,9 +177,219 @@ next_auth_mechanism (smtp_session_t session)
       return 1;
   return 0;
 }
+#endif
+
+int
+select_auth_mechanism (smtp_session_t session)
+{
+  if (session->authenticated)
+    return 0;
+  if (session->gsasl_context != NULL)
+    return gsasl_select_auth_mechanism (session);
+#if ENABLE_DEPRECATED_FEATURES
+  if (session->auth_context != NULL)
+    return auth_select_auth_mechanism (session);
+#endif
+  return 0;
+}
+
+static int
+next_auth_mechanism (smtp_session_t session)
+{
+  if (session->gsasl_context != NULL)
+    return gsasl_next_auth_mechanism (session);
+#if ENABLE_DEPRECATED_FEATURES
+  if (session->auth_context != NULL)
+    return auth_next_auth_mechanism (session);
+#endif
+  return 0;
+}
 
 void
-cmd_auth (siobuf_t conn, smtp_session_t session)
+set_external_id (smtp_session_t session, const char *id)
+{
+  if (session->external_id != NULL)
+    free (session->external_id);
+  session->external_id = strdup (id);
+#if ENABLE_DEPRECATED_FEATURES
+  if (session->auth_context != NULL)
+    auth_set_external_id (session->auth_context, id);
+#endif
+}
+
+/* buffers within the encode/decode functions must persist until
+   the next call within the same thread */
+static void
+gsasl_encode_wrapper (char **dstbuf, int *dstlen,
+		      const char *srcbuf, int srclen, void *arg)
+{
+  smtp_session_t session = arg;
+  size_t len;
+
+  if (session->encode_buffer != NULL)
+    free (session->encode_buffer);
+  gsasl_encode (session->gsasl_session, srcbuf, srclen,
+  		&session->encode_buffer, &len);
+  *dstbuf = session->encode_buffer;
+  *dstlen = len;
+}
+
+static void
+gsasl_decode_wrapper (char **dstbuf, int *dstlen,
+		      const char *srcbuf, int srclen, void *arg)
+{
+  smtp_session_t session = arg;
+  size_t len;
+
+  if (session->encode_buffer != NULL)
+    free (session->encode_buffer);
+  gsasl_decode (session->gsasl_session, srcbuf, srclen,
+  		&session->decode_buffer, &len);
+  *dstbuf = session->decode_buffer;
+  *dstlen = len;
+}
+
+static void
+gsasl_cmd_auth (siobuf_t conn, smtp_session_t session)
+{
+  char *response64 = NULL;
+  int status;
+
+  assert (session != NULL && session->gsasl_context != NULL);
+
+  sio_printf (conn, "AUTH %s", session->current_mechanism->name);
+
+  if (gsasl_client_start (session->gsasl_context,
+			  session->current_mechanism->name,
+			  &session->gsasl_session) != GSASL_OK)
+    {
+      sio_write (conn, " *\r\n", 3);
+      session->cmd_state = -1;
+      return;
+    }
+
+  /* Ask SASL for the initial response (if there is one). */
+  gsasl_property_set (session->gsasl_session, GSASL_AUTHZID,
+		      session->external_id);
+  status = gsasl_step64 (session->gsasl_session, "", &response64);
+  if (status == GSASL_OK || status == GSASL_NEEDS_MORE)
+    {
+      sio_write (conn, " ", 1);
+      sio_write (conn, response64, -1);
+      free (response64);
+    }
+  sio_write (conn, "\r\n", 2);
+  session->cmd_state = -1;
+}
+
+static void
+gsasl_rsp_auth (siobuf_t conn, smtp_session_t session)
+{
+  int code;
+  const char *prop;
+
+  code = read_smtp_response (conn, session, &session->mta_status, NULL);
+  if (code < 0)
+    {
+      gsasl_finish (session->gsasl_session);
+      session->gsasl_session = NULL;
+      session->rsp_state = S_quit;
+      return;
+    }
+  if (code == 4 || code == 5)
+    {
+      gsasl_finish (session->gsasl_session);
+      session->gsasl_session = NULL;
+
+      /* If auth mechanism is too weak or encryption is required, give up.
+         Otherwise try the next mechanism.  */
+      if (session->mta_status.code == 534 || session->mta_status.code == 538)
+	session->rsp_state = S_quit;
+      else
+        {
+	  /* If another mechanism cannot be selected, move on to the
+	     mail command since the MTA is required to accept mail for
+	     its own domain. */
+	  if (next_auth_mechanism (session))
+	    session->rsp_state = S_auth;
+#ifdef USE_ETRN
+	  else if (check_etrn (session))
+	    session->rsp_state = S_etrn;
+#endif
+	  else
+	    session->rsp_state = initial_transaction_state (session);
+        }
+    }
+  else if (code == 2)
+    {
+      session->authenticated = 1;
+      //XXX not convinced the following is correct
+      prop = gsasl_property_get (session->gsasl_session, GSASL_QOP);
+      if (prop != NULL && strstr (prop, "qop-conf") != NULL)
+        {
+	  /* Add SASL mechanism's encoder/decoder to siobuf.  This is
+	     done now, since subsequent commands and responses will be
+	     encoded and remain so until the connection to the server
+	     is closed.  Auth_encode/decode() call through to the
+	     mechanism's coders. */
+	  sio_set_securitycb (conn, gsasl_encode_wrapper, gsasl_decode_wrapper,
+	  		      session);
+	  session->extensions = 0;		/* Turn off extensions */
+	  session->rsp_state = S_ehlo;		/* Restart protocol */
+        }
+#ifdef USE_ETRN
+      else if (check_etrn (session))
+	session->rsp_state = S_etrn;
+#endif
+      else
+	session->rsp_state = initial_transaction_state (session);
+    }
+  else if (code == 3)
+    session->rsp_state = S_auth2;
+  else
+    {
+      set_error (SMTP_ERR_INVALID_RESPONSE_STATUS);
+      session->rsp_state = S_quit;
+    }
+}
+
+static void
+gsasl_cmd_auth2 (siobuf_t conn, smtp_session_t session)
+{
+  char *response64 = NULL;
+  int status;
+
+  /* remove trailing spaces */
+  {
+    char *p = session->mta_status.text;
+
+    for (p += strlen (p); isspace (p[-1]); p--)
+      ;
+    *p = '\0';
+  }
+  status = gsasl_step64 (session->gsasl_session, session->mta_status.text,
+  			 &response64);
+fprintf (stderr, "cmdauth2 '%s' %d\n", session->mta_status.text, status);
+  if (status == GSASL_OK || status == GSASL_NEEDS_MORE)
+    {
+      sio_printf (conn, "%s\r\n", response64);
+      free (response64);
+    }
+  else
+    sio_write (conn, "*\r\n", 3);
+  session->cmd_state = -1;
+}
+
+static void
+gsasl_rsp_auth2 (siobuf_t conn, smtp_session_t session)
+{
+  rsp_auth (conn, session);
+}
+
+#if ENABLE_DEPRECATED_FEATURES
+
+void
+auth_cmd_auth (siobuf_t conn, smtp_session_t session)
 {
   char buf[2048];
   const char *response;
@@ -172,7 +419,7 @@ cmd_auth (siobuf_t conn, smtp_session_t session)
 }
 
 void
-rsp_auth (siobuf_t conn, smtp_session_t session)
+auth_rsp_auth (siobuf_t conn, smtp_session_t session)
 {
   int code;
 
@@ -236,7 +483,7 @@ rsp_auth (siobuf_t conn, smtp_session_t session)
 }
 
 void
-cmd_auth2 (siobuf_t conn, smtp_session_t session)
+auth_cmd_auth2 (siobuf_t conn, smtp_session_t session)
 {
   char buf[2048];
   const char *response;
@@ -267,40 +514,52 @@ cmd_auth2 (siobuf_t conn, smtp_session_t session)
 }
 
 void
-rsp_auth2 (siobuf_t conn, smtp_session_t session)
+auth_rsp_auth2 (siobuf_t conn, smtp_session_t session)
 {
   rsp_auth (conn, session);
 }
-
-#else
-
-/* Define stubs for some of the SMTP AUTH support. */
-#include <stdlib.h>
-#include "auth-client.h"
-#include "libesmtp-private.h"
-
-int
-smtp_auth_set_context (smtp_session_t session, auth_context_t context)
-{
-  SMTPAPI_CHECK_ARGS (session != NULL, 0);
-
-  return 0;
-}
-
-void
-set_auth_mechanisms (smtp_session_t session, const char *mechanisms)
-{
-}
-
-int
-select_auth_mechanism (smtp_session_t session)
-{
-  return 0;
-}
-
-void
-destroy_auth_mechanisms (smtp_session_t session)
-{
-}
-
 #endif
+
+void
+cmd_auth (siobuf_t conn, smtp_session_t session)
+{
+  if (session->gsasl_context != NULL)
+    gsasl_cmd_auth (conn, session);
+#if ENABLE_DEPRECATED_FEATURES
+  else if (session->auth_context != NULL)
+    auth_cmd_auth (conn, session);
+#endif
+}
+
+void
+rsp_auth (siobuf_t conn, smtp_session_t session)
+{
+  if (session->gsasl_context != NULL)
+    gsasl_rsp_auth (conn, session);
+#if ENABLE_DEPRECATED_FEATURES
+  else if (session->auth_context != NULL)
+    auth_rsp_auth (conn, session);
+#endif
+}
+
+void
+cmd_auth2 (siobuf_t conn, smtp_session_t session)
+{
+  if (session->gsasl_context != NULL)
+    gsasl_cmd_auth2 (conn, session);
+#if ENABLE_DEPRECATED_FEATURES
+  else if (session->auth_context != NULL)
+    auth_cmd_auth2 (conn, session);
+#endif
+}
+
+void
+rsp_auth2 (siobuf_t conn, smtp_session_t session)
+{
+  if (session->gsasl_context != NULL)
+    gsasl_rsp_auth2 (conn, session);
+#if ENABLE_DEPRECATED_FEATURES
+  else if (session->auth_context != NULL)
+    auth_rsp_auth2 (conn, session);
+#endif
+}

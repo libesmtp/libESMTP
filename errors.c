@@ -64,7 +64,7 @@ set_herror_internal (struct errno_vars *err, int code)
 }
 
 /* Map error codes from getaddrinfo to/from those used by libESMTP. RFC
-   2553 is silent on whether these values are +ve, -ve, how they sort or
+   3493 is silent on whether these values are +ve, -ve, how they sort or
    even whether they are contiguous so the mapping is done with a
    switch.  NB EAI_SYSTEM is *not* mapped. */
 

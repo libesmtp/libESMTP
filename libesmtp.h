@@ -147,8 +147,12 @@ void *smtp_recipient_get_application_data (smtp_recipient_t recipient);
 
 int smtp_option_require_all_recipients (smtp_session_t session, int state);
 
+struct Gsasl;
+int smtp_gsasl_set_context (smtp_session_t session, struct Gsasl *context);
+#if LIBESMTP_ENABLE_DEPRECATED_SYMBOLS
 #ifdef _auth_client_h
 int smtp_auth_set_context (smtp_session_t session, auth_context_t context);
+#endif
 #endif
 
 /*
@@ -181,7 +185,7 @@ long smtp_set_timeout (smtp_session_t session, int which, long value);
  ****************************************************************************/
 
 /*
-    	RFC 1891.  Delivery Status Notification (DSN)
+    	RFC 3461.  Delivery Status Notification (DSN)
  */
 
 enum ret_flags { Ret_NOTSET, Ret_FULL, Ret_HDRS };
@@ -207,7 +211,7 @@ int smtp_dsn_set_orcpt (smtp_recipient_t recipient,
 int smtp_size_set_estimate (smtp_message_t message, unsigned long size);
 
 /*
-	RFC 1652.  8bit-MIME Transport
+	RFC 6152.  8bit-MIME Transport
  */
 enum e8bitmime_body
   {
@@ -289,11 +293,15 @@ void *smtp_etrn_get_application_data (smtp_etrn_node_t node);
 #define SMTP_ERR_INVAL				7
 #define SMTP_ERR_EXTENSION_NOT_AVAILABLE	8
 
+#if LIBESMTP_ENABLE_DEPRECATED_SYMBOLS
+
 /* Deprecated - these will be removed in a future release */
 #define SMTP_ERR_HOST_NOT_FOUND			SMTP_ERR_EAI_ADDRFAMILY
 #define SMTP_ERR_NO_ADDRESS			SMTP_ERR_EAI_NODATA
 #define SMTP_ERR_NO_RECOVERY			SMTP_ERR_EAI_FAIL
 #define SMTP_ERR_TRY_AGAIN			SMTP_ERR_EAI_AGAIN
+
+#endif
 
 /* libESMTP versions of some getaddrinfo error numbers */
 #define SMTP_ERR_EAI_AGAIN			12
