@@ -24,8 +24,6 @@
 #include <config.h>
 #endif
 
-#define _SVID_SOURCE	1	/* Need this to get strerror_r() */
-
 #include <missing.h> /* declarations for missing library functions */
 
 #include <stdio.h>
@@ -269,7 +267,7 @@ smtp_strerror (int error, char buf[], size_t buflen)
     /* Could end up here when threading is enabled but a working
        strerror_r() is not found.  There will be a critical section
        of code until the returned string is copied to the supplied
-       buffer.  This could be solved using a mutex but its hardly
+       buffer.	This could be solved using a mutex but its hardly
        worth it since even if libESMTP is protected against itself
        the application could still call strerror anyway. */
     text = strerror (-error);
@@ -287,7 +285,7 @@ smtp_strerror (int error, char buf[], size_t buflen)
     {
       len = strlen (text);
       if (len > (int) buflen - 1)
-        len = buflen - 1;
+	len = buflen - 1;
       if (len > 0)
 	memcpy (buf, text, len);
       buf[len] = '\0';
