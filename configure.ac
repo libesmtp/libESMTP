@@ -91,17 +91,15 @@ if test "$GCC" = "yes" -a "$enable_more_warnings" = "picky"; then
 fi
 
 AC_ARG_ENABLE([isoc],
-              ACX_HELP_STRING([--disable-isoc],[check ISO C compliance (default=c99)]),
+              ACX_HELP_STRING([--disable-isoc],[check ISO C compliance (default=c11)]),
 	      ,
-	      enable_isoc=c99)
+	      enable_isoc=c11)
 if test "$enable_isoc" != "no"; then
 	if test "$GCC" = "yes"; then
 		CFLAGS="-std=$enable_isoc -pedantic $CFLAGS"
 	fi
-	AC_DEFINE(_ISOC9X_SOURCE,1,[ISO compliant code])
-	AC_DEFINE(_ISOC99_SOURCE,1,[ISO compliant code])
-	AC_DEFINE(_POSIX_C_SOURCE,199506L,[POSIX compliant code])
-	AC_DEFINE(_XOPEN_SOURCE,500,[Single Unix conformance])
+	AC_DEFINE(_ISOC11_SOURCE,1,[ISO compliant code])
+	AC_DEFINE(_DEFAULT_SOURCE,1,[POSIX 2008 with some BSD, SVID features])
 fi
 
 dnl #########################################################################
@@ -303,7 +301,7 @@ if test x$with_openssl != xno ; then
 	)
 fi
 if test x$with_openssl != xno ; then
-	AC_CHECK_LIB(ssl, SSL_library_init, [
+	AC_CHECK_LIB(ssl, OPENSSL_init_ssl, [
 				with_openssl=yes
 				LIBS="-lssl -lcrypto $LIBS"
 		     ], [
