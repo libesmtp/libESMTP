@@ -23,8 +23,6 @@
 #include <config.h>
 #endif
 
-#define _SVID_SOURCE	1	/* Need this to get gethostbyname_r() */
-
 #include <assert.h>
 
 #include <stdlib.h>
@@ -33,6 +31,7 @@
 #include <errno.h>
 
 #include "gethostbyname.h"
+#include "attribute.h"
 
 #if HAVE_GETIPNODEBYNAME
 
@@ -91,8 +90,8 @@ gethostbyname_ctx (const char *host, struct ghbnctx *ctx)
       return NULL;
     }
   while ((err = gethostbyname_r (host,
-  				 &ctx->hostent, ctx->hostbuf, ctx->hostbuf_len,
-  				 &hp, &ctx->h_err)) == ERANGE)
+				 &ctx->hostent, ctx->hostbuf, ctx->hostbuf_len,
+				 &hp, &ctx->h_err)) == ERANGE)
     {
       ctx->hostbuf_len += 1024;
       if ((tmp = realloc (ctx->hostbuf, ctx->hostbuf_len)) == NULL)
@@ -145,8 +144,8 @@ gethostbyname_ctx (const char *host, struct ghbnctx *ctx)
       return NULL;
     }
   while ((hp = gethostbyname_r (host, &ctx->hostent,
-  				ctx->hostbuf, ctx->hostbuf_len,
-  				&ctx->h_err)) == NULL && errno == ERANGE)
+				ctx->hostbuf, ctx->hostbuf_len,
+				&ctx->h_err)) == NULL && errno == ERANGE)
     {
       ctx->hostbuf_len += 1024;
       if ((tmp = realloc (ctx->hostbuf, ctx->hostbuf_len)) == NULL)
@@ -189,7 +188,7 @@ gethostbyname_ctx (const char *host, struct ghbnctx *ctx)
     }
   return &ctx->hostent;
 }
-  
+
 int
 h_error_ctx (struct ghbnctx *ctx)
 {

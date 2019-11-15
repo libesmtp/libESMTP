@@ -44,6 +44,7 @@
 #include "htable.h"
 #include "rfc2822date.h"
 #include "api.h"
+#include "attribute.h"
 
 struct rfc2822_header
   {
@@ -142,7 +143,7 @@ print_string (smtp_message_t message, struct rfc2822_header *header)
 
   /* TODO: implement line folding at white spaces */
   vconcatenate (&message->hdr_buffer, header->header, ": ",
-                (header->value != NULL) ? header->value : "", "\r\n", NULL);
+		(header->value != NULL) ? header->value : "", "\r\n", NULL);
 }
 
 void
@@ -176,13 +177,13 @@ print_message_id (smtp_message_t message, struct rfc2822_header *header)
       else /* ... but if it does fall back to using time() */
 #endif
       snprintf (buf, sizeof buf, "%ld.%d@%s", time (NULL),
-      	        getpid (), message->session->localhost);
+		getpid (), message->session->localhost);
       message_id = buf;
     }
   /* TODO: implement line folding at white spaces */
   vconcatenate (&message->hdr_buffer,
-                header->header, ": <", message_id, ">\r\n",
-                NULL);
+		header->header, ": <", message_id, ">\r\n",
+		NULL);
 }
 
 /****/
@@ -215,7 +216,7 @@ print_date (smtp_message_t message, struct rfc2822_header *header)
   if (when == (time_t) 0)
     time (&when);
   vconcatenate (&message->hdr_buffer, header->header, ": ",
-                rfc2822date (buf, sizeof buf, &when), "\r\n", NULL);
+		rfc2822date (buf, sizeof buf, &when), "\r\n", NULL);
 }
 
 /****/
@@ -239,9 +240,9 @@ destroy_mbox_list (struct rfc2822_header *header)
     {
       next = mbox->next;
       if (mbox->phrase != NULL)
-        free ((void *) mbox->phrase);
+	free ((void *) mbox->phrase);
       if (mbox->mailbox != NULL)
-        free ((void *) mbox->mailbox);
+	free ((void *) mbox->mailbox);
       free (mbox);
       mbox = next;
     }
@@ -261,7 +262,7 @@ set_from (struct rfc2822_header *header, va_list alist)
 
   /* Allow this to succeed as a special case.  Effectively requesting
      default action in print_from().   Fails if explicit values have
-     already been set.  */
+     already been set.	*/
   if (phrase == NULL && mailbox == NULL)
     return header->value == NULL;
 
@@ -276,7 +277,7 @@ set_from (struct rfc2822_header *header, va_list alist)
   return 1;
 }
 
-/* Print header-name ": " mailbox "\r\n" 
+/* Print header-name ": " mailbox "\r\n"
       or header-name ": \"" phrase "\" <" mailbox ">\r\n" */
 static void
 print_from (smtp_message_t message, struct rfc2822_header *header)
@@ -342,8 +343,8 @@ set_sender (struct rfc2822_header *header, va_list alist)
 }
 
 /* TODO: do nothing if the mailbox is NULL.  Check this doesn't fool
-         the protocol engine into thinking it has seen end of file. */
-/* Print header-name ": " mailbox "\r\n" 
+	 the protocol engine into thinking it has seen end of file. */
+/* Print header-name ": " mailbox "\r\n"
       or header-name ": \"" phrase "\" <" mailbox ">\r\n"
  */
 static void
@@ -417,7 +418,7 @@ set_cc (struct rfc2822_header *header, va_list alist)
   return 1;
 }
 
-/* Print header-name ": " mailbox "\r\n" 
+/* Print header-name ": " mailbox "\r\n"
       or header-name ": \"" phrase "\" <" mailbox ">\r\n"
    ad nauseum. */
 static void
@@ -462,13 +463,13 @@ print_to (smtp_message_t message, struct rfc2822_header *header)
        recipient != NULL;
        recipient = recipient->next)
     vconcatenate (&message->hdr_buffer, recipient->mailbox,
-		  (recipient->next != NULL) ? ",\r\n    " : "\r\n",
+		  (recipient->next != NULL) ? ",\r\n	" : "\r\n",
 		  NULL);
 }
 
 
 /* Header actions placed here to avoid the need for many akward forward
-   declarations for set_xxx/print_xxx.  */
+   declarations for set_xxx/print_xxx.	*/
 
 static const struct header_actions header_actions[] =
   {
@@ -488,9 +489,9 @@ static const struct header_actions header_actions[] =
        and if specified by the API, the relevant APIs will fail. */
     { "Return-Path",	PROHIBIT, NULL, NULL, NULL, },
     /* RFC 2298 - Delivering MTA may add the Original-Recipient: header
-                  using DSN ORCPT parameter and may discard
-                  Original-Recipient: headers present in the message.
-                  No point in sending it then. */
+		  using DSN ORCPT parameter and may discard
+		  Original-Recipient: headers present in the message.
+		  No point in sending it then. */
     { "Original-Recipient", PROHIBIT, NULL, NULL, NULL, },
     /* MIME-*: and Content-*: are MIME headers and must not be generated
        or processed by libESMTP.  Similarly, Resent-*: and Received: must
@@ -517,8 +518,8 @@ static const struct header_actions header_actions[] =
       set_cc,		print_cc,		destroy_mbox_list, },
     { "Reply-To",	OPTIONAL | LISTVALUE,
       set_cc,		print_cc,		destroy_mbox_list, },
-    /* RFC 2298 - MDN request.  Syntax is the same as the From: header and
-                  default when set to NULL is the same as From: */
+    /* RFC 2298 - MDN request.	Syntax is the same as the From: header and
+		  default when set to NULL is the same as From: */
     { "Disposition-Notification-To", OPTIONAL,
       set_from,		print_from,		destroy_mbox_list, },
     /* TODO:
@@ -527,7 +528,7 @@ static const struct header_actions header_actions[] =
        Keywords:	#phrase
 
        Handle Resent- versions of
-       		To Cc Bcc Message-ID Date Reply-To From Sender
+		To Cc Bcc Message-ID Date Reply-To From Sender
      */
   };
 
@@ -630,7 +631,7 @@ insert_header (smtp_message_t message, const char *name)
 
 static struct rfc2822_header *
 create_header (smtp_message_t message, const char *header,
-               struct header_info *info)
+	       struct header_info *info)
 {
   struct rfc2822_header *hdr;
 
@@ -656,7 +657,7 @@ create_header (smtp_message_t message, const char *header,
 
 static void
 reset_headercb (const char *name __attribute__ ((unused)),
-                void *data, void *arg __attribute__ ((unused)))
+		void *data, void *arg __attribute__ ((unused)))
 {
   struct header_info *info = data;
 
@@ -694,27 +695,27 @@ process_header (smtp_message_t message, const char *header, int *len)
       && (info = find_header (message, header, p - header)) != NULL)
     {
       if ((action = info->action) != NULL)
-        {
+	{
 	  /* RFC 2822 states that headers may only appear once in a
 	     message with the exception of a few special headers.
 	     This restriction is enforced here. */
-          if (info->seen && !(action->flags & (MULTIPLE | PRESERVE)))
-            header = NULL;
-          if (info->prohibit || (action->flags & PROHIBIT))
-            header = NULL;
+	  if (info->seen && !(action->flags & (MULTIPLE | PRESERVE)))
+	    header = NULL;
+	  if (info->prohibit || (action->flags & PROHIBIT))
+	    header = NULL;
 
 	  /* When libESMTP is overriding headers in the message with
 	     ones supplied in the API, the substitution is done here
-	     to preserve the original ordering of the headers.  */
+	     to preserve the original ordering of the headers.	*/
 	  if (header != NULL && info->override)
-            {
+	    {
 	      if ((print = action->print) == NULL)
 		print = print_string;
 	      cat_reset (&message->hdr_buffer, 0);
 	      (*print) (message, info->hdr);
 	      header = cat_buffer (&message->hdr_buffer, len);
-            }
-        }
+	    }
+	}
       else if (info->seen)
 	header = NULL;
       info->seen = 1;
@@ -744,26 +745,26 @@ missing_header (smtp_message_t message, int *len)
     {
       info = message->current_header->info;
       if (info == NULL)		/* shouldn't happen */
-        break;
+	break;
       if (!info->seen)
-        {
+	{
 	  if (info->action != NULL)
 	    print = info->action->print;
 	  break;
-        }
+	}
       message->current_header = message->current_header->next;
     }
   if (message->current_header == NULL)
     {
       /* Free the buffer created by concatenate() and return NULL to
-         mark the end of the headers */
+	 mark the end of the headers */
       cat_free (&message->hdr_buffer);
       return NULL;
     }
 
   if (print == NULL)
     print = print_string;
-  
+
   cat_reset (&message->hdr_buffer, 0);
   (*print) (message, message->current_header);
   return cat_buffer (&message->hdr_buffer, len);
@@ -818,18 +819,18 @@ smtp_set_header (smtp_message_t message, const char *header, ...)
   else
     {
       /* Header has a previous value.  If multiple headers are permitted,
-         create a new value.  If the header has a list value, the value
-         is appended to the iost.  If neither condition applies, this
-         is an error. */
+	 create a new value.  If the header has a list value, the value
+	 is appended to the iost.  If neither condition applies, this
+	 is an error. */
       if (info->action->flags & MULTIPLE)
 	hdr = create_header (message, header, info);
       else if (info->action->flags & LISTVALUE)
 	hdr = info->hdr;
       else
-        {
+	{
 	  set_error (SMTP_ERR_INVAL);
 	  return 0;
-        }
+	}
   }
 
   /* Set its value */
@@ -902,7 +903,7 @@ smtp_set_resent_headers (smtp_message_t message, int onoff)
   SMTPAPI_CHECK_ARGS (message != NULL, 0);
 
   /* TODO: place holder, implement real functionality here.
-           For now, succeed if the onoff argument is zero. */
+	   For now, succeed if the onoff argument is zero. */
   SMTPAPI_CHECK_ARGS (onoff == 0, 0);
 
   return 1;

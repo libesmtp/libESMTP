@@ -1,0 +1,3 @@
+option('pthreads', type : 'feature', value : 'auto', description : 'build with support for Posix threads')
+option('tls', type : 'feature', value : 'auto', description : 'build with support for STARTTLS extension')
+option('lwres', type : 'feature', value : 'disabled', description : 'use lwres library for getaddrinfo()')

@@ -1,7 +1,7 @@
 ## Process this file with automake to produce Makefile.in
 AUTOMAKE_OPTIONS = gnu dist-bzip2
 
-INCLUDES = -I$(srcdir) $(VERSION_FLAGS)
+AM_CPPFLAGS = -I$(srcdir) $(VERSION_FLAGS)
 SUBDIRS = @subdirs@ @SASL_PLUGINS@
 DIST_SUBDIRS = @subdirs@ @DIST_PLUGINS@
 AM_CFLAGS = @CFLAGS@ @EXTRA_CFLAGS@

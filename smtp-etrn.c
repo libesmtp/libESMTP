@@ -35,6 +35,7 @@
 
 #include "siobuf.h"
 #include "protocol.h"
+#include "attribute.h"
 
 struct smtp_etrn_node
   {
@@ -59,8 +60,8 @@ smtp_etrn_add_node (smtp_session_t session, int option, const char *domain)
   char *dup_domain;
 
   SMTPAPI_CHECK_ARGS (session != NULL
-                      && domain != NULL
-                      && (option == 0 || option == '@'), NULL);
+		      && domain != NULL
+		      && (option == 0 || option == '@'), NULL);
 
   if ((node = malloc (sizeof (struct smtp_etrn_node))) == NULL)
     {
@@ -185,7 +186,7 @@ rsp_etrn (siobuf_t conn, smtp_session_t session)
   /* Notify the ETRN status */
   if (session->event_cb != NULL)
     (*session->event_cb) (session, SMTP_EV_ETRNSTATUS, session->event_cb_arg,
-  			  node->option, node->domain);
+			  node->option, node->domain);
 
   session->rsp_etrn_node = session->rsp_etrn_node->next;
   if (session->rsp_etrn_node != NULL)
@@ -207,8 +208,8 @@ smtp_etrn_node_t
 smtp_etrn_add_node (smtp_session_t session, int option, const char *domain)
 {
   SMTPAPI_CHECK_ARGS (session != NULL
-                      && domain != NULL
-                      && (option == 0 || option == '@'), NULL);
+		      && domain != NULL
+		      && (option == 0 || option == '@'), NULL);
 
   return NULL;
 }
@@ -233,7 +234,7 @@ smtp_etrn_node_status (smtp_etrn_node_t node)
 
 void *
 smtp_etrn_set_application_data (smtp_etrn_node_t node,
-                                void *data __attribute__ ((unused)))
+				void *data __attribute__ ((unused)))
 {
   SMTPAPI_CHECK_ARGS (node != NULL, NULL);
 

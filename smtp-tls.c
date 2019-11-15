@@ -46,6 +46,7 @@
 #include "libesmtp-private.h"
 #include "siobuf.h"
 #include "protocol.h"
+#include "attribute.h"
 
 
 static int tls_init;
