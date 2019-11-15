@@ -45,9 +45,9 @@ from the ISC (https://www.isc.org/).
 
 **openssl**
 
-OpenSSL (https://www.openssl.org/) is required to build the SMTP STARTTLS
-extension and the NTLM authentication module.  If you have no need for
-either of these features, you do not need OpenSSL.
+OpenSSL v1.1.0 or later (https://www.openssl.org/) is required to build the
+SMTP STARTTLS extension and the NTLM authentication module.  If you have no
+need for either of these features, you do not need OpenSSL.
 
 
 ## Licence

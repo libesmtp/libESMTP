@@ -57,18 +57,6 @@ static void *ctx_password_cb_arg;
 #ifdef USE_PTHREADS
 #include <pthread.h>
 static pthread_mutex_t starttls_mutex = PTHREAD_MUTEX_INITIALIZER;
-static pthread_mutex_t *openssl_mutex;
-
-static void
-openssl_mutexcb (int mode, int n,
-		 const char *file __attribute__ ((unused)),
-		 int line __attribute__ ((unused)))
-{
-  if (mode & CRYPTO_LOCK)
-    pthread_mutex_lock (&openssl_mutex[n]);
-  else
-    pthread_mutex_unlock (&openssl_mutex[n]);
-}
 #endif
 
 static int
@@ -77,26 +65,9 @@ starttls_init (void)
   if (tls_init)
     return 1;
 
-#ifdef USE_PTHREADS
-  /* Set up mutexes for the OpenSSL library */
-  if (openssl_mutex == NULL)
-    {
-      pthread_mutexattr_t attr;
-      int n;
-
-      openssl_mutex = malloc (sizeof (pthread_mutex_t) * CRYPTO_num_locks ());
-      if (openssl_mutex == NULL)
-        return 0;
-      pthread_mutexattr_init (&attr);
-      for (n = 0; n < CRYPTO_num_locks (); n++)
-	pthread_mutex_init (&openssl_mutex[n], &attr);
-      pthread_mutexattr_destroy (&attr);
-      CRYPTO_set_locking_callback (openssl_mutexcb);
-    }
-#endif
+  OPENSSL_init_ssl (OPENSSL_INIT_LOAD_SSL_STRINGS
+		    | OPENSSL_INIT_LOAD_CRYPTO_STRINGS, NULL);
   tls_init = 1;
-  SSL_load_error_strings ();
-  SSL_library_init ();
   return 1;
 }
 
@@ -167,9 +138,9 @@ check_directory (const char *file)
    it sets is global.
 
    N.B.  If this API is not called and OpenSSL requires a password, it
-         will supply a default callback which prompts on the user's tty.
-         This is likely to be undesired behaviour, so the app should
-         supply a callback using this function.
+	 will supply a default callback which prompts on the user's tty.
+	 This is likely to be undesired behaviour, so the app should
+	 supply a callback using this function.
  */
 int
 smtp_starttls_set_password_cb (smtp_starttls_passwordcb_t cb, void *arg)
@@ -200,19 +171,20 @@ starttls_create_ctx (smtp_session_t session)
      TLSv1 is deliberate.  This is in line with the intentions of RFC
      3207.  Servers typically support SSL as well as TLS because some
      versions of Netscape do not support TLS.  I am assuming that all
-     currently deployed servers correctly support TLS.  */
-  ctx = SSL_CTX_new (TLSv1_client_method ());
+     currently deployed servers correctly support TLS.	*/
+  ctx = SSL_CTX_new (TLS_client_method ());
+  SSL_CTX_set_min_proto_version (ctx, TLS1_VERSION);
 
   /* Load our keys and certificates.  To avoid messing with configuration
-     variables etc, use fixed paths for the certificate store.  These are
+     variables etc, use fixed paths for the certificate store.	These are
      as follows :-
 
      ~/.authenticate/private/smtp-starttls.pem
-     				the user's certificate and private key
+				the user's certificate and private key
      ~/.authenticate/ca.pem
-     				the user's trusted CA list
+				the user's trusted CA list
      ~/.authenticate/ca
-     				the user's hashed CA directory
+				the user's hashed CA directory
 
      Host specific stuff follows the same structure except that its
      below ~/.authenticate/host.name
@@ -251,12 +223,12 @@ starttls_create_ctx (smtp_session_t session)
 
   /* Client certificate policy: if a client certificate is found at
      ~/.authenticate/private/smtp-starttls.pem, it is presented to the
-     server if it requests it.  The server may use the certificate to
+     server if it requests it.	The server may use the certificate to
      perform authentication at its own discretion. */
   if (ctx_password_cb != NULL)
     {
       SSL_CTX_set_default_passwd_cb (ctx, ctx_password_cb);
-      SSL_CTX_set_default_passwd_cb_userdata (ctx, ctx_password_cb_arg); 
+      SSL_CTX_set_default_passwd_cb_userdata (ctx, ctx_password_cb_arg);
     }
   keyfile = user_pathname (buf, sizeof buf, "private/smtp-starttls.pem");
   status = check_file (keyfile);
@@ -273,8 +245,8 @@ starttls_create_ctx (smtp_session_t session)
 	  if (session->event_cb != NULL)
 	    (*session->event_cb) (session, SMTP_EV_NO_CLIENT_CERTIFICATE,
 				  session->event_cb_arg, &ok);
-	  if (!ok) 
-            return NULL;
+	  if (!ok)
+	    return NULL;
 	}
     }
   else if (status == FILE_PROBLEM)
@@ -337,12 +309,12 @@ starttls_create_ssl (smtp_session_t session)
      it is presented to the server if it requests it. */
 
   /* FIXME: when the default client certificate is loaded a passowrd may be
-            required.  Then the code below might ask for one too.  It
-            will be annoying when two passwords are needed and only one
-            is necessary.  Also, the default certificate will only need
-            the password when the SSL_CTX is created.  A host specific
-            certificate's password will be needed for every SMTP session
-            within an application.  This needs a solution.  */
+	    required.  Then the code below might ask for one too.  It
+	    will be annoying when two passwords are needed and only one
+	    is necessary.  Also, the default certificate will only need
+	    the password when the SSL_CTX is created.  A host specific
+	    certificate's password will be needed for every SMTP session
+	    within an application.  This needs a solution.  */
 
   /* FIXME: in protocol.c, record the canonic name of the host returned
 	    by getaddrinfo.  Use that instead of session->host. */
@@ -362,8 +334,8 @@ starttls_create_ssl (smtp_session_t session)
 	  if (session->event_cb != NULL)
 	    (*session->event_cb) (session, SMTP_EV_NO_CLIENT_CERTIFICATE,
 				  session->event_cb_arg, &ok);
-	  if (!ok) 
-            return NULL;
+	  if (!ok)
+	    return NULL;
 	}
     }
   else if (status == FILE_PROBLEM)
@@ -412,10 +384,10 @@ select_starttls (smtp_session_t session)
   if (session->using_tls || session->authenticated)
     return 0;
   /* FIXME: if the server has reported the TLS extension in a previous
-            session promote Starttls_ENABLED to Starttls_REQUIRED.
-            If this session does not offer STARTTLS, this will force
-            protocol.c to report the extension as not available and QUIT
-            as reccommended in RFC 3207.  This requires some form of db
+	    session promote Starttls_ENABLED to Starttls_REQUIRED.
+	    If this session does not offer STARTTLS, this will force
+	    protocol.c to report the extension as not available and QUIT
+	    as reccommended in RFC 3207.  This requires some form of db
 	    storage to record this for future sessions. */
   /* if (...)
       session->starttls_enabled = Starttls_REQUIRED; */
@@ -437,11 +409,11 @@ select_starttls (smtp_session_t session)
 
 static int
 match_component (const char *dom, const char *edom,
-                 const char *ref, const char *eref)
+		 const char *ref, const char *eref)
 {
   /* If ref is the single character '*' then accept this as a wildcard
      matching any valid domainname component, i.e. characters from the
-     range A-Z, a-z, 0-9, - or _ 
+     range A-Z, a-z, 0-9, - or _
      NB this is more restrictive than RFC 2818 which allows multiple
      wildcard characters in the component pattern */
   if (eref == ref + 1 && *ref == '*')
@@ -449,7 +421,7 @@ match_component (const char *dom, const char *edom,
       {
 	if (!(isalnum (*dom) || *dom == '-' /*|| *dom == '_'*/))
 	  return 0;
-        dom++;
+	dom++;
       }
   else
     {
@@ -486,19 +458,19 @@ match_domain (const char *domain, const char *reference)
       /* Find the rightmost component of the reference. */
       ref = memrchr (reference, '.', eref - reference - 1);
       if (ref != NULL)
-        ref++;
+	ref++;
       else
-        ref = reference;
+	ref = reference;
 
       /* Find the rightmost component of the domain name. */
       dom = memrchr (domain, '.', edom - domain - 1);
       if (dom != NULL)
-        dom++;
+	dom++;
       else
-        dom = domain;
+	dom = domain;
 
       if (!match_component (dom, edom, ref, eref))
-        return 0;
+	return 0;
       edom = dom - 1;
       eref = ref - 1;
     }
@@ -526,8 +498,8 @@ check_acceptable_security (smtp_session_t session, SSL *ssl)
 	return 0;
 #if 0
       /* Not sure about the location of this call so leave it out for now
-         - from Pawel: the worst thing that can happen is that one can
-         get non-empty  error log in wrong places. */
+	 - from Pawel: the worst thing that can happen is that one can
+	 get non-empty	error log in wrong places. */
       ERR_clear_error ();	/* we know what is going on, clear the error log */
 #endif
     }
@@ -664,7 +636,7 @@ rsp_starttls (siobuf_t conn, smtp_session_t session)
   if (code != 2)
     {
       if (code != 4 && code != 5)
-        set_error (SMTP_ERR_INVALID_RESPONSE_STATUS);
+	set_error (SMTP_ERR_INVALID_RESPONSE_STATUS);
       session->rsp_state = S_quit;
     }
   else if (sio_set_tlsclient_ssl (conn, (ssl = starttls_create_ssl (session))))
@@ -679,7 +651,7 @@ rsp_starttls (siobuf_t conn, smtp_session_t session)
       if (!check_acceptable_security (session, ssl))
 	session->rsp_state = S_quit;
       else
-        {
+	{
 	  if (session->event_cb != NULL)
 	    (*session->event_cb) (session, SMTP_EV_STARTTLS_OK,
 				  session->event_cb_arg,
@@ -700,7 +672,7 @@ rsp_starttls (siobuf_t conn, smtp_session_t session)
 
 	  /* Next state is EHLO */
 	  session->rsp_state = S_ehlo;
-        }
+	}
     }
   else
     {
@@ -722,7 +694,7 @@ int smtp_starttls_set_ctx (smtp_session_t session, SSL_CTX *ctx);
 
 int
 smtp_starttls_set_ctx (smtp_session_t session,
-                       SSL_CTX *ctx __attribute__ ((unused)))
+		       SSL_CTX *ctx __attribute__ ((unused)))
 {
   SMTPAPI_CHECK_ARGS (session != (smtp_session_t) 0, 0);
 
@@ -731,7 +703,7 @@ smtp_starttls_set_ctx (smtp_session_t session,
 
 int
 smtp_starttls_enable (smtp_session_t session,
-                      enum starttls_option how __attribute__ ((unused)))
+		      enum starttls_option how __attribute__ ((unused)))
 {
   SMTPAPI_CHECK_ARGS (session != (smtp_session_t) 0, 0);
 
@@ -741,7 +713,7 @@ smtp_starttls_enable (smtp_session_t session,
 int
 smtp_starttls_set_password_cb (smtp_starttls_passwordcb_t cb
 							__attribute__ ((unused)),
-                               void *arg __attribute__ ((unused)))
+			       void *arg __attribute__ ((unused)))
 {
   return 0;
 }
