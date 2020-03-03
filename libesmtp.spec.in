@@ -68,7 +68,7 @@ necessary for building programs against libesmtp.
 
 %files
 %defattr(-, root, root)
-%doc AUTHORS COPYING COPYING.GPL NEWS Notes README.md
+%doc AUTHORS COPYING.LIB COPYING.GPL NEWS Notes README.md
 %{libdir}/libesmtp.so.*
 %{plugindir}/sasl-*
 
