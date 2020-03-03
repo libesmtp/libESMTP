@@ -177,6 +177,6 @@ endif
 ################################################################################
 # Misc installation
 ################################################################################
-install_headers(['libesmtp.h'])
+install_headers(['libesmtp.h', 'auth-client.h'])
 pkg.generate(lib, filebase : 'libesmtp-1.0', description : 'SMTP client library')
 
