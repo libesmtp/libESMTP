@@ -181,7 +181,7 @@ long smtp_set_timeout (smtp_session_t session, int which, long value);
  ****************************************************************************/
 
 /*
-    	RFC 1891.  Delivery Status Notification (DSN)
+    	RFC 3461.  Delivery Status Notification (DSN)
  */
 
 enum ret_flags { Ret_NOTSET, Ret_FULL, Ret_HDRS };
@@ -207,7 +207,7 @@ int smtp_dsn_set_orcpt (smtp_recipient_t recipient,
 int smtp_size_set_estimate (smtp_message_t message, unsigned long size);
 
 /*
-	RFC 1652.  8bit-MIME Transport
+	RFC 6152.  8bit-MIME Transport
  */
 enum e8bitmime_body
   {

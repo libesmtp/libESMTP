@@ -1,3 +1,6 @@
+2010-08-10 Stable Version 1.0.6 released
+----------------------------------------
+2010-08-10 	Brian Stafford	<brian@stafford.uklinux.net>
       * smtp-tls.c
 	Each component matched by match-domain() is either a single '*' which
 	matches anything or a case-insensitive comparison with a string of

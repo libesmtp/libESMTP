@@ -488,8 +488,9 @@ static const struct header_actions header_actions[] =
        is in transit.  If present in the message they will be stripped
        and if specified by the API, the relevant APIs will fail. */
     { "Return-Path",	PROHIBIT, NULL, NULL, NULL, },
-    /* RFC 2298 - Delivering MTA may add the Original-Recipient: header
-		  using DSN ORCPT parameter and may discard
+    /* RFC 3798 section 2.3
+    		- Delivering MTA may add an Original-Recipient: header
+                  from the DSN ORCPT parameter and may discard any
 		  Original-Recipient: headers present in the message.
 		  No point in sending it then. */
     { "Original-Recipient", PROHIBIT, NULL, NULL, NULL, },
@@ -518,7 +519,7 @@ static const struct header_actions header_actions[] =
       set_cc,		print_cc,		destroy_mbox_list, },
     { "Reply-To",	OPTIONAL | LISTVALUE,
       set_cc,		print_cc,		destroy_mbox_list, },
-    /* RFC 2298 - MDN request.	Syntax is the same as the From: header and
+    /* RFC 3798 - MDN request.  Syntax is the same as the From: header and
 		  default when set to NULL is the same as From: */
     { "Disposition-Notification-To", OPTIONAL,
       set_from,		print_from,		destroy_mbox_list, },
@@ -696,6 +697,7 @@ process_header (smtp_message_t message, const char *header, int *len)
     {
       if ((action = info->action) != NULL)
 	{
+	  //XXX is this true of RFC 5322?
 	  /* RFC 2822 states that headers may only appear once in a
 	     message with the exception of a few special headers.
 	     This restriction is enforced here. */

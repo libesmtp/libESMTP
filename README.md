@@ -1,4 +1,4 @@
-# libESMTP 1.0
+# libESMTP, version 1.0
 
 ## What is libESMTP?
 

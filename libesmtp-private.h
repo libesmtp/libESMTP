@@ -36,15 +36,15 @@
 
 #define _BIT(n)		(1 << (n))
 
-#define EXT_ENHANCEDSTATUSCODES	_BIT(0)	/* RFC 1893, RFC 2034 */
+#define EXT_ENHANCEDSTATUSCODES	_BIT(0)	/* RFC 3463, RFC 2034 */
 #define EXT_PIPELINING		_BIT(1)	/* RFC 2920 */
 #define EXT_DSN			_BIT(2)	/* RFC 1891 */
-#define EXT_AUTH		_BIT(3)	/* RFC 2554 AUTH using SASL */
+#define EXT_AUTH		_BIT(3)	/* RFC 4954 AUTH using SASL */
 #define EXT_STARTTLS		_BIT(4)	/* RFC 3207 */
 #define EXT_SIZE		_BIT(5)	/* RFC 1870 */
 #define EXT_CHUNKING		_BIT(6)	/* RFC 3030 */
 #define EXT_BINARYMIME		_BIT(7)	/* RFC 3030 */
-#define EXT_8BITMIME		_BIT(8)	/* RFC 1652 */
+#define EXT_8BITMIME		_BIT(8)	/* RFC 6152 */
 #define EXT_DELIVERBY		_BIT(9)	/* RFC 2852 */
 #define EXT_ETRN		_BIT(10)/* RFC 1985 */
 #define EXT_XUSR		_BIT(11)/* sendmail */
@@ -98,7 +98,7 @@ struct smtp_session
     unsigned long size_limit;		/* RFC 1870 */
     long min_by_time;			/* RFC 2852 */
 
-  /* Interface to RFC 2554 AUTH and SASL */
+  /* Interface to RFC 4954 AUTH and SASL */
     auth_context_t auth_context;
     struct mechanism *auth_mechanisms;
     struct mechanism *current_mechanism;
@@ -166,7 +166,7 @@ struct smtp_message
     smtp_messagecb_t cb;		/* Transfer message from app. */
     void *cb_arg;			/* Argument for above */
 
-  /* DSN  (RFC 1891) */
+  /* DSN  (RFC 3461) */
     char *dsn_envid;			/* envelope identifier */
     enum ret_flags dsn_ret;		/* return headers or entire message */
 
@@ -178,7 +178,7 @@ struct smtp_message
     enum by_mode by_mode;
     int by_trace;
 
-  /* 8BITMIME  (RFC 1652) */
+  /* 8BITMIME  (RFC 6152) */
     enum e8bitmime_body e8bitmime;
   };
 
@@ -196,7 +196,7 @@ struct smtp_recipient
     unsigned complete : 1;		/* Sent OK or permanent failure */
     /* more per recipient stuff */
 
-  /* DSN  - (RFC 1891) */
+  /* DSN  - (RFC 3461) */
     char *dsn_addrtype;			/* original recipient address type */
     char *dsn_orcpt;			/* original recipient */
     enum notify_flags dsn_notify;	/* notification options */
@@ -211,7 +211,7 @@ struct smtp_recipient
 					  (item)->next = NULL;		\
 					} while (0)
 
-/* RFC 2822 minimum timeouts */
+/* RFC 5321 minimum timeouts */
 
 #define GREETING_DEFAULT	( 5 * 60l * 1000l)
 #define ENVELOPE_DEFAULT	( 5 * 60l * 1000l)

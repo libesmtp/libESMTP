@@ -1,7 +1,7 @@
 /*
- *  This file is part of libESMTP, a library for submission of RFC 2822
+ *  This file is part of libESMTP, a library for submission of RFC 5322
  *  formatted electronic mail messages using the SMTP protocol described
- *  in RFC 2821.
+ *  in RFC 4409 and RFC 5321.
  *
  *  Copyright (C) 2001  Brian Stafford  <brian@stafford.uklinux.net>
  *
@@ -268,7 +268,7 @@ auth_set_external_id (auth_context_t context, const char *identity)
     {
     /* Plugin information */
       "EXTERNAL",
-      "SASL EXTERNAL mechanism (RFC 2222)",
+      "SASL EXTERNAL mechanism (RFC 4422)",
     /* Plugin instance */
       NULL,
       NULL,

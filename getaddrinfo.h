@@ -22,7 +22,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-/* Structure and prototypes aken from RFC 2553 */
+/* Structure and prototypes aken from RFC 3493 */
 
 struct addrinfo
   {
@@ -54,7 +54,7 @@ struct addrinfo
 #define EAI_SOCKTYPE   10  /* ai_socktype not supported */
 #define EAI_SYSTEM     11  /* system error returned in errno */
 
-/* RFC 2553 / Posix resolver */
+/* RFC 3493 / Posix resolver */
 int getaddrinfo (const char *nodename, const char *servname,
 		 const struct addrinfo *hints, struct addrinfo **res);
 
