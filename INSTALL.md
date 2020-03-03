@@ -1,7 +1,7 @@
 # Installation
-**libESMTP** requires a recent version of `meson` and any build
-system it supports, typically `ninja` or `cmake`.  The old `autotools`
-based build has been removed.
+**libESMTP** uses **Meson** (https://mesonbuild.com/Getting-meson.html) with
+any of the build systems it supports, such as `ninja` (https://ninja-build.org/).
+The old `autotools` based build has been removed.
 
 To build with ninja do the following:
 
@@ -10,10 +10,17 @@ $ meson [options] builddir
 $ ninja -C builddir install
 ```
 
-As well as the standard meson options, the following are supported (default: auto)
-* `-Dpthreads=[enabled|disabled|auto]` build with support for Posix threads (default: auto)
-* `-Dtls=[enabled|disabled|auto]` support the STARTTLS extension and NTLM authentication (default: disabled)
-* `-Dlwres=[enabled|disabled|auto]` use the ISC lightweight resolver
+Note that the meson/ninja installer does not require `sudo` if `polkit` is
+installed, instead it will prompt for a password during install. This avoids
+polluting builddir with files owned by root.
+
+As well as the standard meson options, the following are supported:
+* `-Dpthreads=[enabled|disabled|auto]`
+build with support for Posix threads (default: auto)
+* `-Dtls=[enabled|disabled|auto]`
+support the STARTTLS extension and NTLM authentication (default: auto)
+* `-Dlwres=[enabled|disabled|auto]`
+use the ISC lightweight resolver (default: disabled)
 
 ## Dependencies
 
@@ -26,17 +33,16 @@ need for either of these features, you do not need OpenSSL.
 **getaddrinfo**
 
 You will need a modern resolver library providing the getaddrinfo API.
-getaddrinfo is easier to use, protocol independent, thread-safe and
-RFC 2553 and Posix standard.
+``getaddrinfo()`` is easier to use, protocol independent, thread-safe and RFC
+2553 and Posix standard.
 
-Almost all modern systems provide this. If not available the
-ISC BIND 9 (https://www.isc.org/) library should be installed. BIND 9 also
-provides the Lightweight Resolver (lwres) which may optionally be used in
-preference to the standard resolver.
+Almost all modern systems provide this. If not, the ISC BIND 9 (https://www.isc.org/)
+library should be installed. BIND 9 also provides the Lightweight Resolver
+(lwres) which may be used in preference to the standard resolver.
 
 As a last resort an emulation is provided for systems that do not have it,
-however this is not reccommended. The emulation code will likely be removed
-in the near future.
+however this is not reccommended. The emulation code will likely be removed in
+the near future.
 
 **dlsym**
 
