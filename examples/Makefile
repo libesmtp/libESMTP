@@ -1,7 +1,7 @@
 
 OBJECTS = mail-file.o
-LIBESMTP = `libesmtp-config --libs`
-CFLAGS := $(CFLAGS) -std=c99 -pedantic -O2 -g -W -Wall `libesmtp-config --cflags`
+LIBESMTP = `pkg-config libesmtp-1.0 --libs`
+CFLAGS := $(CFLAGS) -std=c99 -pedantic -O2 -g -W -Wall `pkg-config libesmtp-1.0 --cflags`
 
 all: mail-file-a mail-file-so
 
