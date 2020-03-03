@@ -52,6 +52,7 @@ typedef lt_dlhandle dlhandle_t;
 
 #include <stdlib.h>
 #include <string.h>
+#include <strings.h>
 #include <ctype.h>
 
 #include <missing.h>

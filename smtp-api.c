@@ -98,7 +98,7 @@ smtp_set_server (smtp_session_t session, const char *hostport)
 int
 smtp_set_hostname (smtp_session_t session, const char *hostname)
 {
-#ifdef HAVE_GETHOSTNAME
+#if HAVE_GETHOSTNAME
   SMTPAPI_CHECK_ARGS (session != NULL, 0);
 #else
   SMTPAPI_CHECK_ARGS (session != NULL && hostname != NULL, 0);
@@ -106,7 +106,7 @@ smtp_set_hostname (smtp_session_t session, const char *hostname)
 
   if (session->localhost != NULL)
     free (session->localhost);
-#ifdef HAVE_GETHOSTNAME
+#if HAVE_GETHOSTNAME
   if (hostname == NULL)
     {
       session->localhost = NULL;
@@ -409,7 +409,7 @@ smtp_start_session (smtp_session_t session)
   smtp_message_t message;
 
   SMTPAPI_CHECK_ARGS (session != NULL && session->host != NULL, 0);
-#ifndef HAVE_GETHOSTNAME
+#if !HAVE_GETHOSTNAME
   SMTPAPI_CHECK_ARGS (session->localhost != NULL, 0);
 #endif
 
