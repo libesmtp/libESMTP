@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?xml-stylesheet type="text/xml" href="api.xsl"?>
 <!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
- "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd">
+ "https://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd">
 <article id="index">
 
   <articleinfo>
@@ -11,7 +11,7 @@
 	<surname>Stafford</surname>
 	<affiliation>
 	  <address>
-	    <email>brian@stafford.uklinux.net</email>
+	    <email>brian.stafford60@gmail.com</email>
 	  </address>
 	</affiliation>
       </author>
@@ -31,7 +31,7 @@ Free Software Foundation with no Invariant Sections, no Front-Cover
 Texts, and no Back-Cover Texts. You may obtain a copy of the
 <citetitle>GNU Free Documentation License</citetitle> from the Free
 Software Foundation by visiting <ulink type="http"
-url="http://www.fsf.org">their Web site</ulink> or by writing to: Free
+url="https://www.fsf.org">their Web site</ulink> or by writing to: Free
 Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 02111-1307, USA.
       </para>
@@ -145,15 +145,13 @@ to libESMTP and do not require corresponding API functions.
     <title>API</title>
 
     <para>
-The libESMTP API is intended to be a relatively small and lightweight
-interface to the SMTP protocol and its extensions.  However, given the
-number of API functions in libESMTP, this assertion is questionable.  In
-mitigation, many of these are necessary because the internal structures
-are opaque to the application and most of them are used to define the
-messages and recipients to be transferred to the SMTP server during the
-protocol session.  Similarly a significant number of functions are used
-to query the status of the transfer after the event.  The entire SMTP
-protocol session is performed by only one function call.
+The libESMTP API is a relatively small and lightweight interface to the SMTP
+protocol and its extensions. Internal structures are opaque to the application
+accessible only through API calls. The majority of the API is used to define
+the messages and recipients to be transferred to the SMTP server during the
+protocol session.  Similarly a number of functions are used to query the status
+of the transfer after the event.  The entire SMTP protocol session is performed
+by a single function call.
     </para>
 
     <sect2>
@@ -794,12 +792,12 @@ automatically generated value.
 	    <programlisting>const char *phrase, const char *mailbox</programlisting>
 	    <para>
 <parameter>phrase</parameter> is free format text which is usually the
-real name of the recipient specified in <parameter>mailbox</parameter>, for example
-Brian Stafford.
+real name of the recipient specified in <parameter>mailbox</parameter>, for example,
+<token>Revd. Charles Uba</token>.
 	    </para>
 	    <para>
 <parameter>mailbox</parameter> is as defined in RFC 5322, for example
-brian@stafford.uklinux.net.
+<token>charles.uba@example.com</token>.
 	    </para>
 	    <para>
 The <token>From:</token> header is automatically generated if one is not
@@ -821,11 +819,11 @@ description of the action taken by libESMTP.
 	    <para>
 <parameter>phrase</parameter> is free format text which is usually the
 real name of the recipient specified in <parameter>address</parameter>,
-for example Brian Stafford.
+for example, <token>Lancelot Ego</token>.
 	    </para>
 	    <para>
 <parameter>address</parameter> is as defined in RFC 5322, for example
-brian@stafford.uklinux.net.
+<token>lancelot.ego@example.org</token>.
 These headers may be set multiple times, however only one copy of each
 header listing all the values is actually created in the message.
 	    </para>
@@ -2449,7 +2447,7 @@ Non zero on success, zero on failure.
 <title>RFC 2487.  SMTP StartTLS Extension</title>
 
 <para>
-If <ulink type="http" url="http://www.openssl.org/">OpenSSL</ulink> is
+If <ulink type="http" url="https://www.openssl.org/">OpenSSL</ulink> is
 available when building libESMTP, support for the STARTTLS extension can
 be enabled.  If support is not enabled, the following APIs will always
 fail.
