@@ -5,7 +5,11 @@ sasl_ntlm_sources = [
   'ntlmstruct.c',
 ]
 
-sasl_ntlm = shared_module('sasl-ntlm', sasl_ntlm_sources,
+ntlm_deps = [ ssldep, ]
+
+sasl_ntlm = shared_module('ntlm', sasl_ntlm_sources,
+			  name_prefix : 'sasl-',
+			  dependencies : ntlm_deps,
 			  include_directories: [ include_dir, ],
 			  install : true,
 			  install_dir: auth_plugin_dir)
