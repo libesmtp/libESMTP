@@ -162,7 +162,7 @@ starttls_create_ctx (smtp_session_t session)
 {
   SSL_CTX *ctx;
   char buf[2048];
-  char buf2[2048];
+  char buf2[2016];
   char *keyfile, *cafile, *capath;
   ckf_t status;
 
@@ -296,7 +296,7 @@ static SSL *
 starttls_create_ssl (smtp_session_t session)
 {
   char buf[2048];
-  char buf2[2048];
+  char buf2[2016];
   char *keyfile;
   SSL *ssl;
   ckf_t status;
