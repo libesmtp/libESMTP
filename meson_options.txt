@@ -1,3 +1,6 @@
 option('pthreads', type : 'feature', value : 'auto', description : 'build with support for Posix threads')
 option('tls', type : 'feature', value : 'auto', description : 'build with support for STARTTLS extension')
 option('lwres', type : 'feature', value : 'disabled', description : 'use lwres library for getaddrinfo()')
+option('bdat', type : 'boolean', value : 'true', description : 'enable SMTP BDAT extension')
+option('etrn', type : 'boolean', value : 'false', description : 'enable SMTP ETRN extension')
+option('xusr', type : 'boolean', value : 'true', description : 'enable sendmail XUSR extension')

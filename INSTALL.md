@@ -21,6 +21,12 @@ build with support for Posix threads (default: auto)
 support the STARTTLS extension and NTLM authentication (default: auto)
 * `-Dlwres=[enabled|disabled|auto]`
 use the ISC lightweight resolver (default: disabled)
+* `-Dbdat=[true|false]`
+enable SMTP BDAT extension (default: true)
+* `-Detrn=[true|false]`
+enable SMTP ETRN extension (default: false)
+* `-Dxusr=[true|false]`
+enable sendmail XUSR extension (default: true)
 
 ## Dependencies
 
