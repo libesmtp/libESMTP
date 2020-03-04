@@ -25,9 +25,7 @@
     using a callback function.  This is intended to allow the application
     maximum flexibility in managing its message storage.  */
 
-#ifdef HAVE_CONFIG_H
 #include <config.h>
-#endif
 
 #include <assert.h>
 

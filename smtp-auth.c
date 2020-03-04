@@ -20,13 +20,10 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifdef HAVE_CONFIG_H
 #include <config.h>
-#endif
 
 #include <assert.h>
 
-#ifdef USE_SASL
 /* Support for the SMTP AUTH verb.
  */
 #include <stdlib.h>
@@ -272,36 +269,3 @@ rsp_auth2 (siobuf_t conn, smtp_session_t session)
 {
   rsp_auth (conn, session);
 }
-
-#else
-
-/* Define stubs for some of the SMTP AUTH support. */
-#include <stdlib.h>
-#include "auth-client.h"
-#include "libesmtp-private.h"
-
-int
-smtp_auth_set_context (smtp_session_t session, auth_context_t context)
-{
-  SMTPAPI_CHECK_ARGS (session != NULL, 0);
-
-  return 0;
-}
-
-void
-set_auth_mechanisms (smtp_session_t session, const char *mechanisms)
-{
-}
-
-int
-select_auth_mechanism (smtp_session_t session)
-{
-  return 0;
-}
-
-void
-destroy_auth_mechanisms (smtp_session_t session)
-{
-}
-
-#endif

@@ -23,9 +23,7 @@
 /* Standard callback functions for use by message-source.c
    An application requiring anything more sophisticated than either of
    these will need to supply its own callback.  */
-#ifdef HAVE_CONFIG_H
 #include <config.h>
-#endif
 
 #include <stdio.h>
 #include <stdlib.h>

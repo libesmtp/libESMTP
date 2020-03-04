@@ -26,9 +26,7 @@
  * quantities.  Also eliminated convenience functions not needed for
  * libESMTP.
  */
-#if HAVE_CONFIG_H
 #include <config.h>
-#endif
 
 #include <stdio.h>
 #include <string.h>

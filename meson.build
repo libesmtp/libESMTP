@@ -1,20 +1,20 @@
 project('libESMTP', 'c', version : '1.0.7', default_options: ['c_std=c11'])
+email = 'Brian Stafford <brian.stafford60@gmail.com>'
+website = 'https://www.github.com/briancs/libESMTP/web/'
+
 pkg = import('pkgconfig')
 cc = meson.get_compiler('c')
 
 libesmtp_version = meson.project_version()
-so_version = '7.6.2'
+libesmtp_so_version = '7.6.2'
 
-auth_plugin_dir = get_option('libdir') / 'esmtp-plugins-' + so_version
-
+auth_plugin_dir = get_option('libdir') / 'esmtp-plugins-' + libesmtp_so_version
 
 ################################################################################
 # legacy defines
 ################################################################################
 cflags = [
   '-D_POSIX_C_SOURCE=200809L',
-  '-DHAVE_CONFIG_H',
-  '-DHAVE_CONFIG',
 ]
 add_project_arguments(cc.get_supported_arguments(cflags), language: 'c')
 
@@ -28,6 +28,8 @@ if not dldep.found()
 endif
 ssldep = dependency('openssl', required : get_option('tls'))
 threaddep = dependency('threads', required : get_option('pthreads'))
+
+#XXX add test for libbind9.so
 lwresdep = cc.find_library('lwres', required : get_option('lwres'))
 
 deps = [
@@ -53,14 +55,12 @@ conf.set('SIZEOF_UNSIGNED_SHORT', cc.sizeof('unsigned short'))
 conf.set('AUTH_ID_HACK', true)
 conf.set('USE_CHUNKING', true)
 conf.set('USE_ETRN', false)
-conf.set('USE_IPV6', true)
 conf.set('USE_PTHREADS', threaddep.found())
-conf.set('USE_SASL', true)
 conf.set('USE_TLS', ssldep.found())
 conf.set('USE_XUSR', true)
 
 conf.set_quoted('AUTHPLUGINDIR', get_option('prefix') / auth_plugin_dir)
-conf.set_quoted('SO_VERSION', so_version)
+conf.set_quoted('SO_VERSION', libesmtp_so_version)
 conf.set_quoted('VERSION', libesmtp_version)
 
 conf.set('HAVE_DLSYM', have_dl.to_int(), description : 'POSIX.1-2001')
@@ -74,24 +74,13 @@ conf.set('HAVE_STRERROR_R', 1)
 conf.set('HAVE_WORKING_STRERROR_R', 0)
 conf.set('HAVE_STRUCT_TM_TM_ZONE', 0)
 conf.set('HAVE_UNAME', 1)
+conf.set('HAVE_STRFTIME', 1)
 
 # missing.h - probably all ok to remove
 conf.set('HAVE_STRDUP', true)
 conf.set('HAVE_STRNCASECMP', true)
 conf.set('HAVE_STRCASECMP', true)
 conf.set('HAVE_MEMRCHR', false)
-conf.set('HAVE_SNPRINTF', true)
-conf.set('HAVE_VSNPRINTF', true)
-
-# snprintf.c - probably ok to remove
-conf.set('HAVE_STDARG_H', true)
-conf.set('HAVE_STDARGS', false)
-conf.set('HAVE_VARARGS_H', false)
-
-# getaddrinfo.c, gethostbyname.c
-# getaddrinfo() implementation over gethostbyname()
-conf.set('HAVE_GETHOSTBYNAME_R', 0)
-conf.set('HAVE_GETIPNODEBYNAME', 0, description : 'DEPRECATED')
 
 configure_file(output : 'config.h', configuration : conf)
 
@@ -105,8 +94,8 @@ spec.set('VERSION', libesmtp_version)
 spec.set('BINDIR', get_option('bindir'))
 spec.set('LIBDIR', get_option('libdir'))
 spec.set('PLUGINDIR', auth_plugin_dir)
-spec.set('URL', 'https://www.github.com/briancs/libESMTP/web/')
-spec.set('EMAIL', 'Brian Stafford <brian.stafford60@gmail.com>')
+spec.set('URL', website)
+spec.set('EMAIL', email)
 
 if ssldep.found()
   spec.set('RPM_REQUIRES', 'Requires:')
@@ -158,7 +147,7 @@ sources = [
 ]
 
 lib = library('esmtp', sources,
-	      soversion : so_version,
+	      soversion : libesmtp_so_version,
 	      dependencies : deps,
 	      install : true)
 

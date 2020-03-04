@@ -24,9 +24,7 @@
    commands and their extended parameters.  Extended commands are mostly
    in files of their own. */
 
-#ifdef HAVE_CONFIG_H
 #include <config.h>
-#endif
 
 #include <stdlib.h>
 #include <string.h>
