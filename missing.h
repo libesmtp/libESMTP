@@ -25,6 +25,8 @@
 /* Collect together some declarations that might not be present on
    some systems */
 
+#include <stddef.h>		/* for size_t */
+
 #ifndef HAVE_STRDUP
 char *strdup (const char *s1);
 #endif
