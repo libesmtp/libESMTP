@@ -43,15 +43,8 @@ int strncasecmp (const char *a, const char *b, size_t len);
 void *memrchr (const void *a, int c, size_t len);
 #endif
 
-#ifndef HAVE_SNPRINTF
-#include <sys/types.h>
-int snprintf(char *s, size_t n, const char *format, ...);
-#endif
-
-#ifndef HAVE_VSNPRINTF
-#include <stdarg.h>
-#include <sys/types.h>
-int vsnprintf(char *s, size_t n, const char *format, va_list ap);
+#ifndef HAVE_STRLCPY
+size_t strlcpy (char *dest, const char *src, size_t dest_size);
 #endif
 
 #endif

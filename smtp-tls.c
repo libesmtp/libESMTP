@@ -551,10 +551,7 @@ check_acceptable_security (smtp_session_t session, SSL *ssl)
 		      && match_domain (session->host, ia5str))
 		    ok = 1;
 		  else
-		    {
-		      buf[0] = '\0';
-		      strncat (buf, ia5str, sizeof buf - 1);
-		    }
+		    strlcpy (buf, ia5str, sizeof buf);
 		}
 	      // TODO: handle GEN_IPADD
 	    }
@@ -591,10 +588,7 @@ check_acceptable_security (smtp_session_t session, SSL *ssl)
 			  && match_domain (session->host, (char *) str))
 			ok = 1;
 		      else
-			{
-			  buf[0] = '\0';
-			  strncat (buf, (char *) str, sizeof buf - 1);
-			}
+			strlcpy (buf, (char *) str, sizeof buf);
 		      OPENSSL_free (str);
 		    }
 		}

@@ -43,6 +43,10 @@ deps = [
 # Function availability
 ################################################################################
 
+# Solaris 8 strlcpy() return value does not correspond with BSD version
+# libESMTP does not use the return value so this should be sufficient
+have_strlcpy = cc.has_function('strlcpy') or meson.get_cross_property('have_strlcpy', false)
+
 ################################################################################
 # configuration
 # XXX WARNING use of #if SYMBOL vs #ifdef SYMBOL somewhat haphazard
@@ -76,11 +80,12 @@ conf.set('HAVE_STRUCT_TM_TM_ZONE', 0)
 conf.set('HAVE_UNAME', 1)
 conf.set('HAVE_STRFTIME', 1)
 
-# missing.h - probably all ok to remove
+# missing.h
 conf.set('HAVE_STRDUP', true)
 conf.set('HAVE_STRNCASECMP', true)
 conf.set('HAVE_STRCASECMP', true)
 conf.set('HAVE_MEMRCHR', false)
+conf.set('HAVE_STRLCPY', have_strlcpy)
 
 configure_file(output : 'config.h', configuration : conf)
 
@@ -125,10 +130,10 @@ sources = [
   'htable.h',
   'libesmtp.h',
   'libesmtp-private.h',
-  'memrchr.c',
   'message-callbacks.c',
   'message-source.c',
   'message-source.h',
+  'missing.c',
   'missing.h',
   'protocol.c',
   'protocol.h',
