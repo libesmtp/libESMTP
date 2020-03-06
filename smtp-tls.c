@@ -40,15 +40,13 @@
 #include <missing.h> /* declarations for missing library functions */
 /* ^^^^^^^^^^^ */
 
-#include <ctype.h>
 #include "libesmtp-private.h"
 #include "siobuf.h"
 #include "protocol.h"
 #include "attribute.h"
 
+#include "tlsutils.h"
 
-static int tls_init;
-static SSL_CTX *starttls_ctx;
 static smtp_starttls_passwordcb_t ctx_password_cb;
 static void *ctx_password_cb_arg;
 
@@ -57,18 +55,6 @@ static void *ctx_password_cb_arg;
 #include <pthread.h>
 static pthread_mutex_t starttls_mutex = PTHREAD_MUTEX_INITIALIZER;
 #endif
-
-static int
-starttls_init (void)
-{
-  if (tls_init)
-    return 1;
-
-  OPENSSL_init_ssl (OPENSSL_INIT_LOAD_SSL_STRINGS
-		    | OPENSSL_INIT_LOAD_CRYPTO_STRINGS, NULL);
-  tls_init = 1;
-  return 1;
-}
 
 /* This stuff is crude and doesn't belong here */
 /* vvvvvvvvvvv */
@@ -157,22 +143,13 @@ smtp_starttls_set_password_cb (smtp_starttls_passwordcb_t cb, void *arg)
   return 1;
 }
 
-static SSL_CTX *
-starttls_create_ctx (smtp_session_t session)
+static int
+starttls_init_ctx (smtp_session_t session, SSL_CTX *ctx)
 {
-  SSL_CTX *ctx;
   char buf[2048];
   char buf2[2016];
   char *keyfile, *cafile, *capath;
   ckf_t status;
-
-  /* The decision not to support SSL v2 and v3 but instead to use only
-     TLSv1 is deliberate.  This is in line with the intentions of RFC
-     3207.  Servers typically support SSL as well as TLS because some
-     versions of Netscape do not support TLS.  I am assuming that all
-     currently deployed servers correctly support TLS.	*/
-  ctx = SSL_CTX_new (TLS_client_method ());
-  SSL_CTX_set_min_proto_version (ctx, TLS1_VERSION);
 
   /* Load our keys and certificates.  To avoid messing with configuration
      variables etc, use fixed paths for the certificate store.	These are
@@ -236,7 +213,7 @@ starttls_create_ctx (smtp_session_t session)
       if (!SSL_CTX_use_certificate_file (ctx, keyfile, SSL_FILETYPE_PEM))
 	{
 	  /* FIXME: set an error code */
-	  return NULL;
+	  return 0;
 	}
       if (!SSL_CTX_use_PrivateKey_file (ctx, keyfile, SSL_FILETYPE_PEM))
 	{
@@ -245,7 +222,7 @@ starttls_create_ctx (smtp_session_t session)
 	    (*session->event_cb) (session, SMTP_EV_NO_CLIENT_CERTIFICATE,
 				  session->event_cb_arg, &ok);
 	  if (!ok)
-	    return NULL;
+	    return 0;
 	}
     }
   else if (status == FILE_PROBLEM)
@@ -253,7 +230,7 @@ starttls_create_ctx (smtp_session_t session)
       if (session->event_cb != NULL)
 	(*session->event_cb) (session, SMTP_EV_UNUSABLE_CLIENT_CERTIFICATE,
 			      session->event_cb_arg, NULL);
-      return NULL;
+      return 0;
     }
 
   /* Server certificate policy: check the server certificate against the
@@ -267,7 +244,7 @@ starttls_create_ctx (smtp_session_t session)
       if (session->event_cb != NULL)
 	(*session->event_cb) (session, SMTP_EV_UNUSABLE_CA_LIST,
 			      session->event_cb_arg, NULL);
-      return NULL;
+      return 0;
     }
   capath = user_pathname (buf2, sizeof buf2, "ca");
   status = check_directory (capath);
@@ -278,7 +255,7 @@ starttls_create_ctx (smtp_session_t session)
       if (session->event_cb != NULL)
 	(*session->event_cb) (session, SMTP_EV_UNUSABLE_CA_LIST,
 			      session->event_cb_arg, NULL);
-      return NULL;
+      return 0;
     }
 
   /* Load the CAs we trust */
@@ -289,7 +266,50 @@ starttls_create_ctx (smtp_session_t session)
 
   /* FIXME: load a source of randomness */
 
+  return 1;
+}
+
+static SSL_CTX *
+starttls_create_ctx (smtp_session_t session)
+{
+  SSL_CTX *ctx;
+  static SSL_CTX *starttls_ctx;
+
+#ifdef USE_PTHREADS
+  pthread_mutex_lock (&starttls_mutex);
+#endif
+  if (starttls_ctx != NULL)
+    ctx = starttls_ctx;
+  else
+    {
+      /* The decision not to support SSL v2 and v3 but instead to use only
+	 TLSv1 is deliberate.  This is in line with the intentions of RFC
+	 3207.  Servers typically support SSL as well as TLS because some
+	 versions of Netscape do not support TLS.  I am assuming that all
+	 currently deployed servers correctly support TLS.	*/
+      ctx = SSL_CTX_new (TLS_client_method ());
+      if (ctx != NULL)
+	{
+	  SSL_CTX_set_min_proto_version (ctx, TLS1_VERSION);
+
+	  if (!starttls_init_ctx (session, ctx))
+	    {
+	      SSL_CTX_free (ctx);
+	      ctx = NULL;
+	    }
+	}
+      starttls_ctx = ctx;
+    }
+#ifdef USE_PTHREADS
+  pthread_mutex_unlock (&starttls_mutex);
+#endif
   return ctx;
+}
+
+void
+destroy_starttls_context (smtp_session_t session)
+{
+  SSL_CTX_free (session->starttls_ctx);
 }
 
 static SSL *
@@ -358,7 +378,7 @@ smtp_starttls_set_ctx (smtp_session_t session, SSL_CTX *ctx)
 {
   SMTPAPI_CHECK_ARGS (session != NULL, 0);
 
-  tls_init = 1;			/* Assume app has set up openssl */
+  SSL_CTX_up_ref (ctx);
   session->starttls_ctx = ctx;
   return 1;
 }
@@ -392,88 +412,16 @@ select_starttls (smtp_session_t session)
       session->starttls_enabled = Starttls_REQUIRED; */
   if (!(session->extensions & EXT_STARTTLS))
     return 0;
-  if (!session->starttls_enabled)
+  if (session->starttls_enabled == Starttls_DISABLED)
     return 0;
-#ifdef USE_PTHREADS
-  pthread_mutex_lock (&starttls_mutex);
-#endif
-  if (starttls_ctx == NULL && starttls_init ())
-    starttls_ctx = starttls_create_ctx (session);
-#ifdef USE_PTHREADS
-  pthread_mutex_unlock (&starttls_mutex);
-#endif
-  session->starttls_ctx = starttls_ctx;
+  /* if the session already has a CTX set by smtp_starttls_set_ctx(),
+     skip the following */
+  if (session->starttls_ctx == NULL)
+    {
+      session->starttls_ctx = starttls_create_ctx (session);
+      SSL_CTX_up_ref (session->starttls_ctx);
+    }
   return session->starttls_ctx != NULL;
-}
-
-static int
-match_component (const char *dom, const char *edom,
-		 const char *ref, const char *eref)
-{
-  /* If ref is the single character '*' then accept this as a wildcard
-     matching any valid domainname component, i.e. characters from the
-     range A-Z, a-z, 0-9, - or _
-     NB this is more restrictive than RFC 2818 which allows multiple
-     wildcard characters in the component pattern */
-  if (eref == ref + 1 && *ref == '*')
-    while (dom < edom)
-      {
-	if (!(isalnum (*dom) || *dom == '-' /*|| *dom == '_'*/))
-	  return 0;
-	dom++;
-      }
-  else
-    {
-      while (dom < edom && ref < eref)
-	{
-	  /* check for valid domainname character */
-	  if (!(isalnum (*dom) || *dom == '-' /*|| *dom == '_'*/))
-	    return 0;
-	  /* compare the domain name case-insensitively */
-	  if (!(*dom == *ref || tolower (*dom) == tolower (*ref)))
-	    return 0;
-	  ref++, dom++;
-	}
-      if (dom < edom || ref < eref)
-	return 0;
-    }
-  return 1;
-}
-
-/* Perform a domain name comparison where the reference may contain
-   wildcards.  This implements the comparison from RFC 2818.
-   Each component of the domain name is matched separately, working from
-   right to left.
- */
-static int
-match_domain (const char *domain, const char *reference)
-{
-  const char *dom, *edom, *ref, *eref;
-
-  eref = strchr (reference, '\0');
-  edom = strchr (domain, '\0');
-  while (eref > reference && edom > domain)
-    {
-      /* Find the rightmost component of the reference. */
-      ref = memrchr (reference, '.', eref - reference - 1);
-      if (ref != NULL)
-	ref++;
-      else
-	ref = reference;
-
-      /* Find the rightmost component of the domain name. */
-      dom = memrchr (domain, '.', edom - domain - 1);
-      if (dom != NULL)
-	dom++;
-      else
-	dom = domain;
-
-      if (!match_component (dom, edom, ref, eref))
-	return 0;
-      edom = dom - 1;
-      eref = ref - 1;
-    }
-  return eref < reference && edom < domain;
 }
 
 static int

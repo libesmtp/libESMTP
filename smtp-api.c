@@ -435,6 +435,9 @@ smtp_destroy_session (smtp_session_t session)
 #ifdef USE_ETRN
   destroy_etrn_nodes (session);
 #endif
+#ifdef USE_TLS
+  destroy_starttls_context (session);
+#endif
 
   if (session->host != NULL)
     free (session->host);

@@ -26,7 +26,7 @@ have_dl = dldep.found()
 if not dldep.found()
     dldep = cc.find_library('ltdl')
 endif
-ssldep = dependency('openssl', required : get_option('tls'))
+ssldep = dependency('openssl', version : '>=1.1.0', required : get_option('tls'))
 threaddep = dependency('threads', required : get_option('pthreads'))
 
 #XXX add test for libbind9.so
@@ -150,6 +150,9 @@ sources = [
   'tokens.c',
   'tokens.h'
 ]
+if ssldep.found()
+  sources += [ 'tlsutils.h', 'tlsutils.c' ]
+endif
 
 lib = library('esmtp', sources,
 	      soversion : libesmtp_so_version,
