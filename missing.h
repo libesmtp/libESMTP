@@ -36,12 +36,10 @@ int strcasecmp (const char *a, const char *b);
 #endif
 
 #ifndef HAVE_STRNCASECMP
-#include <sys/types.h>
 int strncasecmp (const char *a, const char *b, size_t len);
 #endif
 
 #ifndef HAVE_MEMRCHR
-#include <sys/types.h>
 void *memrchr (const void *a, int c, size_t len);
 #endif
 
