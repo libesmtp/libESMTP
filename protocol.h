@@ -38,6 +38,5 @@ enum states
 int read_smtp_response (siobuf_t conn, smtp_session_t session,
 			struct smtp_status *status,
 			int (*cb) (smtp_session_t, char *));
-void reset_status (struct smtp_status *status);
 
 #endif

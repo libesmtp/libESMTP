@@ -16,6 +16,28 @@ auth_plugin_dir = get_option('libdir') / 'esmtp-plugins-' + libesmtp_so_version
 cflags = [
   '-D_POSIX_C_SOURCE=200809L',
 ]
+
+cflags_warnings = [
+    '-Walloc-zero',
+    '-Wbad-function-cast',
+    '-Wcast-align',
+    '-Wcast-qual',
+    '-Wchar-subscripts',
+    '-Wdeclaration-after-statement',
+    '-Wduplicated-branches',
+    '-Wmissing-prototypes',
+    '-Wnested-externs',
+    '-Wpacked',
+    '-Wpointer-arith',
+    '-Wredundant-decls',
+    '-Wshadow',
+    '-Wstrict-prototypes',
+    '-Wwrite-strings',
+]
+
+if get_option('warning_level').to_int() >= 2
+    cflags += cflags_warnings
+endif
 add_project_arguments(cc.get_supported_arguments(cflags), language: 'c')
 
 ################################################################################

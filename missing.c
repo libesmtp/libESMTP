@@ -86,6 +86,9 @@ strncasecmp (const char *a, const char *b, size_t len)
 #endif
 
 #ifndef HAVE_MEMRCHR
+# pragma GCC diagnostic push
+# pragma GCC diagnostic ignored "-Wcast-qual"
+
 void *
 memrchr (const void *a, int c, size_t len)
 {
@@ -96,6 +99,7 @@ memrchr (const void *a, int c, size_t len)
       return (void *) p;
   return (void *) 0;
 }
+# pragma GCC diagnostic pop
 #endif
 
 #ifndef HAVE_STRLCPY	/* adapted from glib */
