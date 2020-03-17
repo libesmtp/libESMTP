@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<?xml-stylesheet type="text/xml" href="libesmtp.xsl"?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Licensing and Support</title>
+</head>
+<body>
+
+<h2>Licence</h2>
+
+<p><b>libESMTP</b> is licensed under the <a
+href="https://www.gnu.org/copyleft/lesser.html">GNU Lesser General Public
+License</a> and the example programs are under the <a
+href="https://www.gnu.org/copyleft/gpl.html">GNU General Public
+Licence</a>.
+</p>
+
+<h2>Support</h2>
+
+<p>Support for <b>libESMTP</b> is via Github - XXX flesh this out.
+</p>
+
+<h2>Donations</h2>
+
+<form class="lhs" action="https://www.paypal.com/cgi-bin/webscr" method="POST">
+  <button type="type" name="submit">
+    <img src="https://www.paypal.com/en_US/i/btn/x-click-but04.gif"
+	 alt="Make payments with PayPal - it's fast, free and secure!"/>
+    Donate!
+  </button>
+  <input type="hidden" name="cmd" value="_s-xclick"/>
+  <input type="hidden" name="encrypted"
+	 value="-----BEGIN PKCS7-----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-----END PKCS7-----"/>
+</form>
+<p class="rhs">
+If <b>libESMTP</b> is useful to you, please consider a donation.
+By doing so, you are supporting the principle of open source software
+and helping to ensure continued development of <b>libESMTP</b>.
+</p>
+-->
+
+<hr/>
+
+<h2>Commercial Support</h2>
+
+<p>Commercial users of <b>libESMTP</b> are strongly encouraged to purchase
+a commercial support contract, please contact
+<a href="mailto:contact@brianstafford.info">contact at brianstafford.info</a>
+for a quotation.
+</p>
+
+<h2>Multiple Licensing</h2>
+<p>
+The LGPL grants the right and freedom to use <b>libESMTP</b> provided you
+do not deny those rights and freedoms to others.  However there remain a
+few situations where the LGPL prevents <b>libESMTP</b> from being used legally,
+for example, in an embedded application where it may not be possible for an end
+user to to exercise their rights and freedoms granted by the LGPL.
+</p>
+<p>If the use of the LGPL is inappropriate for your application,
+I can either grant an exception to the LGPL or arrange an
+alternative licence to meet your specific needs.
+This is arranged on a case by case basis at a commercial
+consultancy rate plus expenses.
+</p>
+
+</body>
+</html>

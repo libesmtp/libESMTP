@@ -1,0 +1,12 @@
+{
+  "index": "docs/index.md",
+  "sitemap": "docs/sitemap.txt",
+  "languages": [ "c" ],
+  "output": "docs/libesmtp-doc",
+  "project_name": "libesmtp",
+  "project_version": "1.0.7",
+  "c_sources": [
+      "libesmtp.h",
+      "smtp-api.c"
+  ]
+}
