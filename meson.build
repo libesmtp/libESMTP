@@ -1,9 +1,10 @@
 project('libESMTP', 'c', version : '1.0.7', default_options: ['c_std=c11'])
 email = 'Brian Stafford <brian.stafford60@gmail.com>'
 website = 'https://www.github.com/briancs/libESMTP/web/'
-
 pkg = import('pkgconfig')
 cc = meson.get_compiler('c')
+
+hotdoc = import('hotdoc')
 
 libesmtp_version = meson.project_version()
 libesmtp_so_version = '7.6.2'
@@ -199,6 +200,9 @@ subdir('crammd5')
 if ssldep.found()
   subdir('ntlm')
 endif
+
+# Documentation
+subdir('docs')
 
 ################################################################################
 # Misc installation
