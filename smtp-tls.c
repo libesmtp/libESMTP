@@ -28,6 +28,22 @@
 
 #ifdef USE_TLS
 
+/**
+ * SECTION: starttls
+ * @title: RFC 2487.  SMTP StartTLS Extension
+ * @short_description: the application class
+ * @see_also: [OpenSSL](https://www.openssl.org/)
+ * @section_id:
+ * @stability: Stable
+ *
+ * If #OpenSSL is available when building libESMTP, support for the STARTTLS
+ * extension can be enabled.  If support is not enabled, the following APIs
+ * will always fail:
+ * - smtp_starttls_set_password_cb()
+ * - smtp_starttls_set_ctx()
+ * - smtp_starttls_enable()
+ */
+
 /* This stuff doesn't belong here */
 /* vvvvvvvvvvv */
 #include <sys/types.h>
@@ -119,13 +135,31 @@ check_directory (const char *file)
 
 /* ^^^^^^^^^^^ */
 
-/* Unusually this API does not require a smtp_session_t.  The data
-   it sets is global.
+/**
+ * smtp_starttls_passwordcb_t:
+ * @buf: Buffer to receive the password.
+ * @buflen: Length of the buffer.
+ * @rwflag: 0 for reading/decryption, 1 for writing/encryption.
+ * @arg: User data passed to smtp_starttls_set_password_cb().
+ *
+ * Returns: Actual length of password.
+ */
 
-   N.B.  If this API is not called and OpenSSL requires a password, it
-	 will supply a default callback which prompts on the user's tty.
-	 This is likely to be undesired behaviour, so the app should
-	 supply a callback using this function.
+/**
+ * smtp_starttls_set_password_cb:
+ * @session: An #smtp_session_t
+ * @cb: Password callback with signature #smtp_starttls_passwordcb_t.
+ * @arg: User data passed to the callback.
+ *
+ * Set password callback function for OpenSSL. Unusually this API does not
+ * require a smtp_session_t.  The data it sets is global.
+
+ * N.B.  If this API is not called and OpenSSL requires a password, it
+ *	 will supply a default callback which prompts on the user's tty.
+ *	 This is likely to be undesired behaviour, so the app should
+ *	 supply a callback using this function.
+ *
+ * Returns: Zero on failure, non-zero on success.
  */
 int
 smtp_starttls_set_password_cb (smtp_starttls_passwordcb_t cb, void *arg)
@@ -368,11 +402,20 @@ starttls_create_ssl (smtp_session_t session)
   return ssl;
 }
 
-/* App calls this to allow libESMTP to use an SSL_CTX it has already
-   initialised.  NULL means use a default created by libESMTP.
-   If called at all, libESMTP assumes the application has initialised
-   openssl.  Otherwise, libESMTP will initialise OpenSSL before calling
-   any of the SSL APIs. */
+/**
+ * smtp_starttls_set_ctx:
+ * @session: An #smtp_session_t
+ * @ctx: An #SSL_CTX initialised by the application.
+ *
+ * Use an #SSL_CTX created and initialised by the application.  The #SSL_CTX
+ * must be created by the application which is assumed to have also initialised
+ * the OpenSSL library. 
+ *
+ * If not used, or #ctx is %NULL, OpenSSL is automatically initialised before
+ * calling any of the OpenSSL API functions.
+ *
+ * Returns: Zero on failure, non-zero on success.
+ */
 int
 smtp_starttls_set_ctx (smtp_session_t session, SSL_CTX *ctx)
 {
@@ -383,6 +426,26 @@ smtp_starttls_set_ctx (smtp_session_t session, SSL_CTX *ctx)
   return 1;
 }
 
+/**
+ * starttls_option:
+ * @Starttls_DISABLED: Do not use TLS, even if offered by the MTA.
+ * @Starttls_ENABLED: Use TLS if offered by the MTA.
+ * @Starttls_REQUIRED: Exit session if TLS is not offered by the MTA.
+ *
+ * TLS mode options.
+ */
+
+/**
+ * smtp_starttls_enable:
+ * @session: An #smtp_session_t
+ * @how: A #starttls_option
+ *
+ * Enable the SMTP STARTTLS verb if @how is not %Starttls_DISABLED.  If set to
+ * %Starttls_REQUIRED the protocol will quit rather than transferring any
+ * messages if the STARTTLS extension is not available.
+ *
+ * Returns: Zero on failure, non-zero on success.
+ */
 /* how == 0: disabled, 1: if possible, 2: required */
 int
 smtp_starttls_enable (smtp_session_t session, enum starttls_option how)

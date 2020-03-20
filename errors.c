@@ -122,6 +122,14 @@ get_error_internal (struct errno_vars *err)
   return eai_to_libesmtp (err->herror);
 }
 
+/**
+ * smtp_errno:
+ *
+ * Retrieve the error code for the most recently failed API in the calling
+ * thread.
+ *
+ * Returns: libESMTP error code.
+ */
 #ifndef USE_PTHREADS
 
 static struct errno_vars libesmtp_errno;
@@ -242,6 +250,17 @@ static const char *libesmtp_errors[] =
     "Client error",					/* CLIENT_ERROR */
   };
 
+/**
+ * smtp_strerror:
+ * @error:	Error number to translate
+ * @buf:	Buffer to receive text
+ * @buflen:	Buffer length
+ *
+ * Translate a libESMTP error number to a string suitable for use in an
+ * application error message.  The resuting string is copied into #buf.
+ *
+ * Returns: A pointer to the #buf on success or %NULL on failure.
+ */
 char *
 smtp_strerror (int error, char buf[], size_t buflen)
 {

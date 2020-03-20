@@ -46,6 +46,36 @@
 #include "base64.h"
 #include "protocol.h"
 
+/**
+ * SECTION: smtp-auth
+ * @title: RFC 4954.  SMTP Auth Extension
+ * @short_description: SMTP Auth Extension
+ * @section_id:
+ *
+ * When enabled and the SMTP server advertises the AUTH extension, libESMTP
+ * will attempt to authenticate to the SMTP server before transferring any
+ * messages.
+ *
+ * ## Authentication Contexts
+ *
+ * A separate authentication context must be created for each SMTP session.
+ * The application is responsible for destroying context.  The application
+ * should either call smtp_destroy_session() or call smtp_auth_set_context()
+ * with context set to %NULL before doing so.  The authentication API is
+ * described separately.
+ */
+
+/**
+ * smtp_auth_set_context:
+ * @session: An #smtp_session_t
+ * @context: An #auth_context_t
+ *
+ * Enable the SMTP AUTH verb if #context is not %NULL or disable it when
+ * #context is %NULL.  #context must be obtained from the SASL (RFC 4422)
+ * client library API defined in `auth-client.h`.
+ *
+ * Returns: Non zero on success, zero on failure.
+ */
 int
 smtp_auth_set_context (smtp_session_t session, auth_context_t context)
 {
