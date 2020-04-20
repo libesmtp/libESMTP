@@ -176,7 +176,11 @@ if ssldep.found()
   sources += [ 'tlsutils.h', 'tlsutils.c' ]
 endif
 
+mapfile = 'libesmtp.map'
+vflag = '-Wl,--version-script,@0@/@1@'.format(meson.current_source_dir(), mapfile)
+
 lib = library('esmtp', sources,
+	      link_args : vflag, link_depends : mapfile,
 	      soversion : libesmtp_so_version,
 	      dependencies : deps,
 	      install : true)
