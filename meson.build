@@ -68,7 +68,7 @@ deps = [
 
 # Solaris 8 strlcpy() return value does not correspond with BSD version
 # libESMTP does not use the return value so this should be sufficient
-have_strlcpy = cc.has_function('strlcpy') or meson.get_cross_property('have_strlcpy', false)
+have_strlcpy = cc.has_function('strlcpy')
 
 ################################################################################
 # configuration
@@ -91,7 +91,6 @@ conf.set_quoted('SO_VERSION', libesmtp_so_version)
 conf.set_quoted('VERSION', libesmtp_version)
 
 conf.set('HAVE_DLSYM', have_dl.to_int(), description : 'POSIX.1-2001')
-conf.set('HAVE_GETADDRINFO', 1, description : 'POSIX.1-2001, POSIX.1-2008.')
 conf.set('HAVE_GETHOSTNAME', 1, description : 'POSIX.1-2001, POSIX.1-2008.')
 conf.set('HAVE_GETTIMEOFDAY', true, description : 'POSIX.1-2001, obsolete POSIX.1-2008.')
 conf.set('HAVE_LIBCRYPTO', ssldep.found().to_int())

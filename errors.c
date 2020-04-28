@@ -30,8 +30,6 @@
 #include <stdlib.h>
 #if HAVE_LWRES_NETDB_H
 # include <lwres/netdb.h>
-#elif !HAVE_GETADDRINFO
-# include "getaddrinfo.h"
 #else
 # include <netdb.h>
 #endif
