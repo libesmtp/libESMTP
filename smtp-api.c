@@ -123,9 +123,9 @@
  *
  * Three pointer types are declared as follows:
  * ```c
- * typedef struct smtp_session *<anchor id="smtp_session_t"/>smtp_session_t;
- * typedef struct smtp_message *<anchor id="smtp_message_t"/>smtp_message_t;
- * typedef struct smtp_recipient *<anchor id="smtp_recipient_t"/>smtp_recipient_t;
+ * typedef struct smtp_session *smtp_session_t;
+ * typedef struct smtp_message *smtp_message_t;
+ * typedef struct smtp_recipient *smtp_recipient_t;
  * ```
  *
  * ## Thread Safety
