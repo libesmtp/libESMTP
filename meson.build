@@ -4,7 +4,7 @@ website = 'https://www.github.com/briancs/libESMTP/web/'
 pkg = import('pkgconfig')
 cc = meson.get_compiler('c')
 
-hotdoc = import('hotdoc')
+gnome = import('gnome')
 
 libesmtp_version = meson.project_version()
 libesmtp_so_version = '7.6.2'
