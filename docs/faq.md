@@ -6,7 +6,7 @@ libESMTP is an SMTP client designed to manage submission (or posting) of
 electronic mail messages.  It is a more flexible alternative to the traditional
 technique of piping messages into `sendmail`.
 
-## Why not pipe messages into `sendmail`?
+## Why not pipe messages into sendmail?
 
 Well, one good reason is you are required to install `sendmail` which
 introduces bloat into a system that does not otherwise require an MTA (Mail
@@ -64,8 +64,7 @@ attempts to detect when the MTA is Exchange and work round the bug but this
 isn't reliable.  If you are bitten by this problem, the only solution at
 present is to run Meson with `-Dbdat=false`.
 
-## `smtp_start_session()` returned success but my message wasn't sent.  What's
-going on?
+## smtp_start_session() returned success but my message wasn't sent.  What's going on?
 
 `smtp_start_session()` returns success if the protocol engine operated without
 error from start to finish.   This includes the case where the server may have

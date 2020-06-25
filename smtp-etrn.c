@@ -36,10 +36,10 @@
 #include "attribute.h"
 
 /**
- * SECTION: smtp-etrn
- * @title: RFC 1985. Remote Message Queue Starting (ETRN)
- * @short_description: Remote Message Queue Starting
- * @section_id:
+ * DOC: RFC 1985
+ *
+ * Remote Message Queue Starting (ETRN)
+ * ------------------------------------
  *
  * The SMTP ETRN extension is used to request a remote MTA to start its
  * delivery queue for the specified domain.  If the application requests
@@ -65,13 +65,13 @@ struct smtp_etrn_node
 
 /**
  * smtp_etrn_add_node:
- * @session: An #smtp_session_t
+ * @session: The session.
  * @option: The option character.
  * @domain: Request mail for this domain.
  *
  * Add an ETRN node to the SMTP session.
  *
- * Returns: (transfer full): An #smtp_etrn_node_t or %NULL on failure
+ * Return: An &typedef smtp_etrn_node_t or %NULL on failure.
  */
 smtp_etrn_node_t
 smtp_etrn_add_node (smtp_session_t session, int option, const char *domain)
@@ -106,13 +106,13 @@ smtp_etrn_add_node (smtp_session_t session, int option, const char *domain)
 
 /**
  * smtp_etrn_enumerate_nodes:
- * @session: An #smtp_session_t
+ * @session: The session.
  * @cb: Callback function
  * @arg: Argument (closure) passed to callback.
  *
- * Call the callback function once for each etrn node in the SMTP session.
+ * Call the callback function once for each ETRN node in the SMTP session.
  *
- * Returns: Zero on failure, non-zero on success.
+ * Return: Zero on failure, non-zero on success.
  */
 int
 smtp_etrn_enumerate_nodes (smtp_session_t session,
@@ -135,7 +135,7 @@ smtp_etrn_enumerate_nodes (smtp_session_t session,
  * This includes SMTP status codes, RFC 2034 enhanced status codes, if
  * available and text from the server describing the status.
  *
- * Returns: (transfer none): %NULL if no status information is available,
+ * Return: %NULL if no status information is available,
  * otherwise a pointer to the status information.  The pointer remains valid
  * until the next call to libESMTP in the same thread.
  */
@@ -154,7 +154,7 @@ smtp_etrn_node_status (smtp_etrn_node_t node)
  *
  * Associate application defined data with the opaque ETRN structure.
  *
- * Returns: (transfer full): Previously set application data or %NULL.
+ * Return: Previously set application data or %NULL.
  */
 
 void *
@@ -175,7 +175,7 @@ smtp_etrn_set_application_data (smtp_etrn_node_t node, void *data)
  *
  * Retrieve application data from the opaque ETRN structure.
  *
- * Returns: (transfer none): Application data or %NULL.
+ * Return: Application data or %NULL.
  */
 void *
 smtp_etrn_get_application_data (smtp_etrn_node_t node)

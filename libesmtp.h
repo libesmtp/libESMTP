@@ -40,15 +40,43 @@
 extern "C" {
 #endif
 
+/**
+ * DOC: libESMTP Types
+ *
+ * libESMTP Types
+ * ==============
+ *
+ * The following types are defined by libESMTP.
+ */
+
 typedef struct smtp_session *smtp_session_t;
 typedef struct smtp_message *smtp_message_t;
 typedef struct smtp_recipient *smtp_recipient_t;
+
+/**
+ * typedef smtp_enumerate_messagecb_t - Message callback.
+ * @message: The session.
+ * @arg: User data passed to smtp_enumerate_messages().
+ *
+ * Callback function to handle a message.
+ */
+typedef void (*smtp_enumerate_messagecb_t) (smtp_message_t message, void *arg);
+
+/**
+ * typedef smtp_enumerate_recipientcb_t - Recipient callback.
+ * @recipient: The recipient.
+ * @mailbox: Mailbox name.
+ * @arg: User data passed to smtp_enumerate_recipients().
+ *
+ * Callback to process a recipient.
+ */
+typedef void (*smtp_enumerate_recipientcb_t) (smtp_recipient_t recipient,
+					      const char *mailbox, void *arg);
 
 int smtp_version (void *buf, size_t len, int what);
 
 smtp_session_t smtp_create_session (void);
 smtp_message_t smtp_add_message (smtp_session_t session);
-typedef void (*smtp_enumerate_messagecb_t) (smtp_message_t message, void *arg);
 int smtp_enumerate_messages (smtp_session_t session,
 			     smtp_enumerate_messagecb_t cb, void *arg);
 int smtp_set_server (smtp_session_t session, const char *hostport);
@@ -56,8 +84,6 @@ int smtp_set_hostname (smtp_session_t session, const char *hostname);
 int smtp_set_reverse_path (smtp_message_t message, const char *mailbox);
 smtp_recipient_t smtp_add_recipient (smtp_message_t message,
                                      const char *mailbox);
-typedef void (*smtp_enumerate_recipientcb_t) (smtp_recipient_t recipient,
-					      const char *mailbox, void *arg);
 int smtp_enumerate_recipients (smtp_message_t message,
 			       smtp_enumerate_recipientcb_t cb, void *arg);
 int smtp_set_header (smtp_message_t message, const char *header, ...);
@@ -164,6 +190,19 @@ const char *_smtp_message_str_cb (void **ctx, int *len, void *arg);
 		smtp_set_messagecb ((message), _smtp_message_str_cb, (str))
 
 /* Protocol timeouts */
+
+/**
+ * enum rfc2822_timeouts - Specify timeout.
+ * @Timeout_GREETING: Timeout waiting for server greeting.
+ * @Timeout_ENVELOPE: Timeout for envelope responses.
+ * @Timeout_DATA: Timeout waiting for data transfer to begin.
+ * @Timeout_TRANSFER: Timeout for data transfer phase.
+ * @Timeout_DATA2: Timeout for ? phase.
+ * @Timeout_OVERRIDE_RFC2822_MINIMUM: Bitwise OR with above to override
+ *                                    reccommended minimum timeouts.
+ *
+ * Timeout flags.
+ */
 enum rfc2822_timeouts
   {
     Timeout_GREETING,
@@ -184,10 +223,28 @@ long smtp_set_timeout (smtp_session_t session, int which, long value);
     	RFC 3461.  Delivery Status Notification (DSN)
  */
 
+/**
+ * enum ret_flags - DSN request flags.
+ * @Ret_NOTSET: DSN is not requested.
+ * @Ret_FULL: Request full message in DSN.
+ * @Ret_HDRS: Request only headers in DSN.
+ *
+ * DSN flags specifying requested notification.
+ */
 enum ret_flags { Ret_NOTSET, Ret_FULL, Ret_HDRS };
 int smtp_dsn_set_ret (smtp_message_t message, enum ret_flags flags);
 int smtp_dsn_set_envid (smtp_message_t message, const char *envid);
 
+/**
+ * enum notify_flags - DSN notification conditions.
+ * @Notify_NOTSET: Notify options not requested.
+ * @Notify_NEVER: Never notify.
+ * @Notify_SUCCESS: Notify delivery success.
+ * @Notify_FAILURE: Notify delivery failure.
+ * @Notify_DELAY: Notify delivery is delayed.
+ *
+ * DSN notify flags.
+ */
 enum notify_flags
   {
     Notify_NOTSET,
@@ -209,6 +266,16 @@ int smtp_size_set_estimate (smtp_message_t message, unsigned long size);
 /*
 	RFC 6152.  8bit-MIME Transport
  */
+
+/**
+ * enum e8bitmime_body - Message body type.
+ * @E8bitmime_NOTSET: Body type not declared.
+ * @E8bitmime_7BIT: Body conforms with RFC 5322.
+ * @E8bitmime_8BITMIME: Body uses 8 bit encoding.
+ * @E8bitmime_BINARYMIME: Body uses BINARYMIME encoding.
+ *
+ * 8BITMIME extension flags.
+ */
 enum e8bitmime_body
   {
     E8bitmime_NOTSET,
@@ -221,6 +288,15 @@ int smtp_8bitmime_set_body (smtp_message_t message, enum e8bitmime_body body);
 /*
 	RFC 2852.  Deliver By
  */
+
+/**
+ * enum by_mode - Delivery flags.
+ * @By_NOTSET: Deliver-by notification not requested.
+ * @By_NOTIFY: FIXME
+ * @By_RETURN: FIXME
+ *
+ * DELIVERBY (RFC 2852) extension flags.
+ */
 enum by_mode
   {
     By_NOTSET,
@@ -232,6 +308,12 @@ int smtp_deliverby_set_mode (smtp_message_t message,
 
 /*
     	RFC 3207.  SMTP Starttls extension.
+ */
+/**
+ * enum starttls_option - TLS mode options
+ * @Starttls_DISABLED: Do not use TLS, even if offered by the MTA.
+ * @Starttls_ENABLED: Use TLS if offered by the MTA.
+ * @Starttls_REQUIRED: Exit session if TLS is not offered by the MTA.
  */
 enum starttls_option
   {
@@ -247,7 +329,18 @@ int smtp_starttls_enable (smtp_session_t session, enum starttls_option how);
 int smtp_starttls_set_ctx (smtp_session_t session, SSL_CTX *ctx);
 #endif
 
-/* This is cleverly chosen to be the same as the OpenSSL declaration */
+/**
+ * typedef smtp_starttls_passwordcb_t - Password callback signature.
+ * @buf: Buffer to receive the password.
+ * @buflen: Length of the buffer.
+ * @rwflag: 0 for reading/decryption, 1 for writing/encryption.
+ * @arg: User data passed to smtp_starttls_set_password_cb().
+ *
+ * The callback function declaration is cleverly chosen to be the same as
+ * the OpenSSL declaration.
+ *
+ * Return: Actual length of password.
+ */
 typedef int (*smtp_starttls_passwordcb_t) (char *buf, int buflen,
                                            int rwflag, void *arg);
 int smtp_starttls_set_password_cb (smtp_starttls_passwordcb_t cb, void *arg);

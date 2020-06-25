@@ -22,7 +22,7 @@ If this is problematic for you,  LibESMTP can be built without support for
 features which depend on OpenSSL and the resulting binary will be pure LGPL.
 
 ### dlopen()
-libESMTP requires `dlopen()` to dynamically load plugin modules.
+libESMTP requires `dlopen()` to dynamically load authentication modules.
 
 ### getaddrinfo()
 You will need a modern resolver library providing the getaddrinfo API.

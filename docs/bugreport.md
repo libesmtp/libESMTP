@@ -76,7 +76,7 @@ RFC 5321.
 ## What Not to Report
 Its amazing how often correct behaviour is reported as a bug.  Familiarise
 yourself with the appropriate documentation.  Also read the [libESMTP
-API](c-index) document.  Many people trip up on the subtleties of SMTP and
+API](reference) document.  Many people trip up on the subtleties of SMTP and
 often the documents will answer your question saving your time and mine.
 
 

@@ -1,6 +1,0 @@
-index.md
-	download.md
-	bugreport.md
-	faq.md
-	rationale.md
-	c-index

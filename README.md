@@ -2,7 +2,7 @@
 
 ## What is libESMTP?
 
-LibESMTP is a library to manage posting (or submission of) electronic
+libESMTP is a library to manage posting (or submission of) electronic
 mail using SMTP to a preconfigured Mail Transport Agent (MTA) such as
 Exim or Postfix.  It may be used as part of a Mail User Agent (MUA) or
 another program that must be able to post electronic mail but where mail
