@@ -51,10 +51,19 @@ protocol session is performed by a single function call.
 Reference
 ---------
 
-To use the libESMTP API, include ``libesmtp.h``.  Declarations for deprecated
-symbols must be requested explicitly; define the macro
-``LIBESMTP_ENABLE_DEPRECATED_SYMBOLS`` to be non-zero before including
-``libesmtp.h``.
+To use the libESMTP API, include the following header files:
+``` c
+#include <auth-client.h>
+#include <libesmtp.h>
+```
+
+Declarations for deprecated symbols must be requested explicitly; define the
+macro ``LIBESMTP_ENABLE_DEPRECATED_SYMBOLS`` to be non-zero before including
+libesmtp.h. for example:
+``` c
+#define LIBESMTP_ENABLE_DEPRECATED_SYMBOLS 1
+#include <libesmtp.h>
+```
 
 Internally libESMTP creates and maintains structures to track the state of
 an SMTP protocol session.  Opaque pointers to these structures are passed
@@ -85,10 +94,10 @@ Thread Safety
 LibESMTP is thread-aware, however the application is responsible for
 observing the restrictions below to ensure full thread safety.
 
-Do not access a ``smtp_session_t``, ``smtp_message_t`` or ``smtp_recipient_t``
+Do not access a smtp_session_t, smtp_message_t or smtp_recipient_t
 from more than one thread at a time.  A mutex can be used to protect API calls
 if the application logic cannot guarantee this.  It is especially important to
-observe this restriction during a call to ``smtp_start_session()``.
+observe this restriction during a call to smtp_start_session().
 
 Signal Handling
 ---------------

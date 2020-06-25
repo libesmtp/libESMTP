@@ -1,34 +1,26 @@
-# libESMTP
-## A Library for Posting Electronic Mail
+# Benefits
 
-**libESMTP** is an SMTP client which manages posting (or submission of)
-electronic mail via a preconfigured Mail Transport Agent (MTA).  It may be used
-as part of a Mail User Agent (MUA) or other program that must be able to post
-electronic mail where mail functionality may not be that program's primary
-purpose.
+## Simple
 
-The availability of a reliable, lightweight and thread-safe SMTP client eases
-the task of coding for software authors thus improving the quality of the
-resulting code.  See the [rationale](rationale.md) for development of this
-library.
+libESMTP offloads the developer of the need to handle the complexity of
+negotiating the SMTP protocol and its extensions by providing a simple API
+which configures a connection to the mail server (a "session"), adds messages
+to the session and adds recipients addresses to the messages.  A callback
+function is supplied to read the message.  Submission is then performed in a
+single API call.
 
-## Simple to Use
+## Efficient
 
-libESMTP offloads the application of the need to handle the complexity of
-negotiating the SMTP protocol and its extensions and instead provides a
-simple API which configures a connection to the mail server (a "session"),
-adds messages to the session and adds recipients addresses to the messages.
-A callback function is supplied to read the message.
-Submission is then performed in a single API call.
-
-## Efficiency
-
-libESMTP's primary goal is to be efficient.  Because it it buffers all network
+libESMTP's primary goal is to be efficient.  Because it buffers all network
 traffic and supports the SMTP PIPELINING (RFC 2920) extension when connecting
 to a pipelining SMTP server, libESMTP significantly increases network
 performance, especially on slow connections or those with high latency.  Even
 without a pipelining server libESMTP offers much better performance than would
 be expected with a simple client.
+
+## Thread Safety
+
+Providing a few simple restrictions are observed, libESMTP is thread-safe.
 
 ## Extensions
 
@@ -46,13 +38,13 @@ agents (MSA).
 - [RFC 6152] 8BITMIME
 - [RFC 2852] DELIVERBY
 - [RFC 1985] ETRN
-- [sendmail] XUSR
+- [sendmail] XUSR - *notify sendmail this is an initial submission*
 - [exchange] XEXCH50
 
 Many of these are used automatically if advertised by the MTA. Certain
 extensions require extra information supplied by associated API calls.
 
-# Target Applications
+## Target Applications
 
 libESMTP is intended for use with any application that needs to submit mail;
 that is where a message is first submitted into the transport and delivery
@@ -66,14 +58,7 @@ is intentional since this is undesirable behaviour in a program that is not an
 MTA, and may even be detrimental if the client is behind a firewall which
 blocks access to port 25 on the Internet.
 
-## Licence
-
-libESMTP is copyright © 2001-2020 Brian Stafford, licensed under the
-[GNU Lesser General Public License](https://www.gnu.org/copyleft/lesser.html).
-
-The example programs are
-licensed [GNU General Public Licence](https://www.gnu.org/copyleft/gpl.html).
-
-## Author
-
-libESMTP's primary author is Brian Stafford.
+The availability of a reliable, lightweight and thread-safe SMTP client eases
+the task of coding for software authors thus improving the quality of the
+resulting code.  See the [rationale](rationale.md) for development of this
+library.

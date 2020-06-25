@@ -1,10 +1,13 @@
 API Reference
 =============
 
-This document describes the libESMTP programming interface.  The libESMTP
-API is intended for use as an ESMTP client within a Mail User Agent (MUA) or
-other program that wishes to submit mail to a preconfigured Message
-Submission Agent (MSA).
+This document describes the libESMTP programming interface.
+
+This document is for version 1.0.6.
+
+The libESMTP API is intended for use as an ESMTP client within a Mail User
+Agent (MUA) or other program that wishes to submit mail to a preconfigured
+Message Submission Agent (MSA).
 
 The documentation is believed to be accurate but may not necessarily reflect
 actual behaviour. To quote Douglas Adams:
@@ -26,4 +29,13 @@ If in doubt, consult the source.
    _kdoc/smtp-auth
    _kdoc/smtp-tls
    _kdoc/message-callbacks
+   _kdoc/errors
+
+Auth Client
+-----------
+
+.. toctree::
+   :maxdepth: 2
+
+   _kdoc/auth-client
 

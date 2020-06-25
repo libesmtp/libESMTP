@@ -59,3 +59,5 @@ other MTA to be present on workstations.
 
 **libESMTP** is my attempt at implementing just such a library.
 
+----
+Brian Stafford, November 2000.

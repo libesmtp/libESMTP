@@ -36,6 +36,15 @@
 #include "libesmtp-private.h"
 #include "api.h"
 
+/**
+ * DOC: Errors
+ *
+ * Errors
+ * ------
+ *
+ * Thread safe "errno" for libESMTP.
+ */
+
 struct errno_vars
   {
     int error;
@@ -120,14 +129,6 @@ get_error_internal (struct errno_vars *err)
   return eai_to_libesmtp (err->herror);
 }
 
-/**
- * smtp_errno:
- *
- * Retrieve the error code for the most recently failed API in the calling
- * thread.
- *
- * Returns: libESMTP error code.
- */
 #ifndef USE_PTHREADS
 
 static struct errno_vars libesmtp_errno;
@@ -205,6 +206,14 @@ set_herror (int code)
     set_herror_internal (value, code);
 }
 
+/**
+ * smtp_errno() - Get error number.
+ *
+ * Retrieve the error code for the most recently failed API in the calling
+ * thread.
+ *
+ * Return: libESMTP error code.
+ */
 int
 smtp_errno (void)
 {
@@ -249,7 +258,7 @@ static const char *libesmtp_errors[] =
   };
 
 /**
- * smtp_strerror:
+ * smtp_strerror() - Translate error number to text.
  * @error:	Error number to translate
  * @buf:	Buffer to receive text
  * @buflen:	Buffer length
@@ -257,7 +266,7 @@ static const char *libesmtp_errors[] =
  * Translate a libESMTP error number to a string suitable for use in an
  * application error message.  The resuting string is copied into #buf.
  *
- * Returns: A pointer to the #buf on success or %NULL on failure.
+ * Return: A pointer to @buf on success or %NULL on failure.
  */
 char *
 smtp_strerror (int error, char buf[], size_t buflen)

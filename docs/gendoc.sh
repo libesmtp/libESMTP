@@ -4,7 +4,8 @@ SRC=..
 DST=_kdoc
 
 SOURCES="libesmtp.h message-callbacks.c
-smtp-api.c  smtp-auth.c  smtp-etrn.c  smtp-tls.c
+smtp-api.c  smtp-auth.c  smtp-etrn.c  smtp-tls.c errors.c
+auth-client.c
 "
 
 mkdir -p $DST
