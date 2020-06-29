@@ -28,24 +28,12 @@
 #include <pthread.h>
 #endif
 
-#if HAVE_DLSYM
-# include <dlfcn.h>
-# ifndef DLEXT
+#include <dlfcn.h>
+#ifndef DLEXT
 #  define DLEXT ".so"
-# endif
-# ifndef RTLD_LAZY
+#endif
+#ifndef RTLD_LAZY
 #  define RTLD_LAZY RTLD_NOW
-# endif
-typedef void *dlhandle_t;
-#else
-# include <ltdl.h>
-# ifndef DLEXT
-#  define DLEXT ""
-# endif
-typedef lt_dlhandle dlhandle_t;
-# define dlopen(n,f)	lt_dlopenext((n))
-# define dlsym(h,s)	lt_dlsym((h),(s))
-# define dlclose(h)	lt_dlclose((h))
 #endif
 
 #include <stdlib.h>
@@ -66,7 +54,7 @@ static pthread_mutex_t plugin_mutex = PTHREAD_MUTEX_INITIALIZER;
 struct auth_plugin
   {
     struct auth_plugin *next;
-    dlhandle_t module;
+    void *module;
     const struct auth_client_plugin *info;
   };
 static struct auth_plugin *client_plugins, *end_client_plugins;
@@ -85,7 +73,7 @@ struct auth_context
 #define mechanism_disabled(p,a,f)		\
 	  (((p)->flags & AUTH_PLUGIN_##f) && !((a)->flags & AUTH_PLUGIN_##f))
 
-#if HAVE_DLSYM && defined AUTHPLUGINDIR
+#if defined AUTHPLUGINDIR
 # define PLUGIN_DIR AUTHPLUGINDIR "/"
 #else
 # define PLUGIN_DIR
@@ -111,7 +99,7 @@ plugin_name (const char *str)
 }
 
 static int
-append_plugin (dlhandle_t module, const struct auth_client_plugin *info)
+append_plugin (void *module, const struct auth_client_plugin *info)
 {
   struct auth_plugin *auth_plugin;
 
@@ -137,7 +125,7 @@ append_plugin (dlhandle_t module, const struct auth_client_plugin *info)
 static const struct auth_client_plugin *
 load_client_plugin (const char *name)
 {
-  dlhandle_t module;
+  void *module;
   char *plugin;
   const struct auth_client_plugin *info;
 
@@ -173,19 +161,6 @@ load_client_plugin (const char *name)
 void
 auth_client_init (void)
 {
-#if !HAVE_DLSYM
-# ifdef USE_PTHREADS
-  pthread_mutex_lock (&plugin_mutex);
-# endif
-  lt_dlinit ();
-# ifdef AUTHPLUGINDIR
-  lt_dladdsearchdir (AUTHPLUGINDIR);
-# endif
-  /* Add builtin mechanisms to the plugin list */
-# ifdef USE_PTHREADS
-  pthread_mutex_unlock (&plugin_mutex);
-# endif
-#endif
 }
 
 void
@@ -205,9 +180,6 @@ auth_client_exit (void)
       free (plugin);
     }
   client_plugins = end_client_plugins = NULL;
-#if !HAVE_DLSYM
-  lt_dlexit ();
-#endif
 #ifdef USE_PTHREADS
   pthread_mutex_unlock (&plugin_mutex);
 #endif

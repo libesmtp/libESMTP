@@ -43,11 +43,7 @@ add_project_arguments(cc.get_supported_arguments(cflags), language: 'c')
 ################################################################################
 # dependencies
 ################################################################################
-dldep = cc.find_library('dl', required : false)
-have_dl = dldep.found()
-if not dldep.found()
-    dldep = cc.find_library('ltdl')
-endif
+dldep = cc.find_library('dl')
 ssldep = dependency('openssl', version : '>=1.1.0', required : get_option('tls'))
 threaddep = dependency('threads', required : get_option('pthreads'))
 
@@ -89,8 +85,6 @@ conf.set_quoted('AUTHPLUGINDIR', get_option('prefix') / auth_plugin_dir)
 conf.set_quoted('SO_VERSION', libesmtp_so_version)
 conf.set_quoted('VERSION', libesmtp_version)
 
-conf.set('HAVE_DLSYM', have_dl.to_int(), description : 'POSIX.1-2001')
-conf.set('HAVE_GETADDRINFO', 1, description : 'POSIX.1-2001, POSIX.1-2008.')
 conf.set('HAVE_GETHOSTNAME', 1, description : 'POSIX.1-2001, POSIX.1-2008.')
 conf.set('HAVE_GETTIMEOFDAY', true, description : 'POSIX.1-2001, obsolete POSIX.1-2008.')
 conf.set('HAVE_LIBCRYPTO', ssldep.found().to_int())
