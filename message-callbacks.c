@@ -23,22 +23,38 @@
 /* Standard callback functions for use by message-source.c
    An application requiring anything more sophisticated than either of
    these will need to supply its own callback.  */
-#ifdef HAVE_CONFIG_H
 #include <config.h>
-#endif
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "libesmtp.h"
 
-/* Callback function to read the message from a file.  The file MUST be
-   formatted according to RFC 5322 and lines MUST be terminated with the
-   canonical CRLF sequence.  Furthermore, RFC 5321 line length
-   limitations must be observed (1000 octets maximum). */
-//XXX check the line length
 #define BUFLEN	8192
 
+/**
+ * DOC: Message Callbacks.
+ *
+ * Message Callbacks
+ * -----------------
+ *
+ * libESMTP provides basic message callbacks to handle two common cases,
+ * reading from a file and reading from a string.  In both cases the message
+ * *must* be formatted according to RFC 5322 and lines *must* be terminated
+ * with the canonical CRLF sequence.  Furthermore, RFC 5321 line length
+ * limitations must be observed (1000 octets maximum).
+ */
+
+/**
+ * _smtp_message_fp_cb() - Read message from a file.
+ * @ctx: context data for the message.
+ * @len: length of message data returned to the application.
+ * @arg: application data (closure) passed to the callback.
+ *
+ * Callback function to read the message from a file.
+ *
+ * Return: A pointer to message data which remains valid until the next call.
+ */
 const char *
 _smtp_message_fp_cb (void **ctx, int *len, void *arg)
 {
@@ -61,6 +77,16 @@ struct state
     int length;
   };
 
+/**
+ * _smtp_message_str_cb() - Read message from a string.
+ * @ctx: context data for the message.
+ * @len: length of message data returned to the application.
+ * @arg: application data (closure) passed to the callback.
+ *
+ * Callback function to read the message from a string.
+ *
+ * Return: A pointer to message data which remains valid until the next call.
+ */
 const char *
 _smtp_message_str_cb (void **ctx, int *len, void *arg)
 {

@@ -20,9 +20,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifdef HAVE_CONFIG_H
 #include <config.h>
-#endif
 
 #include <stdio.h>
 #include <sys/types.h>
@@ -39,6 +37,26 @@
 #endif
 
 #include "rfc2822date.h"
+
+#if HAVE_STRFTIME
+
+char *
+rfc2822date (char buf[], size_t buflen, time_t *timedate)
+{
+#if HAVE_LOCALTIME_R
+  struct tm tmbuf, *tm;
+
+  tm = localtime_r (timedate, &tmbuf);
+#else
+  struct tm *tm;
+
+  tm = localtime (timedate);
+#endif
+  strftime (buf, buflen, "%a, %d %b %Y %T %z", tm);
+  return buf;
+}
+
+#else
 
 #if !HAVE_STRUCT_TM_TM_ZONE
 /* Calculate seconds since 1970 from the struct tm.  Leap seconds are
@@ -116,3 +134,5 @@ rfc2822date (char buf[], size_t buflen, time_t *timedate)
 	    dir, minutes / 60, minutes % 60);
   return buf;
 }
+
+#endif

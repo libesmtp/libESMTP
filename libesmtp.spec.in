@@ -2,6 +2,7 @@
 # Based on original file by Carlos Morgado <chbm@chbm.nu>
 # Updates from Pawel Salek <pawsa@theochem.kth.se>
 # Updates from Christophe Lambin <clambin@easynet.be>
+# Meson updates from Brian Stafford <brian.stafford60@gmail.com>
 
 Summary:  	SMTP client library
 
@@ -9,8 +10,11 @@ Summary:  	SMTP client library
 %define ver	@VERSION@
 %define rel    	1
 %define prefix 	/usr
-%define plugindir %{prefix}/lib/esmtp-plugins
-%define openssl	0.9.6
+%define plugindir %{prefix}/@PLUGINDIR@
+%define libdir %{prefix}/@LIBDIR@
+%define bindir %{prefix}/@BINDIR@
+%define includedir %{prefix}/include
+%define openssl	1.1.0
 
 Name:     	%{pkg}
 Version:  	%{ver}
@@ -21,13 +25,16 @@ Group:    	System Environment/Libraries
 Summary:        SMTP client library.
 Source:  	%{pkg}-%{ver}.tar.bz2
 
-URL:       	http://www.stafford.uklinux.net/libesmtp/
+URL:       	@URL@
 BuildRoot:	/var/tmp/%{pkg}-root
 Prefix:		%{prefix}
 
-Packager:	Brian Stafford <brian@stafford.uklinux.net>
+Packager:	@EMAIL@
 Provides:	%{pkg}
 Docdir:		%{_docdir}
+
+BuildRequires:	meson
+BuildRequires:	gcc
 
 @RPM_REQUIRES@	@RPM_OPENSSL@
 @RPM_BUILDREQUIRES@	@RPM_OPENSSLDEVEL@
@@ -49,34 +56,27 @@ Requires:	%{pkg} = %{ver}
 The libesmtp-devel package contains headers and development libraries
 necessary for building programs against libesmtp.
 
- 
-%prep 
-%setup -T -b 0
-#%patch
+%prep
+%autosetup -c
 
 %build
-CFLAGS="$RPM_OPT_FLAGS" ./configure --prefix=%{prefix} --enable-all --with-auth-plugin-dir=%{plugindir} --enable-pthreads 
-make
+%meson
+%meson_build
 
 %install
-rm -rf $RPM_BUILD_ROOT
-make DESTDIR="$RPM_BUILD_ROOT" install
-
-%clean
-rm -rf $RPM_BUILD_ROOT
-
+%meson_install
 
 %files
 %defattr(-, root, root)
-%doc AUTHORS COPYING COPYING.GPL NEWS Notes README
-%{prefix}/lib/libesmtp.so.*
+%doc AUTHORS COPYING.LIB COPYING.GPL NEWS Notes README.md
+%{libdir}/libesmtp.so.*
 %{plugindir}/sasl-*
 
 %files devel
 %defattr(-,root,root)
-%{prefix}/bin/libesmtp-config
-%{prefix}/include/*
-%{prefix}/lib/libesmtp.so
-%{prefix}/lib/libesmtp.la
-%{prefix}/lib/libesmtp.a
+%{bindir}/libesmtp-config
+%{includedir}/*
+%{libdir}/libesmtp.so
+%{libdir}/libesmtp.la
+%{libdir}/libesmtp.a
 

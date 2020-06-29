@@ -5,7 +5,7 @@
  *  formatted electronic mail messages using the SMTP protocol described
  *  in RFC 2821.
  *
- *  Copyright (C) 2002  Brian Stafford  <brian@stafford.uklinux.net>
+ *  Copyright (C) 2002	Brian Stafford	<brian@stafford.uklinux.net>
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
@@ -21,9 +21,7 @@
  *  License along with this library; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-#if HAVE_CONFIG_H
 #include <config.h>
-#endif
 
 #include <stdlib.h>
 #include <string.h>
@@ -57,7 +55,7 @@ typedef	uint32 unsigned32_t;
 /* Everything in NTLM is little endian binary, therefore byte swapping
    is needed on big endian platforms.  For simplicity, always provide
    byte swapping functions rather than trying to detect the local
-   platform's support.  These functions make no effort to be efficient
+   platform's support.	These functions make no effort to be efficient
    since this code doesn't require efficient byte swapping. */
 
 #define SWAP(a,b)	do { unsigned char s = u.swap[(a)];	\
@@ -140,7 +138,7 @@ read_uint32 (const char *buf, size_t offset)
 
 static inline void
 write_string (char *buf, size_t offset, size_t *str_offset,
-              const void *data, size_t len)
+	      const void *data, size_t len)
 {
   if (data == NULL)
     len = 0;
@@ -179,15 +177,14 @@ write_string (char *buf, size_t offset, size_t *str_offset,
 static const char NTLMSSP[] = "NTLMSSP";
 
 /* Build a NTLM type 1 structure in the buffer.
-        domain - the NT domain the workstation belongs to
+	domain - the NT domain the workstation belongs to
    workstation - the NT (netbios) name of the workstation */
 size_t
 ntlm_build_type_1 (char *buf, size_t buflen, unsigned int flags,
-                   const char *domain, const char *workstation)
+		   const char *domain, const char *workstation)
 {
   size_t offset = T1SIZE;
   size_t len;
-  unsigned char *up;
   char string[256];
 
   if (buflen < offset)
@@ -195,7 +192,6 @@ ntlm_build_type_1 (char *buf, size_t buflen, unsigned int flags,
   memcpy (buf, NTLMSSP, 8);
   write_uint32 (buf, MSGTYPE, 1);
   write_uint32 (buf, T1FLAGS, flags);
-  up = NULL;
   len = 0;
   if (domain != NULL)
     {
@@ -205,7 +201,6 @@ ntlm_build_type_1 (char *buf, size_t buflen, unsigned int flags,
       lm_uccpy (string, len, domain);
     }
   write_string (buf, T1DOMAIN, &offset, string, len);
-  up = NULL;
   len = 0;
   if (workstation != NULL)
     {
@@ -221,7 +216,7 @@ ntlm_build_type_1 (char *buf, size_t buflen, unsigned int flags,
 /* Build a NTLM type 2 structure in the buffer */
 size_t
 ntlm_build_type_2 (char *buf, size_t buflen, unsigned int flags,
-                   const unsigned char *nonce, const char *domain)
+		   const unsigned char *nonce, const char *domain)
 {
   size_t offset = T2SIZE;
   size_t len;
@@ -253,8 +248,8 @@ ntlm_build_type_2 (char *buf, size_t buflen, unsigned int flags,
 /* Build a NTLM type 3 structure in the buffer */
 size_t
 ntlm_build_type_3 (char *buf, size_t buflen, unsigned int flags,
-                   const unsigned char *lm_resp, const unsigned char *nt_resp,
-                   const char *domain, const char *user, const char *workstation)
+		   const unsigned char *lm_resp, const unsigned char *nt_resp,
+		   const char *domain, const char *user, const char *workstation)
 {
   size_t offset = T3SIZE;
   size_t len;
@@ -315,7 +310,7 @@ ntlm_build_type_3 (char *buf, size_t buflen, unsigned int flags,
    supplied buffer (which must be eight bytes long) */
 size_t
 ntlm_parse_type_2 (const char *buf, size_t buflen, unsigned int *flags,
-                   unsigned char *nonce, char **domain)
+		   unsigned char *nonce, char **domain)
 {
   if (buflen < T2SIZE)
     return 0;

@@ -20,9 +20,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifdef HAVE_CONFIG_H
 #include <config.h>
-#endif
 
 #include <stdarg.h>
 #include <string.h>
@@ -42,6 +40,24 @@
    bowels of the library and RFC hell.
  */
 
+/**
+ * DOC: libESMTP API Reference
+ *
+ * Core API
+ * --------
+ *
+ * The following describes the libESMTP core API which implements the
+ * functionality covered in RFC 5321 and RFC 5322.
+ */
+
+/**
+ * smtp_create_session() - Create a libESMTP session.
+ * @void: No arguments.
+ *
+ * Create a descriptor which maintains internal state for the SMTP session.
+ *
+ * Return: A new SMTP session or %NULL on failure.
+ */
 smtp_session_t
 smtp_create_session (void)
 {
@@ -55,7 +71,6 @@ smtp_create_session (void)
 
   memset (session, 0, sizeof (struct smtp_session));
 
-  //XXX
   /* Set the default timeouts to the minimum values described in RFC 5322 */
   session->greeting_timeout = GREETING_DEFAULT;
   session->envelope_timeout = ENVELOPE_DEFAULT;
@@ -66,6 +81,20 @@ smtp_create_session (void)
   return session;
 }
 
+/**
+ * smtp_set_server() - Set host and service for submission MTA.
+ * @session: The session.
+ * @hostport: Hostname and port (service) for the SMTP server.
+ *
+ * Set the host name and service for the client connection.  This is specified
+ * in the format ``host.example.org[:service]`` with no whitespace surrounding
+ * the colon if ``service`` is specified.  ``service`` may be a name from
+ * ``/etc/services`` or a decimal port number.  If not specified the port
+ * defaults to 587. Host and service name validity is not checked until an
+ * attempt to connect to the remote host.
+ *
+ * Return: Zero on failure, non-zero on success.
+ */
 int
 smtp_set_server (smtp_session_t session, const char *hostport)
 {
@@ -96,10 +125,21 @@ smtp_set_server (smtp_session_t session, const char *hostport)
   return 1;
 }
 
+/**
+ * smtp_set_hostname() - Set the local host name.
+ * @session: The session.
+ * @hostname: The local hostname.
+ *
+ * Set the name of the localhost.  If ``hostname`` is %NULL, the local host
+ * name will be determined using uname().  If the system does not provide
+ * uname() or equivalent, the ``hostname`` parameter may not be %NULL.
+ *
+ * Return: Zero on failure, non-zero on success.
+ */
 int
 smtp_set_hostname (smtp_session_t session, const char *hostname)
 {
-#ifdef HAVE_GETHOSTNAME
+#if HAVE_GETHOSTNAME
   SMTPAPI_CHECK_ARGS (session != NULL, 0);
 #else
   SMTPAPI_CHECK_ARGS (session != NULL && hostname != NULL, 0);
@@ -107,7 +147,7 @@ smtp_set_hostname (smtp_session_t session, const char *hostname)
 
   if (session->localhost != NULL)
     free (session->localhost);
-#ifdef HAVE_GETHOSTNAME
+#if HAVE_GETHOSTNAME
   if (hostname == NULL)
     {
       session->localhost = NULL;
@@ -123,6 +163,16 @@ smtp_set_hostname (smtp_session_t session, const char *hostname)
   return 1;
 }
 
+/**
+ * smtp_add_message() - Add a message to the session.
+ * @session: The session.
+ *
+ * Add a message to the list of messages to be transferred to the remote MTA
+ * during an SMTP session.
+ *
+ * Return: The descriptor for the message state, or %NULL on
+ * failure.
+ */
 smtp_message_t
 smtp_add_message (smtp_session_t session)
 {
@@ -142,6 +192,18 @@ smtp_add_message (smtp_session_t session)
   return message;
 }
 
+/**
+ * smtp_enumerate_messages() - Call function for each message in session.
+ * @session: The session.
+ * @cb:	callback function
+ * @arg: user data passed to the callback
+ *
+ * Call the callback function once for each message in an smtp session.  The
+ * arg parameter is passed back to the application via the callback's parameter
+ * of the same name.
+ *
+ * Return: Zero on failure, non-zero on success.
+ */
 int
 smtp_enumerate_messages (smtp_session_t session,
 			 smtp_enumerate_messagecb_t cb, void *arg)
@@ -155,6 +217,20 @@ smtp_enumerate_messages (smtp_session_t session,
   return 1;
 }
 
+/**
+ * smtp_message_transfer_status() - Retrieve message status.
+ * @message: The message.
+ *
+ * Retrieve the message transfer success/failure status from a previous SMTP
+ * session. This includes SMTP status codes, RFC 2034 enhanced status codes, if
+ * available, and text from the server describing the status.  If a message is
+ * marked with a success or permanent failure status, it will not be resent if
+ * smtp_start_session() is called again.
+ *
+ * Return: %NULL if no status information is available, otherwise a pointer to
+ *         the status information.  The pointer remains valid until the next
+ *         call to libESMTP in the same thread.
+ */
 const smtp_status_t *
 smtp_message_transfer_status (smtp_message_t message)
 {
@@ -163,6 +239,28 @@ smtp_message_transfer_status (smtp_message_t message)
   return &message->message_status;
 }
 
+/**
+ * smtp_set_reverse_path() - Set reverse path mailbox.
+ * @message: The message.
+ * @mailbox: Reverse path mailbox.
+ *
+ * Set the reverse path (envelope sender) mailbox address.  @mailbox must be an
+ * address using the syntax specified in RFC 5321.  If a null reverse path is
+ * required, specify @mailbox as %NULL or ``""``.
+ *
+ * The reverse path mailbox address is used to generate a ``From:`` header when
+ * the message neither contains a ``From:`` header nor has one been specified
+ * using smtp_set_header().
+ *
+ * It is strongly reccommended that the message supplies a From: header
+ * specifying a single mailbox or a Sender: header and a From: header
+ * specifying multiple mailboxes or that the libESMTP header APIs are used to
+ * create them.
+ *
+ * Not calling this API has the same effect as specifing @mailbox as %NULL.
+ *
+ * Return: Zero on failure, non-zero on success.
+ */
 int
 smtp_set_reverse_path (smtp_message_t message, const char *mailbox)
 {
@@ -180,6 +278,18 @@ smtp_set_reverse_path (smtp_message_t message, const char *mailbox)
   return 1;
 }
 
+/**
+ * smtp_reverse_path_status() - Get the reverse path status.
+ * @message: The message.
+ *
+ * Retrieve the reverse path status from a previous SMTP session.  This
+ * includes SMTP status codes, RFC 2034 enhanced status codes, if available,
+ * and text from the server describing the status.
+ *
+ * Return: %NULL if no status information is available,
+ * otherwise a pointer to the status information.  The pointer remains valid
+ * until the next call to libESMTP in the same thread.
+ */
 const smtp_status_t *
 smtp_reverse_path_status (smtp_message_t message)
 {
@@ -188,6 +298,16 @@ smtp_reverse_path_status (smtp_message_t message)
   return &message->reverse_path_status;
 }
 
+/**
+ * smtp_message_reset_status() - Reset message status.
+ * @message: The message.
+ *
+ * Reset the message status to the state it would have before
+ * smtp_start_session() is called for the first time on the containing session.
+ * This may be used to force libESMTP to resend certain messages.
+ *
+ * Return: Zero on failure, non-zero on success.
+ */
 int
 smtp_message_reset_status (smtp_message_t message)
 {
@@ -198,6 +318,28 @@ smtp_message_reset_status (smtp_message_t message)
   return 1;
 }
 
+/**
+ * smtp_add_recipient() - Add a message recipient.
+ * @message: The message.
+ * @mailbox: Recipient mailbox address.
+ *
+ * Add a recipient to the message.  @mailbox must be an address using the
+ * syntax specified in RFC 5321.
+ *
+ * If neither the message contains a ``To:`` header nor a ``To:`` is specified
+ * using smtp_set_header(), one header will be automatically generated using
+ * the list of envelope recipients.
+ *
+ * It is strongly reccommended that the message supplies ``To:``, ``Cc:`` and
+ * ``Bcc:`` headers or that the libESMTP header APIs are used to create them.
+ *
+ * The envelope recipient need not be related to the To/Cc/Bcc recipients, for
+ * example, when a mail is resent to the recipients of a mailing list or as a
+ * result of alias expansion.
+ *
+ * Return: The descriptor for the recipient state or %NULL
+ * for failure.
+ */
 smtp_recipient_t
 smtp_add_recipient (smtp_message_t message, const char *mailbox)
 {
@@ -225,6 +367,16 @@ smtp_add_recipient (smtp_message_t message, const char *mailbox)
   return recipient;
 }
 
+/**
+ * smtp_enumerate_recipients() - Call a function for each recipient.
+ * @message: The message.
+ * @cb: Callback function to process recipient.
+ * @arg: User data passed to the callback.
+ *
+ * Call the callback function once for each recipient in the SMTP message.
+ *
+ * Return: Zero on failure, non-zero on success.
+ */
 int
 smtp_enumerate_recipients (smtp_message_t message,
 			   smtp_enumerate_recipientcb_t cb, void *arg)
@@ -240,6 +392,21 @@ smtp_enumerate_recipients (smtp_message_t message,
   return 1;
 }
 
+/**
+ * smtp_recipient_status() - Get the recipient status.
+ * @recipient: The recipient.
+ *
+ * Retrieve the recipient success/failure status from a previous SMTP session.
+ * This includes SMTP status codes, RFC 2034 enhanced status codes, if
+ * available and text from the server describing the status.  If a recipient is
+ * marked with a success or permanent failure status, it will not be resent if
+ * smtp_start_session() is called again, however it may be used when generating
+ * ``To:`` or ``Cc:`` headers if required.
+ *
+ * Return: %NULL if no status information is available,
+ * otherwise a pointer to the status information.  The pointer remains valid
+ * until the next call to libESMTP in the same thread.
+ */
 const smtp_status_t *
 smtp_recipient_status (smtp_recipient_t recipient)
 {
@@ -248,6 +415,17 @@ smtp_recipient_status (smtp_recipient_t recipient)
   return &recipient->status;
 }
 
+/**
+ * smtp_recipient_check_complete() - Check if recipient processing is completed.
+ * @recipient: The recipient.
+ *
+ * Check whether processing is complete for the specified recipient of the
+ * message.  Processing is considered complete when an MTA has assumed
+ * responsibility for delivering the message, or if it has indicated a
+ * permanent failure.
+ *
+ * Return: Zero if processing is not complete, non-zero otherwise.
+ */
 int
 smtp_recipient_check_complete (smtp_recipient_t recipient)
 {
@@ -256,6 +434,17 @@ smtp_recipient_check_complete (smtp_recipient_t recipient)
   return recipient->complete;
 }
 
+/**
+ * smtp_recipient_reset_status() - Reset recipient status.
+ * @recipient: The recipient.
+ *
+ * Reset the recipient status to the state it would have before
+ * smtp_start_session() is called for the first time on the containing session.
+ * This is used to force the libESMTP to resend previously successful
+ * recipients.
+ *
+ * Return: Zero on failure, non-zero on success.
+ */
 int
 smtp_recipient_reset_status (smtp_recipient_t recipient)
 {
@@ -266,7 +455,27 @@ smtp_recipient_reset_status (smtp_recipient_t recipient)
   return 1;
 }
 
-/* DSN (RFC 3461) */
+/**
+ * DOC: RFC 3461.
+ *
+ * Delivery Status Notification (DSN)
+ * ----------------------------------
+ *
+ * The following APIs implement Delivery Status Notification (DSN) as
+ * described in RFC 3461.
+ */
+
+
+/**
+ * smtp_dsn_set_ret() - Set DSN return flags.
+ * @message: The message.
+ * @flags: an ``enum ret_flags``
+ *
+ * Instruct the reporting MTA whether to include the full content of the
+ * original message in the Delivery Status Notification, or just the headers.
+ *
+ * Return: Zero on failure, non-zero on success.
+ */
 int
 smtp_dsn_set_ret (smtp_message_t message, enum ret_flags flags)
 {
@@ -278,6 +487,17 @@ smtp_dsn_set_ret (smtp_message_t message, enum ret_flags flags)
   return 1;
 }
 
+/**
+ * smtp_dsn_set_envid() - Set the envelope identifier.
+ * @message: The message.
+ * @envid: Envelope idientifier.
+ *
+ * Set the envelope identifier.  This value is returned in the
+ * DSN and may be used by the MUA to associate the DSN with the
+ * message that caused it to be generated.
+ *
+ * Return: Zero on failure, non-zero on success.
+ */
 int
 smtp_dsn_set_envid (smtp_message_t message, const char *envid)
 {
@@ -293,6 +513,18 @@ smtp_dsn_set_envid (smtp_message_t message, const char *envid)
   return 1;
 }
 
+
+/**
+ * smtp_dsn_set_notify() - Set the DSN notify flags.
+ * @recipient: The recipient.
+ * @flags: An ``enum notify_flags``
+ *
+ * Set the DSN notify options.  Flags may be %Notify_NOTSET or %Notify_NEVER or
+ * the bitwise OR of any combination of %Notify_SUCCESS, %Notify_FAILURE and
+ * %Notify_DELAY.
+ *
+ * Return: Zero on failure, non-zero on success.
+ */
 int
 smtp_dsn_set_notify (smtp_recipient_t recipient, enum notify_flags flags)
 {
@@ -304,6 +536,20 @@ smtp_dsn_set_notify (smtp_recipient_t recipient, enum notify_flags flags)
   return 1;
 }
 
+/**
+ * smtp_dsn_set_orcpt() - Set the DSN ORCPT option.
+ * @recipient: The recipient.
+ * @address_type: String specifying the address type.
+ * @address: String specifying the original recipient address.
+ *
+ * Set the DSN ORCPT option. This DSN option is used only when performing
+ * mailing list expansion or similar situations when the envelope recipient no
+ * longer matches the recipient for whom the DSN is to be generated.  Probably
+ * only useful to an MTA and should not normally be used by an MUA or other
+ * program which submits mail.
+ *
+ * Return: Non zero on success, zero on failure.
+ */
 int
 smtp_dsn_set_orcpt (smtp_recipient_t recipient,
 		    const char *address_type, const char *address)
@@ -327,7 +573,27 @@ smtp_dsn_set_orcpt (smtp_recipient_t recipient,
   return 1;
 }
 
-/* SIZE (RFC 1870) */
+/**
+ * DOC: RFC 1870
+ *
+ * Size Extention
+ * --------------
+ *
+ * The following APIs implement the SMTP size extention as
+ * described in RFC 1870.
+ */
+
+
+/**
+ * smtp_size_set_estimate() - Set the message size estimate.
+ * @message: The message.
+ * @size: The size estimate
+ *
+ * Used by the application to supply an estimate of the size of the
+ * message to be transferred.
+ *
+ * Return: Non zero on success, zero on failure.
+ */
 int
 smtp_size_set_estimate (smtp_message_t message, unsigned long size)
 {
@@ -337,7 +603,30 @@ smtp_size_set_estimate (smtp_message_t message, unsigned long size)
   return 1;
 }
 
-/* 8BITMIME (RFC 6152) */
+/**
+ * DOC: RFC 6152.
+ *
+ * 8bit-MIME Transport Extension
+ * -----------------------------
+ *
+ * The 8-bit MIME extension described in RFC 6152 allows an SMTP client to
+ * declare the message body is either in strict conformance with RFC 5322 or
+ * that it is a MIME document where some or all of the MIME parts use 8-bit
+ * encoding.
+ */
+
+
+/**
+ * smtp_8bitmime_set_body() - Set message body options.
+ * @message: The message.
+ * @body: Constant from &enum e8bitmime_body.
+ *
+ * Declare the message body conformance.  If the body type is not
+ * %E8bitmime_NOTSET, libESMTP will use the event callback to notify the
+ * application if the MTA does not support the ``8BITMIME`` extension.
+ *
+ * Return: Non zero on success, zero on failure.
+ */
 int
 smtp_8bitmime_set_body (smtp_message_t message, enum e8bitmime_body body)
 {
@@ -358,6 +647,27 @@ smtp_8bitmime_set_body (smtp_message_t message, enum e8bitmime_body body)
 }
 
 /* DELIVERBY (RFC 2852) */
+/**
+ * DOC: RFC 2852.
+ *
+ * Deliver By Extension
+ * --------------------
+ *
+ * # FIXME
+ */
+
+
+/**
+ * smtp_deliverby_set_mode() - Set delivery tracing and conditions. 
+ * @message: The message.
+ * @time: Deliver ny specified time.
+ * @mode: Delivery mode.
+ * @trace: Trace mode.
+ *
+ * FIXME
+ *
+ * Return: Non zero on success, zero on failure.
+ */
 int
 smtp_deliverby_set_mode (smtp_message_t message,
 			 long time, enum by_mode mode, int trace)
@@ -372,6 +682,24 @@ smtp_deliverby_set_mode (smtp_message_t message,
   return 1;
 }
 
+/**
+ * DOC: Core API
+ *
+ * Core API
+ * --------
+ *
+ */
+
+/**
+ * smtp_set_messagecb() - Set message reader.
+ * @message: The message.
+ * @cb: Callback function.
+ * @arg: application data (closure) passed to the callback.
+ *
+ * Set a callback function to read the message.
+ *
+ * Return: Non zero on success, zero on failure.
+ */
 int
 smtp_set_messagecb (smtp_message_t message, smtp_messagecb_t cb, void *arg)
 {
@@ -382,6 +710,16 @@ smtp_set_messagecb (smtp_message_t message, smtp_messagecb_t cb, void *arg)
   return 1;
 }
 
+/**
+ * smtp_set_eventcb() - Set event callback.
+ * @session: The session.
+ * @cb: Callback function.
+ * @arg: application data (closure) passed to the callback.
+ *
+ * Set callback to be called as protocol events occur.
+ *
+ * Return: Non zero on success, zero on failure.
+ */
 int
 smtp_set_eventcb (smtp_session_t session, smtp_eventcb_t cb, void *arg)
 {
@@ -392,6 +730,21 @@ smtp_set_eventcb (smtp_session_t session, smtp_eventcb_t cb, void *arg)
   return 1;
 }
 
+/**
+ * smtp_set_monitorcb() - Set protocol monitor.
+ * @session: The session.
+ * @cb: Callback function.
+ * @arg: application data (closure) passed to the callback.
+ * @headers: non-zero to view headers.
+ *
+ * Set callback to be monitor the SMTP session.  The monitor function is called
+ * to with the text of the protocol exchange and is flagged as being from the
+ * server or the client.  Because the message body is potentially large it is
+ * excluded from the monitor.  However, @headers is non-zero the message
+ * headers are monitored.
+ *
+ * Return: Non zero on success, zero on failure.
+ */
 int
 smtp_set_monitorcb (smtp_session_t session, smtp_monitorcb_t cb, void *arg,
 		    int headers)
@@ -404,13 +757,33 @@ smtp_set_monitorcb (smtp_session_t session, smtp_monitorcb_t cb, void *arg,
   return 1;
 }
 
+/**
+ * smtp_start_session() - Start an SMTP session.
+ * @session: The session to start.
+ *
+ * Initiate a mail submission session with an SMTP server.
+ *
+ * This connects to an SMTP server and transfers the messages in the session.
+ * The SMTP envelope is constructed using the message and recipient parameters
+ * set up previously.  The message callback is then used to read the message
+ * contents to the server.  As the RFC 5322 headers are read from the
+ * application, they may be processed.  Header processing terminates when the
+ * first line containing only CR-LF is encountered.  The remainder of the
+ * message is copied verbatim.
+ *
+ * This call is atomic in the sense that a connection to the server is made
+ * only when this is called and is closed down before it returns, i.e. there is
+ * no connection to the server outside this function.
+ *
+ * Return: Zero on failure, non-zero on success.
+ */
 int
 smtp_start_session (smtp_session_t session)
 {
   smtp_message_t message;
 
   SMTPAPI_CHECK_ARGS (session != NULL && session->host != NULL, 0);
-#ifndef HAVE_GETHOSTNAME
+#if !HAVE_GETHOSTNAME
   SMTPAPI_CHECK_ARGS (session->localhost != NULL, 0);
 #endif
 
@@ -425,6 +798,18 @@ smtp_start_session (smtp_session_t session)
   return do_session (session);
 }
 
+/**
+ * smtp_destroy_session() - Destroy a libESMTP session.
+ * @session: The session.
+ *
+ * Deallocate all resources associated with the SMTP session.
+ *
+ * Note that any application data set will not be destroyed.  To do this the
+ * application must explicitly enumerate all messages and their recipients, and
+ * retrieve the data to be freed.
+ *
+ * Return: always returns 1
+ */
 int
 smtp_destroy_session (smtp_session_t session)
 {
@@ -437,6 +822,9 @@ smtp_destroy_session (smtp_session_t session)
   destroy_auth_mechanisms (session);
 #ifdef USE_ETRN
   destroy_etrn_nodes (session);
+#endif
+#ifdef USE_TLS
+  destroy_starttls_context (session);
 #endif
 
   if (session->host != NULL)
@@ -484,6 +872,15 @@ smtp_destroy_session (smtp_session_t session)
   return 1;
 }
 
+/**
+ * smtp_set_application_data() - Associate data with a session.
+ * @session: The session.
+ * @data: Application data
+ *
+ * Associate application data with the session.
+ *
+ * Return: Previously set application data or %NULL
+ */
 void *
 smtp_set_application_data (smtp_session_t session, void *data)
 {
@@ -496,6 +893,14 @@ smtp_set_application_data (smtp_session_t session, void *data)
   return old;
 }
 
+/**
+ * smtp_get_application_data() - Get data from a session.
+ * @session: The session.
+ *
+ * Get application data from the session.
+ *
+ * Return: Previously set application data or %NULL
+ */
 void *
 smtp_get_application_data (smtp_session_t session)
 {
@@ -504,6 +909,15 @@ smtp_get_application_data (smtp_session_t session)
   return session->application_data;
 }
 
+/**
+ * smtp_message_set_application_data() - Associate data with a message.
+ * @message: The message.
+ * @data: Application data
+ *
+ * Associate application data with the message.
+ *
+ * Return: Previously set application data or %NULL
+ */
 void *
 smtp_message_set_application_data (smtp_message_t message, void *data)
 {
@@ -516,6 +930,14 @@ smtp_message_set_application_data (smtp_message_t message, void *data)
   return old;
 }
 
+/**
+ * smtp_message_get_application_data() - Get data from a message.
+ * @message: The message.
+ *
+ * Get application data from the message.
+ *
+ * Return: Previously set application data or %NULL
+ */
 void *
 smtp_message_get_application_data (smtp_message_t message)
 {
@@ -524,6 +946,15 @@ smtp_message_get_application_data (smtp_message_t message)
   return message->application_data;
 }
 
+/**
+ * smtp_recipient_set_application_data() - Associate data with a recipient.
+ * @recipient: The recipient.
+ * @data: Application data
+ *
+ * Associate application data with the recipient.
+ *
+ * Return: Previously set application data or %NULL
+ */
 void *
 smtp_recipient_set_application_data (smtp_recipient_t recipient, void *data)
 {
@@ -536,6 +967,14 @@ smtp_recipient_set_application_data (smtp_recipient_t recipient, void *data)
   return old;
 }
 
+/**
+ * smtp_recipient_get_application_data() - Get data from a recipient.
+ * @recipient: The recipient.
+ *
+ * Get application data from the recipient.
+ *
+ * Return: Previously set application data or %NULL
+ */
 void *
 smtp_recipient_get_application_data (smtp_recipient_t recipient)
 {
@@ -544,6 +983,16 @@ smtp_recipient_get_application_data (smtp_recipient_t recipient)
   return recipient->application_data;
 }
 
+/**
+ * smtp_version() - Identify libESMTP version.
+ * @buf: Buffer to receive version string.
+ * @len: Length of buffer.
+ * @what: Which version information to be retrieved (currently must be 0).
+ *
+ * Retrieve version information for the libESMTP in use.
+ *
+ * Return: Zero on failure, non-zero on success.
+ */
 int
 smtp_version (void *buf, size_t len, int what)
 {
@@ -561,10 +1010,18 @@ smtp_version (void *buf, size_t len, int what)
   return 1;
 }
 
-/* Some applications can't handle one recipient from many failing
-   particularly well.  If the 'require_all_recipients' option is
-   set, this will fail the entire transaction even if some of the
-   recipients were accepted in the RCPT commands. */
+/**
+ * smtp_option_require_all_recipients() - FAIL if server rejects any recipient.
+ * @session: The session.
+ * @state: Boolean set non-zero to enable.
+ *
+ * Some applications can't handle one recipient from many failing particularly
+ * well.  If the ``require_all_recipients`` option is set, this will fail the
+ * entire transaction even if some of the recipients were accepted in the RCPT
+ * commands.
+ *
+ * Return: Non zero on success, zero on failure.
+ */
 int
 smtp_option_require_all_recipients (smtp_session_t session, int state)
 {
@@ -574,11 +1031,20 @@ smtp_option_require_all_recipients (smtp_session_t session, int state)
   return 1;
 }
 
-//XXX
-/* Set the timeouts.  An absolute minumum timeout of one second is imposed.
-   Unless overriden using the OVERRIDE_RFC2822_MINIMUM flag, the minimum
-   values recommended in RFC 5322 are enforced.  Return value is the actual
-   timeout set or zero on error. */
+/**
+ * smtp_set_timeout() - Set session timeouts.
+ * @session: The session.
+ * @which: Which timeout to set. A constant from &enum rfc2822_timeouts.
+ * @value: duration of timeout in seconds.
+ *
+ * Set the protocol timeouts.  @which is a constant from &enum rfc2822_timeouts
+ * specifying which timeout to set.  The minimum values recommended in RFC 5322
+ * are enforced unless @which is bitwise-ORed with
+ * %Timeout_OVERRIDE_RFC2822_MINIMUM.  An absolute minumum timeout of one
+ * second is imposed.
+ *
+ * Return: the actual timeout set or zero on error.
+ */
 long
 smtp_set_timeout (smtp_session_t session, int which, long value)
 {

@@ -26,9 +26,7 @@
    processing is specific to the BDAT code and bears no resemblance to
    that of the DATA command.  */
 
-#ifdef HAVE_CONFIG_H
 #include <config.h>
-#endif
 
 #ifdef USE_CHUNKING
 

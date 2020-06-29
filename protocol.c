@@ -24,12 +24,11 @@
    commands and their extended parameters.  Extended commands are mostly
    in files of their own. */
 
-#ifdef HAVE_CONFIG_H
 #include <config.h>
-#endif
 
 #include <stdlib.h>
 #include <string.h>
+#include <strings.h>
 #include <ctype.h>
 #include <stdarg.h>
 #include <unistd.h>
@@ -40,8 +39,6 @@
 #include <sys/socket.h>
 #if HAVE_LWRES_NETDB_H
 # include <lwres/netdb.h>
-#elif !HAVE_GETADDRINFO
-# include "getaddrinfo.h"
 #else
 # include <netdb.h>
 #endif

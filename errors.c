@@ -20,11 +20,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifdef HAVE_CONFIG_H
 #include <config.h>
-#endif
-
-#define _SVID_SOURCE	1	/* Need this to get strerror_r() */
 
 #include <missing.h> /* declarations for missing library functions */
 
@@ -34,13 +30,20 @@
 #include <stdlib.h>
 #if HAVE_LWRES_NETDB_H
 # include <lwres/netdb.h>
-#elif !HAVE_GETADDRINFO
-# include "getaddrinfo.h"
 #else
 # include <netdb.h>
 #endif
 #include "libesmtp-private.h"
 #include "api.h"
+
+/**
+ * DOC: Errors
+ *
+ * Errors
+ * ------
+ *
+ * Thread safe "errno" for libESMTP.
+ */
 
 struct errno_vars
   {
@@ -203,6 +206,14 @@ set_herror (int code)
     set_herror_internal (value, code);
 }
 
+/**
+ * smtp_errno() - Get error number.
+ *
+ * Retrieve the error code for the most recently failed API in the calling
+ * thread.
+ *
+ * Return: libESMTP error code.
+ */
 int
 smtp_errno (void)
 {
@@ -246,6 +257,17 @@ static const char *libesmtp_errors[] =
     "Client error",					/* CLIENT_ERROR */
   };
 
+/**
+ * smtp_strerror() - Translate error number to text.
+ * @error:	Error number to translate
+ * @buf:	Buffer to receive text
+ * @buflen:	Buffer length
+ *
+ * Translate a libESMTP error number to a string suitable for use in an
+ * application error message.  The resuting string is copied into #buf.
+ *
+ * Return: A pointer to @buf on success or %NULL on failure.
+ */
 char *
 smtp_strerror (int error, char buf[], size_t buflen)
 {
@@ -269,7 +291,7 @@ smtp_strerror (int error, char buf[], size_t buflen)
     /* Could end up here when threading is enabled but a working
        strerror_r() is not found.  There will be a critical section
        of code until the returned string is copied to the supplied
-       buffer.  This could be solved using a mutex but its hardly
+       buffer.	This could be solved using a mutex but its hardly
        worth it since even if libESMTP is protected against itself
        the application could still call strerror anyway. */
     text = strerror (-error);
@@ -287,7 +309,7 @@ smtp_strerror (int error, char buf[], size_t buflen)
     {
       len = strlen (text);
       if (len > (int) buflen - 1)
-        len = buflen - 1;
+	len = buflen - 1;
       if (len > 0)
 	memcpy (buf, text, len);
       buf[len] = '\0';

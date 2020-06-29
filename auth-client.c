@@ -20,9 +20,17 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifdef HAVE_CONFIG_H
+/**
+ * DOC: Auth Client
+ *
+ * Auth Client
+ * -----------
+ *
+ * The auth client is a simple SASL implementation supporting the
+ * SMTP AUTH extension.
+ */
+
 #include <config.h>
-#endif
 
 #if ENABLE_DEPRECATED_FEATURES
 
@@ -32,28 +40,17 @@
 #include <pthread.h>
 #endif
 
-#if HAVE_DLSYM
-# include <dlfcn.h>
-# ifndef DLEXT
+#include <dlfcn.h>
+#ifndef DLEXT
 #  define DLEXT ".so"
-# endif
-# ifndef RTLD_LAZY
+#endif
+#ifndef RTLD_LAZY
 #  define RTLD_LAZY RTLD_NOW
-# endif
-typedef void *dlhandle_t;
-#else
-# include <ltdl.h>
-# ifndef DLEXT
-#  define DLEXT ""
-# endif
-typedef lt_dlhandle dlhandle_t;
-# define dlopen(n,f)	lt_dlopenext((n))
-# define dlsym(h,s)	lt_dlsym((h),(s))
-# define dlclose(h)	lt_dlclose((h))
 #endif
 
 #include <stdlib.h>
 #include <string.h>
+#include <strings.h>
 #include <ctype.h>
 
 #include <missing.h>
@@ -69,7 +66,7 @@ static pthread_mutex_t plugin_mutex = PTHREAD_MUTEX_INITIALIZER;
 struct auth_plugin
   {
     struct auth_plugin *next;
-    dlhandle_t module;
+    void *module;
     const struct auth_client_plugin *info;
   };
 static struct auth_plugin *client_plugins, *end_client_plugins;
@@ -88,7 +85,7 @@ struct auth_context
 #define mechanism_disabled(p,a,f)		\
 	  (((p)->flags & AUTH_PLUGIN_##f) && !((a)->flags & AUTH_PLUGIN_##f))
 
-#if HAVE_DLSYM && defined AUTHPLUGINDIR
+#if defined AUTHPLUGINDIR
 # define PLUGIN_DIR AUTHPLUGINDIR "/"
 #else
 # define PLUGIN_DIR
@@ -114,7 +111,7 @@ plugin_name (const char *str)
 }
 
 static int
-append_plugin (dlhandle_t module, const struct auth_client_plugin *info)
+append_plugin (void *module, const struct auth_client_plugin *info)
 {
   struct auth_plugin *auth_plugin;
 
@@ -140,7 +137,7 @@ append_plugin (dlhandle_t module, const struct auth_client_plugin *info)
 static const struct auth_client_plugin *
 load_client_plugin (const char *name)
 {
-  dlhandle_t module;
+  void *module;
   char *plugin;
   const struct auth_client_plugin *info;
 
@@ -173,24 +170,24 @@ load_client_plugin (const char *name)
   return info;
 }
 
+/**
+ * auth_client_init() - Initialise the auth client.
+ *
+ * Perform any preparation necessary for the auth client modules.  Call this
+ * before any other auth client APIs.
+ */
 void
 auth_client_init (void)
 {
-#if !HAVE_DLSYM
-# ifdef USE_PTHREADS
-  pthread_mutex_lock (&plugin_mutex);
-# endif
-  lt_dlinit ();
-# ifdef AUTHPLUGINDIR
-  lt_dladdsearchdir (AUTHPLUGINDIR);
-# endif
-  /* Add builtin mechanisms to the plugin list */
-# ifdef USE_PTHREADS
-  pthread_mutex_unlock (&plugin_mutex);
-# endif
-#endif
 }
 
+/**
+ * auth_client_exit() - Destroy the auth client.
+ *
+ * This clears any work done by auth_client_init() or any global state that may
+ * be created by the authentication modules.  Auth client APIs after this is
+ * called may fail unpredictably or crash.
+ */
 void
 auth_client_exit (void)
 {
@@ -208,14 +205,18 @@ auth_client_exit (void)
       free (plugin);
     }
   client_plugins = end_client_plugins = NULL;
-#if !HAVE_DLSYM
-  lt_dlexit ();
-#endif
 #ifdef USE_PTHREADS
   pthread_mutex_unlock (&plugin_mutex);
 #endif
 }
 
+/**
+ * auth_create_context() - Create an authentication context.
+ *
+ * Create a new authentication context.
+ *
+ * Return: The &typedef auth_context_t.
+ */
 auth_context_t
 auth_create_context (void)
 {
@@ -229,6 +230,14 @@ auth_create_context (void)
   return context;
 }
 
+/**
+ * auth_destroy_context() - Destroy an authentication context.
+ * @context: The authentication context.
+ *
+ * Destroy an authentication context, releasing any resources used.
+ *
+ * Return: Zero on failure, non-zero on success.
+ */
 int
 auth_destroy_context (auth_context_t context)
 {
@@ -243,6 +252,18 @@ auth_destroy_context (auth_context_t context)
   return 1;
 }
 
+/**
+ * auth_set_mechanism_flags() - Set authentication flags.
+ * @context: The authentication context.
+ * @set: Flags to set.
+ * @clear: Flags to clear.
+ *
+ * Configure authentication mechanism flags which may affect operation of the
+ * authentication modules. The %AUTH_PLUGIN_EXTERNAL flag is excluded from the
+ * allowable flags.
+ *
+ * Return: Zero on failure, non-zero on success.
+ */
 int
 auth_set_mechanism_flags (auth_context_t context, unsigned set, unsigned clear)
 {
@@ -253,6 +274,16 @@ auth_set_mechanism_flags (auth_context_t context, unsigned set, unsigned clear)
   return 1;
 }
 
+/**
+ * auth_set_mechanism_ssf() - Set security factor.
+ * @context: The authentication context.
+ * @min_ssf: The minimum security factor.
+ *
+ * Set the minimum acceptable security factor.  The exact meaning of the
+ * security factor depends on the authentication type.
+ *
+ * Return: Zero on failure, non-zero on success.
+ */
 int
 auth_set_mechanism_ssf (auth_context_t context, int min_ssf)
 {
@@ -262,6 +293,20 @@ auth_set_mechanism_ssf (auth_context_t context, int min_ssf)
   return 1;
 }
 
+/**
+ * auth_set_external_id() - Set the external id.
+ * @context: The authentication context.
+ * @identity: Authentication identity.
+ *
+ * Set the authentication identity for the EXTERNAL SASL mechanism.  This call
+ * also configures the built-in EXTERNAL authenticator.
+ *
+ * The EXTERNAL mechanism is used in conjunction with authentication which has
+ * already occurred at a lower level in the network stack, such as TLS.  For
+ * X.509 the identity is normally that used in the relevant certificate.
+ *
+ * Return: Zero on failure, non-zero on success.
+ */
 int
 auth_set_external_id (auth_context_t context, const char *identity)
 {
@@ -325,9 +370,17 @@ auth_set_interact_cb (auth_context_t context,
   return 1;
 }
 
-/* Perform various checks to see if SASL is usable.   Do not check
-   for loaded plugins though.  This is checked when trying to
-   select one for use. */
+/**
+ * auth_client_enabled() - Check if mechanism is enabled.
+ * @context: The authentication context.
+ *
+ * Perform various checks to ensure SASL is usable.
+ *
+ * Note that this does not check for loaded plugins.  This is checked when
+ * negotiating a mechanism with the MTA.
+ *
+ * Return: Non-zero if the SASL is usable, zero otherwise.
+ */
 int
 auth_client_enabled (auth_context_t context)
 {
@@ -338,6 +391,16 @@ auth_client_enabled (auth_context_t context)
   return 1;
 }
 
+/**
+ * auth_set_mechanism() - Select authentication mechanism.
+ * @context: The authentication context.
+ * @name: Name of the authentication mechanism.
+ *
+ * Perform checks, including acceptable security levels and select
+ * the authentication mechanism if successful.
+ *
+ * Return: Zero on failure, non-zero on success.
+ */
 int
 auth_set_mechanism (auth_context_t context, const char *name)
 {
