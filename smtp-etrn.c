@@ -35,6 +35,18 @@
 #include "protocol.h"
 #include "attribute.h"
 
+/**
+ * DOC: RFC 1985
+ *
+ * Remote Message Queue Starting (ETRN)
+ * ------------------------------------
+ *
+ * The SMTP ETRN extension is used to request a remote MTA to start its
+ * delivery queue for the specified domain.  If the application requests
+ * the use if the ETRN extension and the remote MTA does not list ETRN,
+ * libESMTP will use the event callback to notify the application.
+ */
+
 struct smtp_etrn_node
   {
     struct smtp_etrn_node *next;
@@ -51,6 +63,16 @@ struct smtp_etrn_node
     smtp_status_t status;		/* Status from MTA greeting */
   };
 
+/**
+ * smtp_etrn_add_node:
+ * @session: The session.
+ * @option: The option character.
+ * @domain: Request mail for this domain.
+ *
+ * Add an ETRN node to the SMTP session.
+ *
+ * Return: An &typedef smtp_etrn_node_t or %NULL on failure.
+ */
 smtp_etrn_node_t
 smtp_etrn_add_node (smtp_session_t session, int option, const char *domain)
 {
@@ -64,13 +86,13 @@ smtp_etrn_add_node (smtp_session_t session, int option, const char *domain)
   if ((node = malloc (sizeof (struct smtp_etrn_node))) == NULL)
     {
       set_errno (ENOMEM);
-      return 0;
+      return NULL;
     }
   if ((dup_domain = strdup (domain)) == NULL)
     {
       free (node);
       set_errno (ENOMEM);
-      return 0;
+      return NULL;
     }
 
   memset (node, 0, sizeof (struct smtp_etrn_node));
@@ -82,6 +104,16 @@ smtp_etrn_add_node (smtp_session_t session, int option, const char *domain)
   return node;
 }
 
+/**
+ * smtp_etrn_enumerate_nodes:
+ * @session: The session.
+ * @cb: Callback function
+ * @arg: Argument (closure) passed to callback.
+ *
+ * Call the callback function once for each ETRN node in the SMTP session.
+ *
+ * Return: Zero on failure, non-zero on success.
+ */
 int
 smtp_etrn_enumerate_nodes (smtp_session_t session,
 			   smtp_etrn_enumerate_nodecb_t cb, void *arg)
@@ -95,6 +127,18 @@ smtp_etrn_enumerate_nodes (smtp_session_t session,
   return 1;
 }
 
+/**
+ * smtp_etrn_node_status:
+ * @node: An #smtp_etrn_node_t
+ *
+ * Retrieve the ETRN node success/failure status from a previous SMTP session.
+ * This includes SMTP status codes, RFC 2034 enhanced status codes, if
+ * available and text from the server describing the status.
+ *
+ * Return: %NULL if no status information is available,
+ * otherwise a pointer to the status information.  The pointer remains valid
+ * until the next call to libESMTP in the same thread.
+ */
 const smtp_status_t *
 smtp_etrn_node_status (smtp_etrn_node_t node)
 {
@@ -102,6 +146,16 @@ smtp_etrn_node_status (smtp_etrn_node_t node)
 
   return &node->status;
 }
+
+/**
+ * smtp_etrn_set_application_data:
+ * @node: An #smtp_etrn_node_t
+ * @data: Application data to set
+ *
+ * Associate application defined data with the opaque ETRN structure.
+ *
+ * Return: Previously set application data or %NULL.
+ */
 
 void *
 smtp_etrn_set_application_data (smtp_etrn_node_t node, void *data)
@@ -115,6 +169,14 @@ smtp_etrn_set_application_data (smtp_etrn_node_t node, void *data)
   return old;
 }
 
+/**
+ * smtp_etrn_get_application_data:
+ * @node: An #smtp_etrn_node_t
+ *
+ * Retrieve application data from the opaque ETRN structure.
+ *
+ * Return: Application data or %NULL.
+ */
 void *
 smtp_etrn_get_application_data (smtp_etrn_node_t node)
 {

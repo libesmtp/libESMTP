@@ -63,7 +63,7 @@ deps = [
 
 # Solaris 8 strlcpy() return value does not correspond with BSD version
 # libESMTP does not use the return value so this should be sufficient
-have_strlcpy = cc.has_function('strlcpy') or meson.get_cross_property('have_strlcpy', false)
+have_strlcpy = cc.has_function('strlcpy')
 
 ################################################################################
 # configuration

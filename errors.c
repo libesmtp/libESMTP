@@ -30,13 +30,20 @@
 #include <stdlib.h>
 #if HAVE_LWRES_NETDB_H
 # include <lwres/netdb.h>
-#elif !HAVE_GETADDRINFO
-# include "getaddrinfo.h"
 #else
 # include <netdb.h>
 #endif
 #include "libesmtp-private.h"
 #include "api.h"
+
+/**
+ * DOC: Errors
+ *
+ * Errors
+ * ------
+ *
+ * Thread safe "errno" for libESMTP.
+ */
 
 struct errno_vars
   {
@@ -199,6 +206,14 @@ set_herror (int code)
     set_herror_internal (value, code);
 }
 
+/**
+ * smtp_errno() - Get error number.
+ *
+ * Retrieve the error code for the most recently failed API in the calling
+ * thread.
+ *
+ * Return: libESMTP error code.
+ */
 int
 smtp_errno (void)
 {
@@ -242,6 +257,17 @@ static const char *libesmtp_errors[] =
     "Client error",					/* CLIENT_ERROR */
   };
 
+/**
+ * smtp_strerror() - Translate error number to text.
+ * @error:	Error number to translate
+ * @buf:	Buffer to receive text
+ * @buflen:	Buffer length
+ *
+ * Translate a libESMTP error number to a string suitable for use in an
+ * application error message.  The resuting string is copied into #buf.
+ *
+ * Return: A pointer to @buf on success or %NULL on failure.
+ */
 char *
 smtp_strerror (int error, char buf[], size_t buflen)
 {
