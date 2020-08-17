@@ -1,6 +1,6 @@
 			libESMTP, version 1.0
 			      -- oOo --
-	      	Brian Stafford	<brian@stafford.uklinux.net>
+			    Brian Stafford
 
 
 What is libESMTP?
@@ -88,14 +88,13 @@ Obtaining libESMTP
 ------------------
 
 LibESMTP may be obtained from:
-	http://www.stafford.uklinux.net/libesmtp/
+	https://libesmtp.github.io/download
 
 Documentation
 -------------
 
 LibESMTP documentation is available on the web at:
-	http://www.stafford.uklinux.net/libesmtp/api.html
-This probably (definitely) lags behind the actual source code.
+	https://libesmtp.github.io/reference.html
 
 What does the 'E' stand for?
 --------------------------
