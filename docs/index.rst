@@ -40,6 +40,7 @@ libESMTP transparently handles many SMTP extensions including authentication.
    :hidden:
 
    ChangeLog
+   errata
 
 Indices and tables
 ------------------
