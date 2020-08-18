@@ -1,4 +1,4 @@
-# libESMTP Repository Notes
+# Errata
 
 The libESMTP git repository has been rebuilt by hand from the collection of
 released tarballs. A few errors or inconsistencies occurred during this

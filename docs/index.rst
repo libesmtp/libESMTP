@@ -8,11 +8,9 @@ libESMTP
 ========
 
 .. note:: This is the official libESMTP repository and documentation,
-    created and maintained by the original libESMTP author.  The author does
-    not endorse other repositories which may contain forks of libESMTP.
+    created and maintained by the original libESMTP author.
 
-    It is requested that any modifications are branched and merged from
-    the official repository at https://github.com/libesmtp/libESMTP .
+    See `these notes <notes.html>`_ for further information.
 
 A Library for Posting Electronic Mail
 =====================================
@@ -36,13 +34,15 @@ libESMTP transparently handles many SMTP extensions including authentication.
    retrospective
    reference
 
-.. toctree::
-   :hidden:
+Users
+-----
 
-   ChangeLog
-   errata
+.. attention:: Projects using libESMTP are currently unknown. Please leave
+    a comment on issue #2 if your project is using libESMTP.  Without this
+    it is impossible to judge whether and how much effort should be invested
+    in libESMTP's future.
 
-Indices and tables
+Indexes and Tables
 ------------------
 
 * :ref:`genindex`

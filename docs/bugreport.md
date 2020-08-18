@@ -1,7 +1,5 @@
 # Reporting Bugs
 
-## What to Report
-
 libESMTP will not be changed without good justification.  SMTP and mail related
 documents in general have been subject to rigorous peer review in public by the
 [IETF](https://www.ietf.org/) before being accepted as standard.  Since mail is
@@ -14,6 +12,16 @@ In SMTP, as with many internet protocols, the distinction is subtle at times.
 The following paragraphs are examples of what might constitute a bug.  The list
 is by no means exhaustive.
 
+
+## GitHub Issue Tracker
+
+All bug reports should be made using the GitHub issue tracker.  This is only
+for discussion of libESMTP sources within, or for pull requests against the git
+repository.  Issues opened solely against the libESMTP tarballs will be deleted
+without explanation.
+
+
+## What to Report
 
 If, after reading the following, you are convinced that libESMTP does not do
 something it should, or vice-versa, get hold of the relevant RFC or other
