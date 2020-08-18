@@ -38,12 +38,12 @@ A more serious error occurred when the v0.8.5 tarball reverted `configure.ac`
 to `configure.in` due to autoconf version problems (who knew?).
 Here is the comment from `Changelog`:
 
-    configure.in acinclude.m4 acconfig.h
-
-    Reverted to configure.in, reinstated acconfig.h and added
-    some compatibility stuff to acinclude.m4.  All this to try
-    and be compatible with autoconf 2.5 *and* 2.13.  I really
-    hate autoconf.
+>    configure.in acinclude.m4 acconfig.h
+>
+>    Reverted to configure.in, reinstated acconfig.h and added
+>    some compatibility stuff to acinclude.m4.  All this to try
+>    and be compatible with autoconf 2.5 *and* 2.13.  I really
+>    hate autoconf.
 
 This step was unfortunately missed when adding v0.8.5 to the repository.
 If you need to build previous releases for any reason this is a problem
