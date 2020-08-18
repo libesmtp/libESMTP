@@ -34,6 +34,12 @@ libESMTP transparently handles many SMTP extensions including authentication.
    retrospective
    reference
 
+Wiki
+----
+
+The libESMTP wiki pages may be
+`found here <https://github.com/libesmtp/libESMTP/wiki>`_.
+
 Users
 -----
 
