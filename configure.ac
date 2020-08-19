@@ -303,7 +303,7 @@ if test x$with_openssl != xno ; then
 	)
 fi
 if test x$with_openssl != xno ; then
-	AC_CHECK_LIB(ssl, SSL_library_init, [
+	AC_CHECK_LIB(ssl, SSL_new, [
 				with_openssl=yes
 				LIBS="-lssl -lcrypto $LIBS"
 		     ], [
