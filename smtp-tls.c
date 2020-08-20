@@ -64,10 +64,12 @@ openssl_mutexcb (int mode, int n,
 		 const char *file __attribute__ ((unused)),
 		 int line __attribute__ ((unused)))
 {
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
   if (mode & CRYPTO_LOCK)
     pthread_mutex_lock (&openssl_mutex[n]);
   else
     pthread_mutex_unlock (&openssl_mutex[n]);
+#endif
 }
 #endif
 
@@ -76,7 +78,7 @@ starttls_init (void)
 {
   if (tls_init)
     return 1;
-
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
 #ifdef USE_PTHREADS
   /* Set up mutexes for the OpenSSL library */
   if (openssl_mutex == NULL)
@@ -94,9 +96,12 @@ starttls_init (void)
       CRYPTO_set_locking_callback (openssl_mutexcb);
     }
 #endif
-  tls_init = 1;
   SSL_load_error_strings ();
   SSL_library_init ();
+#else
+  OPENSSL_init_ssl(0, NULL);
+#endif
+  tls_init = 1;
   return 1;
 }
 
@@ -197,11 +202,24 @@ starttls_create_ctx (smtp_session_t session)
   ckf_t status;
 
   /* The decision not to support SSL v2 and v3 but instead to use only
-     TLSv1 is deliberate.  This is in line with the intentions of RFC
+     TLSv1.X is deliberate.  This is in line with the intentions of RFC
      3207.  Servers typically support SSL as well as TLS because some
      versions of Netscape do not support TLS.  I am assuming that all
      currently deployed servers correctly support TLS.  */
-  ctx = SSL_CTX_new (TLSv1_client_method ());
+#if (OPENSSL_VERSION_NUMBER >= 0x10100000L) && \
+    !defined(LIBRESSL_VERSION_NUMBER)  && !defined(OPENSSL_IS_BORINGSSL)
+    ctx = SSL_CTX_new (TLS_client_method ());
+#else
+    ctx = SSL_CTX_new (SSLv23_client_method ());
+#endif
+
+#ifdef OPENSSL_NO_SSL3
+    SSL_CTX_set_options(ctx, SSL_OP_NO_SSLv3);
+#endif
+
+#ifdef OPENSSL_NO_SSL2
+    SSL_CTX_set_options(ctx, SSL_OP_NO_SSLv2);
+#endif
 
   /* Load our keys and certificates.  To avoid messing with configuration
      variables etc, use fixed paths for the certificate store.  These are
