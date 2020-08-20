@@ -2,7 +2,7 @@
 
 libdir = @plugindir@
 
-INCLUDES = -I@srcdir@
+AM_CPPFLAGS = -I@srcdir@
 AM_CFLAGS = @CFLAGS@ @EXTRA_CFLAGS@
 
 lib_LTLIBRARIES = sasl-plain.la
