@@ -57,6 +57,8 @@ static void *ctx_password_cb_arg;
 #ifdef USE_PTHREADS
 #include <pthread.h>
 static pthread_mutex_t starttls_mutex = PTHREAD_MUTEX_INITIALIZER;
+
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
 static pthread_mutex_t *openssl_mutex;
 
 static void
@@ -64,13 +66,12 @@ openssl_mutexcb (int mode, int n,
 		 const char *file __attribute__ ((unused)),
 		 int line __attribute__ ((unused)))
 {
-#if OPENSSL_VERSION_NUMBER < 0x10100000L
   if (mode & CRYPTO_LOCK)
     pthread_mutex_lock (&openssl_mutex[n]);
   else
     pthread_mutex_unlock (&openssl_mutex[n]);
-#endif
 }
+#endif
 #endif
 
 static int
