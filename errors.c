@@ -24,7 +24,7 @@
 #include <config.h>
 #endif
 
-#define _SVID_SOURCE	1	/* Need this to get strerror_r() */
+#define _DEFAULT_SOURCE	1	/* Need this to get strerror_r() */
 
 #include <missing.h> /* declarations for missing library functions */
 
