@@ -34,6 +34,9 @@
 
 #include <missing.h> /* declarations for missing library functions */
 
+#if WITH_AUTH_CLIENT
+#include "auth-client.h"
+#endif
 #include "libesmtp-private.h"
 
 #include "api.h"
@@ -84,8 +87,7 @@ smtp_gsasl_set_context (smtp_session_t session, Gsasl *context)
   return 1;
 }
 
-#if ENABLE_DEPRECATED_FEATURES
-#include "auth-client.h"
+#if WITH_AUTH_CLIENT
 
 /**
  * smtp_auth_set_context:
@@ -188,7 +190,7 @@ gsasl_next_auth_mechanism (smtp_session_t session)
   return 0;
 }
 
-#if ENABLE_DEPRECATED_FEATURES
+#if WITH_AUTH_CLIENT
 static int
 auth_select_auth_mechanism (smtp_session_t session)
 {
@@ -225,7 +227,7 @@ select_auth_mechanism (smtp_session_t session)
     return 0;
   if (session->gsasl_context != NULL)
     return gsasl_select_auth_mechanism (session);
-#if ENABLE_DEPRECATED_FEATURES
+#if WITH_AUTH_CLIENT
   if (session->auth_context != NULL)
     return auth_select_auth_mechanism (session);
 #endif
@@ -237,7 +239,7 @@ next_auth_mechanism (smtp_session_t session)
 {
   if (session->gsasl_context != NULL)
     return gsasl_next_auth_mechanism (session);
-#if ENABLE_DEPRECATED_FEATURES
+#if WITH_AUTH_CLIENT
   if (session->auth_context != NULL)
     return auth_next_auth_mechanism (session);
 #endif
@@ -250,7 +252,7 @@ set_external_id (smtp_session_t session, const char *id)
   if (session->external_id != NULL)
     free (session->external_id);
   session->external_id = strdup (id);
-#if ENABLE_DEPRECATED_FEATURES
+#if WITH_AUTH_CLIENT
   if (session->auth_context != NULL)
     auth_set_external_id (session->auth_context, id);
 #endif
@@ -425,9 +427,9 @@ gsasl_rsp_auth2 (siobuf_t conn, smtp_session_t session)
   rsp_auth (conn, session);
 }
 
-#if ENABLE_DEPRECATED_FEATURES
+#if WITH_AUTH_CLIENT
 
-void
+static void
 auth_cmd_auth (siobuf_t conn, smtp_session_t session)
 {
   char buf[2048];
@@ -457,7 +459,7 @@ auth_cmd_auth (siobuf_t conn, smtp_session_t session)
   session->cmd_state = -1;
 }
 
-void
+static void
 auth_rsp_auth (siobuf_t conn, smtp_session_t session)
 {
   int code;
@@ -521,7 +523,7 @@ auth_rsp_auth (siobuf_t conn, smtp_session_t session)
     }
 }
 
-void
+static void
 auth_cmd_auth2 (siobuf_t conn, smtp_session_t session)
 {
   char buf[2048];
@@ -552,7 +554,7 @@ auth_cmd_auth2 (siobuf_t conn, smtp_session_t session)
   session->cmd_state = -1;
 }
 
-void
+static void
 auth_rsp_auth2 (siobuf_t conn, smtp_session_t session)
 {
   rsp_auth (conn, session);
@@ -564,7 +566,7 @@ cmd_auth (siobuf_t conn, smtp_session_t session)
 {
   if (session->gsasl_context != NULL)
     gsasl_cmd_auth (conn, session);
-#if ENABLE_DEPRECATED_FEATURES
+#if WITH_AUTH_CLIENT
   else if (session->auth_context != NULL)
     auth_cmd_auth (conn, session);
 #endif
@@ -575,7 +577,7 @@ rsp_auth (siobuf_t conn, smtp_session_t session)
 {
   if (session->gsasl_context != NULL)
     gsasl_rsp_auth (conn, session);
-#if ENABLE_DEPRECATED_FEATURES
+#if WITH_AUTH_CLIENT
   else if (session->auth_context != NULL)
     auth_rsp_auth (conn, session);
 #endif
@@ -586,7 +588,7 @@ cmd_auth2 (siobuf_t conn, smtp_session_t session)
 {
   if (session->gsasl_context != NULL)
     gsasl_cmd_auth2 (conn, session);
-#if ENABLE_DEPRECATED_FEATURES
+#if WITH_AUTH_CLIENT
   else if (session->auth_context != NULL)
     auth_cmd_auth2 (conn, session);
 #endif
@@ -597,7 +599,7 @@ rsp_auth2 (siobuf_t conn, smtp_session_t session)
 {
   if (session->gsasl_context != NULL)
     gsasl_rsp_auth2 (conn, session);
-#if ENABLE_DEPRECATED_FEATURES
+#if WITH_AUTH_CLIENT
   else if (session->auth_context != NULL)
     auth_rsp_auth2 (conn, session);
 #endif

@@ -45,6 +45,7 @@ add_project_arguments(cc.get_supported_arguments(cflags), language: 'c')
 ################################################################################
 dldep = cc.find_library('dl')
 ssldep = dependency('openssl', version : '>=1.1.0', required : get_option('tls'))
+gsasldep = dependency('libgsasl', version : '>=1.8.0', required : true)
 threaddep = dependency('threads', required : get_option('pthreads'))
 
 #XXX add test for libbind9.so
@@ -53,6 +54,7 @@ lwresdep = cc.find_library('lwres', required : get_option('lwres'))
 deps = [
   dldep,
   ssldep,
+  gsasldep,
   threaddep,
   lwresdep,
 ]
@@ -65,6 +67,8 @@ deps = [
 # libESMTP does not use the return value so this should be sufficient
 have_strlcpy = cc.has_function('strlcpy')
 
+with_auth_client = get_option('auth-client')
+
 ################################################################################
 # configuration
 # XXX WARNING use of #if SYMBOL vs #ifdef SYMBOL somewhat haphazard
@@ -73,6 +77,8 @@ conf = configuration_data()
 conf.set('SIZEOF_UNSIGNED_INT', cc.sizeof('unsigned int'))
 conf.set('SIZEOF_UNSIGNED_LONG', cc.sizeof('unsigned long'))
 conf.set('SIZEOF_UNSIGNED_SHORT', cc.sizeof('unsigned short'))
+
+conf.set10('WITH_AUTH_CLIENT', with_auth_client)
 
 conf.set('AUTH_ID_HACK', true)
 conf.set('USE_CHUNKING', get_option('bdat'))
@@ -137,7 +143,6 @@ configure_file(input : 'libesmtp.spec.in',
 ################################################################################
 sources = [
   'api.h',
-  'auth-client.c',
   'base64.c',
   'base64.h',
   'concatenate.c',
@@ -172,6 +177,9 @@ sources = [
 if ssldep.found()
   sources += [ 'tlsutils.h', 'tlsutils.c' ]
 endif
+if with_auth_client
+  sources += [ 'auth-client.c' ]
+endif
 
 mapfile = 'libesmtp.map'
 vflag = '-Wl,--version-script,@0@/@1@'.format(meson.current_source_dir(), mapfile)
@@ -185,18 +193,25 @@ lib = library('esmtp', sources,
 ################################################################################
 # SASL client modules
 ################################################################################
-clients = []
-include_dir = include_directories('.')
-subdir('login')
-subdir('plain')
-subdir('crammd5')
-if ssldep.found()
-  subdir('ntlm')
+if with_auth_client
+  clients = []
+  include_dir = include_directories('.')
+  subdir('login')
+  subdir('plain')
+  subdir('crammd5')
+  if ssldep.found()
+    subdir('ntlm')
+  endif
 endif
 
 ################################################################################
 # Misc installation
 ################################################################################
-install_headers(['libesmtp.h', 'auth-client.h'])
+headers = ['libesmtp.h']
+if with_auth_client
+  headers += ['auth-client.h']
+endif
+
+install_headers(headers)
 pkg.generate(lib, filebase : 'libesmtp-1.0', description : 'SMTP client library')
 

@@ -4,3 +4,4 @@ option('lwres', type : 'feature', value : 'disabled', description : 'use lwres l
 option('bdat', type : 'boolean', value : 'true', description : 'enable SMTP BDAT extension')
 option('etrn', type : 'boolean', value : 'true', description : 'enable SMTP ETRN extension')
 option('xusr', type : 'boolean', value : 'true', description : 'enable sendmail XUSR extension')
+option('auth-client', type : 'boolean', value : 'true', description : 'enable deprecated auth-client module')

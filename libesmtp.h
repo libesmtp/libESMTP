@@ -175,10 +175,8 @@ int smtp_option_require_all_recipients (smtp_session_t session, int state);
 
 struct Gsasl;
 int smtp_gsasl_set_context (smtp_session_t session, struct Gsasl *context);
-#if LIBESMTP_ENABLE_DEPRECATED_SYMBOLS
 #ifdef _auth_client_h
 int smtp_auth_set_context (smtp_session_t session, auth_context_t context);
-#endif
 #endif
 
 /*

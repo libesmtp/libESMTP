@@ -32,8 +32,6 @@
 
 #include <config.h>
 
-#if ENABLE_DEPRECATED_FEATURES
-
 #include <assert.h>
 
 #ifdef USE_PTHREADS
@@ -534,5 +532,3 @@ auth_decode (char **dstbuf, int *dstlen,
     (*context->client->decode) (context->plugin_ctx,
 				dstbuf, dstlen, srcbuf, srclen);
 }
-
-#endif

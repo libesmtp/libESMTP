@@ -104,7 +104,7 @@ struct smtp_session
   /* Interface to RFC 4954 AUTH and SASL */
     struct Gsasl *gsasl_context;
     struct Gsasl_session *gsasl_session;
-#ifdef ENABLE_DEPRECATED_FEATURES
+#if WITH_AUTH_CLIENT
     auth_context_t auth_context;
 #endif
     struct mechanism *auth_mechanisms;
