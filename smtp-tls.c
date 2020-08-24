@@ -85,10 +85,26 @@ static char *
 user_pathname (char buf[], size_t buflen, const char *tail)
 {
   const char *home;
+  int len;
 
   home = get_home ();
-  snprintf (buf, buflen, "%s/.authenticate/%s", home, tail);
-  return buf;
+  len = snprintf (buf, buflen, "%s/.authenticate/%s", home, tail);
+  return (len >= 0 || (size_t) len < buflen) ? buf : NULL;
+}
+
+static char *
+host_pathname (char buf[], size_t buflen, smtp_session_t session,
+	       const char *tail)
+{
+  const char *home;
+  int len;
+
+  /* FIXME: in protocol.c, record the canonic name of the host returned
+	    by getaddrinfo.  Use that instead of session->host. */
+  home = get_home ();
+  len = snprintf (buf, buflen, "%s/.authenticate/%s/%s",
+  		  home, session->host, tail);
+  return (len >= 0 || (size_t) len < buflen) ? buf : NULL;
 }
 
 typedef enum { FILE_PROBLEM, FILE_NOT_PRESENT, FILE_OK } ckf_t;
@@ -98,6 +114,9 @@ static ckf_t
 check_file (const char *file)
 {
   struct stat st;
+
+  if (file == NULL)
+    return FILE_PROBLEM;
 
   errno = 0;
   if (stat (file, &st) < 0)
@@ -121,6 +140,9 @@ static ckf_t
 check_directory (const char *file)
 {
   struct stat st;
+
+  if (file == NULL)
+    return FILE_PROBLEM;
 
   if (stat (file, &st) < 0)
     return (errno == ENOENT) ? FILE_NOT_PRESENT : FILE_PROBLEM;
@@ -306,7 +328,7 @@ starttls_create_ctx (smtp_session_t session)
   else
     {
       /* The decision not to support SSL v2 and v3 but instead to use only
-	 TLSv1 is deliberate.  This is in line with the intentions of RFC
+	 TLSv1.X is deliberate.  This is in line with the intentions of RFC
 	 3207.  Servers typically support SSL as well as TLS because some
 	 versions of Netscape do not support TLS.  I am assuming that all
 	 currently deployed servers correctly support TLS.	*/
@@ -339,7 +361,6 @@ static SSL *
 starttls_create_ssl (smtp_session_t session)
 {
   char buf[2048];
-  char buf2[2016];
   char *keyfile;
   SSL *ssl;
   ckf_t status;
@@ -358,10 +379,8 @@ starttls_create_ssl (smtp_session_t session)
 	    certificate's password will be needed for every SMTP session
 	    within an application.  This needs a solution.  */
 
-  /* FIXME: in protocol.c, record the canonic name of the host returned
-	    by getaddrinfo.  Use that instead of session->host. */
-  snprintf (buf2, sizeof buf2, "%s/private/smtp-starttls.pem", session->host);
-  keyfile = user_pathname (buf, sizeof buf, buf2);
+  keyfile = host_pathname (buf, sizeof buf, session,
+  			   "private/smtp-starttls.pem");
   status = check_file (keyfile);
   if (status == FILE_OK)
     {
