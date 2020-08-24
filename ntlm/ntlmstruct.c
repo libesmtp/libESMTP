@@ -187,7 +187,6 @@ ntlm_build_type_1 (char *buf, size_t buflen, unsigned int flags,
 {
   size_t offset = T1SIZE;
   size_t len;
-  unsigned char *up;
   char string[256];
 
   if (buflen < offset)
@@ -195,25 +194,13 @@ ntlm_build_type_1 (char *buf, size_t buflen, unsigned int flags,
   memcpy (buf, NTLMSSP, 8);
   write_uint32 (buf, MSGTYPE, 1);
   write_uint32 (buf, T1FLAGS, flags);
-  up = NULL;
-  len = 0;
-  if (domain != NULL)
-    {
-      len = strlen (domain);
-      if (offset + len > buflen)
-	return 0;
-      lm_uccpy (string, len, domain);
-    }
+  len = lm_uccpy (string, sizeof string, domain);
+  if (offset + len > buflen)
+    return 0;
   write_string (buf, T1DOMAIN, &offset, string, len);
-  up = NULL;
-  len = 0;
-  if (workstation != NULL)
-    {
-      len = strlen (workstation);
-      if (offset + len > buflen)
-	return 0;
-      lm_uccpy (string, len, workstation);
-    }
+  len = lm_uccpy (string, sizeof string, workstation);
+  if (offset + len > buflen)
+    return 0;
   write_string (buf, T1WKSTN, &offset, string, len);
   return offset;
 }
@@ -232,16 +219,11 @@ ntlm_build_type_2 (char *buf, size_t buflen, unsigned int flags,
     return 0;
   memcpy (buf, NTLMSSP, 8);
   write_uint32 (buf, MSGTYPE, 2);
-  up = NULL;
-  len = 0;
-  if (domain != NULL)
-    {
-      len = strlen (domain);
-      if (offset + 2 * len > buflen)
-	return 0;
-      up = nt_unicode (lm_uccpy (string, len, domain), 2 * len);
-    }
-  write_string (buf, T2AUTHTARGET, &offset, up, len);
+  len = lm_uccpy (string, sizeof string, domain);
+  if (offset + 2 * len > buflen)
+    return 0;
+  up = nt_unicode (string, len);
+  write_string (buf, T2AUTHTARGET, &offset, up, 2 * len);
   if (up != NULL)
     free (up);
   write_uint32 (buf, T2FLAGS, flags);
@@ -267,39 +249,24 @@ ntlm_build_type_3 (char *buf, size_t buflen, unsigned int flags,
   write_uint32 (buf, MSGTYPE, 3);
   write_string (buf, T3LMRESPONSE, &offset, lm_resp, 24);
   write_string (buf, T3NTRESPONSE, &offset, nt_resp, 24);
-  up = NULL;
-  len = 0;
-  if (domain != NULL)
-    {
-      len = strlen (domain);
-      if (offset + 2 * len > buflen)
-	return 0;
-      up = nt_unicode (lm_uccpy (string, len, domain), 2 * len);
-    }
+  len = lm_uccpy (string, sizeof string, domain);
+  if (offset + 2 * len > buflen)
+    return 0;
+  up = nt_unicode (string, len);
   write_string (buf, T3DOMAIN, &offset, up, 2 * len);
   if (up != NULL)
     free (up);
-  up = NULL;
-  len = 0;
-  if (user != NULL)
-    {
-      len = strlen (user);
-      if (offset + 2 * len > buflen)
-	return 0;
-      up = nt_unicode (lm_uccpy (string, len, user), 2 * len);
-    }
+  len = lm_uccpy (string, sizeof string, user);
+  if (offset + 2 * len > buflen)
+    return 0;
+  up = nt_unicode (string, len);
   write_string (buf, T3USER, &offset, up, 2 * len);
   if (up != NULL)
     free (up);
-  up = NULL;
-  len = 0;
-  if (workstation != NULL)
-    {
-      len = strlen (workstation);
-      if (offset + 2 * len > buflen)
-	return 0;
-      up = nt_unicode (lm_uccpy (string, len, workstation), 2 * len);
-    }
+  len = lm_uccpy (string, sizeof string, workstation);
+  if (offset + 2 * len > buflen)
+    return 0;
+  up = nt_unicode (string, len);
   write_string (buf, T3WKSTN, &offset, up, 2 * len);
   if (up != NULL)
     free (up);

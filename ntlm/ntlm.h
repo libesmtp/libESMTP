@@ -24,7 +24,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-char *lm_uccpy (char *dst, size_t dstlen, const char *src);
+int lm_uccpy (char *dst, size_t dstlen, const char *src);
 unsigned char *nt_unicode (const char *string, size_t len);
 
 void lm_hash_password (unsigned char *hash, const char *pass);
