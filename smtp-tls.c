@@ -106,6 +106,12 @@ starttls_init (void)
   return 1;
 }
 
+static char *
+strncat_safe (char *dest, const char *src, size_t n)
+{
+  return strncat (dest, src, n - strlen (dest));
+}
+
 /* This stuff is crude and doesn't belong here */
 /* vvvvvvvvvvv */
 
@@ -620,7 +626,7 @@ check_acceptable_security (smtp_session_t session, SSL *ssl)
 		  else
 		    {
 		      buf[0] = '\0';
-		      strncat (buf, ia5str, sizeof buf - 1);
+		      strncat_safe (buf, ia5str, sizeof buf - 1);
 		    }
 		}
 	      // TODO: handle GEN_IPADD
@@ -660,7 +666,7 @@ check_acceptable_security (smtp_session_t session, SSL *ssl)
 		      else
 			{
 			  buf[0] = '\0';
-			  strncat (buf, (char *) str, sizeof buf - 1);
+			  strncat_safe (buf, (char *) str, sizeof buf - 1);
 			}
 		      OPENSSL_free (str);
 		    }
