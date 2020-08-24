@@ -65,6 +65,16 @@
 
 #include <gsasl.h>
 
+/**
+ * smtp_gsasl_set_context:
+ * @session: The session.
+ * @context: The auth context.
+ *
+ * Enable the SMTP AUTH verb if @context is not %NULL or disable it when
+ * @context is %NULL.  @context must be obtained from the Gsasl library.
+ *
+ * Returns: Non zero on success, zero on failure.
+ */
 int
 smtp_gsasl_set_context (smtp_session_t session, Gsasl *context)
 {
