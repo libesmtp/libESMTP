@@ -337,7 +337,7 @@ set_sender (struct rfc2822_header *header, va_list alist)
   mbox->mailbox = strdup (mailbox);
   mbox->next = NULL;
 
-  mbox->next = header->value;
+  header->value = mbox;
   return 1;
 }
 
