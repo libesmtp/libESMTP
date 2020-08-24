@@ -129,7 +129,7 @@ user_pathname (char buf[], size_t buflen, const char *tail)
 
   home = get_home ();
   len = snprintf (buf, buflen, "%s/.authenticate/%s", home, tail);
-  return (len >= 0 || (size_t) len < buflen) ? buf : NULL;
+  return (len >= 0 && (size_t) len < buflen) ? buf : NULL;
 }
 
 static char *
@@ -144,7 +144,7 @@ host_pathname (char buf[], size_t buflen, smtp_session_t session,
   home = get_home ();
   len = snprintf (buf, buflen, "%s/.authenticate/%s/%s",
   		  home, session->host, tail);
-  return (len >= 0 || (size_t) len < buflen) ? buf : NULL;
+  return (len >= 0 && (size_t) len < buflen) ? buf : NULL;
 }
 
 typedef enum { FILE_PROBLEM, FILE_NOT_PRESENT, FILE_OK } ckf_t;
