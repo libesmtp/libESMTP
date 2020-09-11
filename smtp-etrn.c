@@ -54,6 +54,7 @@ struct smtp_etrn_node
 
   /* Application data */
     void *application_data;		/* Pointer to data maintained by app */
+    void (*release) (void *);		/* function to free/unref data */
 
   /* Node Info */
     int option;				/* Option character */
@@ -154,9 +155,11 @@ smtp_etrn_node_status (smtp_etrn_node_t node)
  *
  * Associate application defined data with the opaque ETRN structure.
  *
+ * Only available when %LIBESMTP_ENABLE_DEPRECATED_SYMBOLS is defined.
+ * Use smtp_etrn_set_application_data_full() instead.
+ *
  * Return: Previously set application data or %NULL.
  */
-
 void *
 smtp_etrn_set_application_data (smtp_etrn_node_t node, void *data)
 {
@@ -166,7 +169,31 @@ smtp_etrn_set_application_data (smtp_etrn_node_t node, void *data)
 
   old = node->application_data;
   node->application_data = data;
+  node->release = NULL;
   return old;
+}
+
+/**
+ * smtp_etrn_set_application_data_full() - Associate data with an ETRN node.
+ * @node: The ETRN node.
+ * @data: Application data
+ * @release: function to free/unref data.
+ *
+ * Associate application data with the ETRN node.
+ * If @release is non-NULL it is called to free or unreference data when
+ * changed or the session is destroyed.
+ */
+void
+smtp_etrn_set_application_data_full (smtp_etrn_node_t node, void *data,
+				     void (*release) (void *))
+{
+  SMTPAPI_CHECK_ARGS (node != NULL, /* void */);
+
+  if (node->application_data != NULL && node->release != NULL)
+    (*node->release) (node->application_data);
+
+  node->release = release;
+  node->application_data = data;
 }
 
 /**
@@ -199,6 +226,9 @@ destroy_etrn_nodes (smtp_session_t session)
   for (node = session->etrn_nodes; node != NULL; node = next)
     {
       next = node->next;
+
+      if (node->application_data != NULL && node->release != NULL)
+	(*node->release) (node->application_data);
       free (node->domain);
       free (node);
     }
@@ -299,6 +329,15 @@ smtp_etrn_set_application_data (smtp_etrn_node_t node,
   SMTPAPI_CHECK_ARGS (node != NULL, NULL);
 
   return NULL;
+}
+
+void
+smtp_etrn_set_application_data_full (smtp_etrn_node_t node
+						      __attribute__ ((unused)),
+				     void *data __attribute__ ((unused)),
+				     void (*release) (void *)
+						      __attribute__ ((unused)))
+{
 }
 
 void *

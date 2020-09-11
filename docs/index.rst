@@ -10,7 +10,7 @@ libESMTP
 .. note:: This is the official libESMTP repository and documentation,
     created and maintained by the original libESMTP author.
 
-    See `these notes <notes.html>`_ for further information.
+    See `the following notes <notes.html>`_ for more information.
 
 A Library for Posting Electronic Mail
 =====================================
@@ -37,7 +37,7 @@ libESMTP transparently handles many SMTP extensions including authentication.
 Wiki
 ----
 
-The libESMTP wiki pages may be
+The libESMTP wiki is
 `found here <https://github.com/libesmtp/libESMTP/wiki>`_.
 
 Users
