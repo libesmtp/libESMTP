@@ -193,6 +193,7 @@ subdir('crammd5')
 if ssldep.found()
   subdir('ntlm')
 endif
+subdir('test')
 
 ################################################################################
 # Misc installation

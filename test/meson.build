@@ -1,6 +1,4 @@
-project('libESMTP-test', 'c', version : '1.0.7', default_options: ['c_std=c11'])
 
-include_dir = include_directories('..')
 dep = dependency('check')
 
 base64 = executable('base64', 'test-base64.c',
