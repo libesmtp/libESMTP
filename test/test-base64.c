@@ -7,7 +7,7 @@
 START_TEST (base64_encode)
 {
   char buffer[256];
-  char data[] =
+  unsigned char data[] =
     {
       0x46, 0xb2, 0x7d, 0xac, 0x2f,
       0xad, 0xcc, 0x46, 0xdb, 0xac,
@@ -38,7 +38,7 @@ END_TEST
 START_TEST (base64_decode)
 {
   char buffer[256];
-  char data[] =
+  unsigned char data[] =
     {
       0x46, 0xb2, 0x7d, 0xac, 0x2f,
       0xad, 0xcc, 0x46, 0xdb, 0xac,
@@ -60,11 +60,11 @@ START_TEST (base64_decode)
   /* check output buffer has enough space for result */
   ck_assert_int_eq (b64_decode (buffer, 18, b64data, sizeof b64data), -1);
   /* check against invalid input */
-  ck_assert_int_eq (b64_decode (buffer, sizeof buffer, data, sizeof data), -1);
+  ck_assert_int_eq (b64_decode (buffer, sizeof buffer, (char *) data, sizeof data), -1);
 }
 END_TEST
 
-Suite *
+static Suite *
 base64_suite (void)
 {
   Suite *s;

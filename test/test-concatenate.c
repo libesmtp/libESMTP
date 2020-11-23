@@ -72,7 +72,7 @@ START_TEST (concatenate_more)
 }
 END_TEST
 
-Suite *
+static Suite *
 concatenate_suite (void)
 {
   Suite *s;

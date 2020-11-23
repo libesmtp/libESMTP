@@ -1,5 +1,6 @@
 #include <check.h>
-#include "missing.h"
+#include <stdlib.h>
+#include <strings.h>
 #include "missing.c"
 
 START_TEST (test_strdup)
@@ -97,7 +98,7 @@ START_TEST (test_strlcpy)
 }
 END_TEST
 
-Suite *
+static Suite *
 missing_suite (void)
 {
   Suite *s;
