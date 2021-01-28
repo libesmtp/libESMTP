@@ -404,7 +404,7 @@ void *smtp_etrn_get_application_data (smtp_etrn_node_t node);
 #define SMTP_ERR_INVAL				7
 #define SMTP_ERR_EXTENSION_NOT_AVAILABLE	8
 
-#if LIBESMTP_ENABLE_DEPRECATED_SYMBOLS
+#ifdef LIBESMTP_ENABLE_DEPRECATED_SYMBOLS
 
 /* Deprecated - these will be removed in a future release */
 #define SMTP_ERR_HOST_NOT_FOUND			SMTP_ERR_EAI_ADDRFAMILY
