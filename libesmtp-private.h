@@ -64,6 +64,7 @@ struct smtp_session
 
   /* Application data */
     void *application_data;		/* Pointer to data maintained by app */
+    void (*release) (void *);		/* function to free/unref data */
 
   /* Messages */
     struct smtp_message *messages;	/* list of messages to submit */
@@ -151,6 +152,7 @@ struct smtp_message
 
   /* Application data */
     void *application_data;		/* Pointer to data maintained by app */
+    void (*release) (void *);		/* function to free/unref data */
 
   /* Reverse Path */
     char *reverse_path_mailbox;		/* Reverse path */
@@ -199,6 +201,7 @@ struct smtp_recipient
 
   /* Application data */
     void *application_data;		/* Pointer to data maintained by app */
+    void (*release) (void *);		/* function to free/unref data */
 
   /* Recipient Info */
     char *mailbox;			/* Envelope address */

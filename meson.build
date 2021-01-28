@@ -102,6 +102,8 @@ conf.set('HAVE_STRUCT_TM_TM_ZONE', 0)
 conf.set('HAVE_UNAME', 1)
 conf.set('HAVE_STRFTIME', 1)
 
+conf.set('LIBESMTP_ENABLE_DEPRECATED_SYMBOLS', get_option('deprecated'))
+
 # endianness
 conf.set('WORDS_BIGENDIAN', host_machine.endian() == 'big')
 

@@ -51,19 +51,22 @@ protocol session is performed by a single function call.
 Reference
 ---------
 
-To use the libESMTP API, include the following header files:
-``` c
-#include <auth-client.h>
-#include <libesmtp.h>
-```
+To use the libESMTP API, include the following header files
+
+.. code-block:: c
+
+    #include <auth-client.h>
+    #include <libesmtp.h>
 
 Declarations for deprecated symbols must be requested explicitly; define the
-macro ``LIBESMTP_ENABLE_DEPRECATED_SYMBOLS`` to be non-zero before including
-libesmtp.h. for example:
-``` c
-#define LIBESMTP_ENABLE_DEPRECATED_SYMBOLS 1
-#include <libesmtp.h>
-```
+macro ``LIBESMTP_ENABLE_DEPRECATED_SYMBOLS`` before including
+libesmtp.h. for example
+
+.. code-block:: c
+
+    #define LIBESMTP_ENABLE_DEPRECATED_SYMBOLS
+    #include <libesmtp.h>
+
 
 Internally libESMTP creates and maintains structures to track the state of
 an SMTP protocol session.  Opaque pointers to these structures are passed
@@ -82,7 +85,9 @@ the internal detail of libESMTP structures is not made available to the
 application.  Object oriented programmers may wish to regard the pointers
 as instances of private classes within libESMTP.
 
-Three pointer types are declared as follows::
+Three pointer types are declared as follows
+
+.. code-block:: c
 
     typedef struct smtp_session *smtp_session_t;
     typedef struct smtp_message *smtp_message_t;
@@ -109,7 +114,9 @@ sometimes try to write to a socket with no reader.  Catching or ignoring
 SIGPIPE ensures the application isn't killed accidentally when this happens
 during the protocol session.
 
-Code similar to the following may be used to do this::
+Code similar to the following may be used to do this
+
+.. code-block:: c
 
    #include <signal.h>
 

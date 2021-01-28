@@ -818,6 +818,9 @@ smtp_destroy_session (smtp_session_t session)
 
   SMTPAPI_CHECK_ARGS (session != NULL, 0);
 
+  if (session->application_data != NULL && session->release != NULL)
+    (*session->release) (session->application_data);
+
   reset_status (&session->mta_status);
   destroy_auth_mechanisms (session);
 #ifdef USE_ETRN
@@ -839,6 +842,9 @@ smtp_destroy_session (smtp_session_t session)
     {
       message = session->messages->next;
 
+      if (message->application_data != NULL && message->release != NULL)
+	(*message->release) (message->application_data);
+
       reset_status (&session->messages->message_status);
       reset_status (&session->messages->reverse_path_status);
       free (session->messages->reverse_path_mailbox);
@@ -846,6 +852,9 @@ smtp_destroy_session (smtp_session_t session)
       while (session->messages->recipients != NULL)
         {
 	  recipient = session->messages->recipients->next;
+
+	  if (recipient->application_data != NULL && recipient->release != NULL)
+	    (*recipient->release) (recipient->application_data);
 
 	  reset_status (&session->messages->recipients->status);
 	  free (session->messages->recipients->mailbox);
@@ -879,6 +888,9 @@ smtp_destroy_session (smtp_session_t session)
  *
  * Associate application data with the session.
  *
+ * Only available when %LIBESMTP_ENABLE_DEPRECATED_SYMBOLS is defined.
+ * Use smtp_set_application_data_full() instead.
+ *
  * Return: Previously set application data or %NULL
  */
 void *
@@ -886,11 +898,35 @@ smtp_set_application_data (smtp_session_t session, void *data)
 {
   void *old;
 
-  SMTPAPI_CHECK_ARGS (session != NULL, 0);
+  SMTPAPI_CHECK_ARGS (session != NULL, NULL);
 
   old = session->application_data;
   session->application_data = data;
+  session->release = NULL;
   return old;
+}
+
+/**
+ * smtp_set_application_data_full() - Associate data with a session.
+ * @session: The session.
+ * @data: Application data
+ * @release: function to free/unref data.
+ *
+ * Associate application data with the session.
+ * If @release is non-NULL it is called to free or unreference data when
+ * changed or the session is destroyed.
+ */
+void
+smtp_set_application_data_full (smtp_session_t session, void *data,
+				void (*release) (void *))
+{
+  SMTPAPI_CHECK_ARGS (session != NULL, /* void */);
+
+  if (session->application_data != NULL && session->release != NULL)
+    (*session->release) (session->application_data);
+
+  session->release = release;
+  session->application_data = data;
 }
 
 /**
@@ -904,7 +940,7 @@ smtp_set_application_data (smtp_session_t session, void *data)
 void *
 smtp_get_application_data (smtp_session_t session)
 {
-  SMTPAPI_CHECK_ARGS (session != NULL, 0);
+  SMTPAPI_CHECK_ARGS (session != NULL, NULL);
 
   return session->application_data;
 }
@@ -916,6 +952,9 @@ smtp_get_application_data (smtp_session_t session)
  *
  * Associate application data with the message.
  *
+ * Only available when %LIBESMTP_ENABLE_DEPRECATED_SYMBOLS is defined.
+ * Use smtp_message_set_application_data_full() instead.
+ *
  * Return: Previously set application data or %NULL
  */
 void *
@@ -923,11 +962,35 @@ smtp_message_set_application_data (smtp_message_t message, void *data)
 {
   void *old;
 
-  SMTPAPI_CHECK_ARGS (message != NULL, 0);
+  SMTPAPI_CHECK_ARGS (message != NULL, NULL);
 
   old = message->application_data;
   message->application_data = data;
+  message->release = NULL;
   return old;
+}
+
+/**
+ * smtp_message_set_application_data_full() - Associate data with a message.
+ * @message: The message.
+ * @data: Application data
+ * @release: function to free/unref data.
+ *
+ * Associate application data with the message.
+ * If @release is non-NULL it is called to free or unreference data when
+ * changed or the message is destroyed.
+ */
+void
+smtp_message_set_application_data_full (smtp_message_t message, void *data,
+					void (*release) (void *))
+{
+  SMTPAPI_CHECK_ARGS (message != NULL, /* void */);
+
+  if (message->application_data != NULL && message->release != NULL)
+    (*message->release) (message->application_data);
+
+  message->release = release;
+  message->application_data = data;
 }
 
 /**
@@ -941,7 +1004,7 @@ smtp_message_set_application_data (smtp_message_t message, void *data)
 void *
 smtp_message_get_application_data (smtp_message_t message)
 {
-  SMTPAPI_CHECK_ARGS (message != NULL, 0);
+  SMTPAPI_CHECK_ARGS (message != NULL, NULL);
 
   return message->application_data;
 }
@@ -953,6 +1016,9 @@ smtp_message_get_application_data (smtp_message_t message)
  *
  * Associate application data with the recipient.
  *
+ * Only available when %LIBESMTP_ENABLE_DEPRECATED_SYMBOLS is defined.
+ * Use smtp_recipient_set_application_data_full() instead.
+ *
  * Return: Previously set application data or %NULL
  */
 void *
@@ -960,11 +1026,36 @@ smtp_recipient_set_application_data (smtp_recipient_t recipient, void *data)
 {
   void *old;
 
-  SMTPAPI_CHECK_ARGS (recipient != NULL, 0);
+  SMTPAPI_CHECK_ARGS (recipient != NULL, NULL);
 
   old = recipient->application_data;
   recipient->application_data = data;
+  recipient->release = NULL;
   return old;
+}
+
+/**
+ * smtp_recipient_set_application_data_full() - Associate data with a recipient.
+ * @recipient: The recipient.
+ * @data: Application data
+ * @release: function to free/unref data.
+ *
+ * Associate application data with the recipient.
+ * If @release is non-NULL it is called to free or unreference data when
+ * changed or the recipient is destroyed.
+ */
+void
+smtp_recipient_set_application_data_full (smtp_recipient_t recipient,
+					  void *data,
+					  void (*release) (void *))
+{
+  SMTPAPI_CHECK_ARGS (recipient != NULL, /* void */);
+
+  if (recipient->application_data != NULL && recipient->release != NULL)
+    (*recipient->release) (recipient->application_data);
+
+  recipient->release = release;
+  recipient->application_data = data;
 }
 
 /**
@@ -978,7 +1069,7 @@ smtp_recipient_set_application_data (smtp_recipient_t recipient, void *data)
 void *
 smtp_recipient_get_application_data (smtp_recipient_t recipient)
 {
-  SMTPAPI_CHECK_ARGS (recipient != NULL, 0);
+  SMTPAPI_CHECK_ARGS (recipient != NULL, NULL);
 
   return recipient->application_data;
 }
