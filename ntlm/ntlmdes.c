@@ -66,19 +66,19 @@ lm_deshash (void *result, const_DES_cblock *iv, const void *secret)
 
 /* Copy and convert to upper case.  If supplied string is shorter than the
    destination, zero pad the remainder. */
-char *
+int
 lm_uccpy (char *dst, size_t dstlen, const char *src)
 {
   char *p;
   size_t len;
 
-  if ((len = strlen (src)) > dstlen)
+  if ((len = src != NULL ? strlen (src) : 0) > dstlen)
     len = dstlen;
   for (p = dst; len > 0; p++, src++, len--)
     *p = toupper (*src);
   if (p < dst + dstlen)
     memset (p, 0, dst + dstlen - p);
-  return dst;
+  return len;
 }
 
 /* create LanManager hashed password */
@@ -100,6 +100,9 @@ unsigned char *
 nt_unicode (const char *string, size_t len)
 {
   unsigned char *uni, *pp;
+
+  if (len == 0)
+    return NULL;
 
   uni = malloc (len * 2);
   if ((pp = uni) != NULL)

@@ -2,11 +2,14 @@
 
 LibESMTP is considered stable.  Source code is available from
 [GitHub](https://github.com/libesmtp/libESMTP).
-Clone the repository using:
+Clone the repository as follows, however please also refer to
+[the errata](errata.md) for further important information.
 
 ``` sh
 $ git clone https://github.com/libesmtp/libESMTP.git
 ```
+
+libESMTP v1.0.6 may be found on the branch `libesmtp-1.0.6`.
 
 ## Dependencies
 
@@ -34,6 +37,7 @@ resolver should it be unavailable on the target platform.
 LibESMTP uses the
 [Meson build system](https://mesonbuild.com/Getting-meson.html).
 Refer to the Meson manual for standard configuration options.
+*Note that the libesmtp-1.0.6 branch still uses autotools.*
 
 Meson supports multiple build system backends.  To build with
 [Ninja](https://ninja-build.org/) do the following:
