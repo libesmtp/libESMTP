@@ -264,7 +264,7 @@ static const char *libesmtp_errors[] =
  * @buflen:	Buffer length
  *
  * Translate a libESMTP error number to a string suitable for use in an
- * application error message.  The resuting string is copied into #buf.
+ * application error message.  The resuting string is copied into @buf.
  *
  * Return: A pointer to @buf on success or %NULL on failure.
  */

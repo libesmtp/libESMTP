@@ -212,11 +212,10 @@ const char *_smtp_message_str_cb (void **ctx, int *len, void *arg);
  * @Timeout_ENVELOPE: Timeout for envelope responses.
  * @Timeout_DATA: Timeout waiting for data transfer to begin.
  * @Timeout_TRANSFER: Timeout for data transfer phase.
- * @Timeout_DATA2: Timeout for ? phase.
- * @Timeout_OVERRIDE_RFC2822_MINIMUM: Bitwise OR with above to override
- *                                    reccommended minimum timeouts.
+ * @Timeout_DATA2: Timeout for data transfer phase.
  *
- * Timeout flags.
+ * Timeout flags. In addition %Timeout_OVERRIDE_RFC2822_MINIMUM may
+ * be bitwise-ORed with above to override reccommended minimum timeouts.
  */
 enum rfc2822_timeouts
   {

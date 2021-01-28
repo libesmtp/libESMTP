@@ -20,7 +20,7 @@
 # -- Project information -----------------------------------------------------
 
 project = 'libESMTP'
-copyright = '2020, Brian Stafford'
+copyright = '2021, Brian Stafford'
 author = 'Brian Stafford'
 
 # The short X.Y version
@@ -41,6 +41,7 @@ release = '1.0.6'
 extensions = [
     'recommonmark',
     'sphinx.ext.githubpages',
+    'sphinx_markdown_tables',
     'sphinx_rtd_theme',
     #'sphinx_typo3_theme',
 ]

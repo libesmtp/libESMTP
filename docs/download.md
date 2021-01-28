@@ -53,29 +53,30 @@ builddir with files owned by root.
 
 As well as the standard meson options, the following are supported:
 
-* -Dpthreads=[enabled|disabled|auto]
+Option | Values | Description
+-------|--------|------------
+pthreads | enabled, disabled, **auto** | build with support for Posix threads
+tls | enabled, disabled, **auto** | support the STARTTLS extension and NTLM authentication
+lwres | enabled, **disabled**, auto | use the ISC lightweight resolver
+bdat | **true**, false | enable SMTP BDAT extension
+etrn | **true**, false | enable SMTP ETRN extension
+xusr | **true**, false | enable sendmail XUSR extension
 
-  build with support for Posix threads (default: auto)
+Options are specified as `-D<option>=<value>`.
 
-* -Dtls=[enabled|disabled|auto]
+## Static Analyser
 
-  support the STARTTLS extension and NTLM authentication (default: auto)
+It's not obvious how to use `scan-build` with meson and ninja when the binary
+does not have the default name.  It truns out the `SCANBUILD` environment
+variable must be set to the *absolute* pathname of the binary.
 
-* -Dlwres=[enabled|disabled|auto]
+To build with the clang static analyser, assuming the scan-build binary is
+`scan-build-10`, use the following:
 
-  use the ISC lightweight resolver (default: disabled)
-
-* -Dbdat=[true|false]
-
-  enable SMTP BDAT extension (default: true)
-
-* -Detrn=[true|false]
-
-  enable SMTP ETRN extension (default: true)
-
-* -Dxusr=[true|false]
-
-  enable sendmail XUSR extension (default: true)
+``` sh
+SCANBUILD=`which scan-build-10` meson builddir [options]
+ninja -C builddir scan-build
+```
 
 ## Documentation
 

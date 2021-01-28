@@ -130,7 +130,7 @@ smtp_etrn_enumerate_nodes (smtp_session_t session,
 
 /**
  * smtp_etrn_node_status:
- * @node: An #smtp_etrn_node_t
+ * @node: An &smtp_etrn_node_t returned by smtp_etrn_add_node()
  *
  * Retrieve the ETRN node success/failure status from a previous SMTP session.
  * This includes SMTP status codes, RFC 2034 enhanced status codes, if
@@ -150,7 +150,7 @@ smtp_etrn_node_status (smtp_etrn_node_t node)
 
 /**
  * smtp_etrn_set_application_data:
- * @node: An #smtp_etrn_node_t
+ * @node: An &smtp_etrn_node_t returned by smtp_etrn_add_node()
  * @data: Application data to set
  *
  * Associate application defined data with the opaque ETRN structure.
@@ -175,7 +175,7 @@ smtp_etrn_set_application_data (smtp_etrn_node_t node, void *data)
 
 /**
  * smtp_etrn_set_application_data_full() - Associate data with an ETRN node.
- * @node: The ETRN node.
+ * @node: An &smtp_etrn_node_t returned by smtp_etrn_add_node()
  * @data: Application data
  * @release: function to free/unref data.
  *
@@ -198,7 +198,7 @@ smtp_etrn_set_application_data_full (smtp_etrn_node_t node, void *data,
 
 /**
  * smtp_etrn_get_application_data:
- * @node: An #smtp_etrn_node_t
+ * @node: An &smtp_etrn_node_t returned by smtp_etrn_add_node()
  *
  * Retrieve application data from the opaque ETRN structure.
  *

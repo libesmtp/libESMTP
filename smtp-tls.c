@@ -34,14 +34,15 @@
  * StartTLS Extension
  * ------------------
  *
- * If #OpenSSL is available when building libESMTP, support for the STARTTLS
+ * If OpenSSL is available when building libESMTP, support for the STARTTLS
  * extension can be enabled.  If support is not enabled, the following APIs
  * will always fail:
- * - smtp_starttls_set_password_cb()
- * - smtp_starttls_set_ctx()
- * - smtp_starttls_enable()
  *
- * .. see_also:: [OpenSSL](https://www.openssl.org/)
+ * * smtp_starttls_set_password_cb()
+ * * smtp_starttls_set_ctx()
+ * * smtp_starttls_enable()
+ *
+ * See also: `OpenSSL <https://www.openssl.org/>`_.
  */
 
 /* This stuff doesn't belong here */
@@ -159,16 +160,16 @@ check_directory (const char *file)
 
 /**
  * smtp_starttls_set_password_cb:
- * @cb: Password callback with signature #smtp_starttls_passwordcb_t.
+ * @cb: Password callback with signature &smtp_starttls_passwordcb_t.
  * @arg: User data passed to the callback.
  *
  * Set password callback function for OpenSSL. Unusually this API does not
  * require a &typedef smtp_session_t as the data it sets is global.
  *
- * N.B.  If this API is not called and OpenSSL requires a password, it
- *	 will supply a default callback which prompts on the user's tty.
- *	 This is likely to be undesired behaviour, so the app should
- *	 supply a callback using this function.
+ * N.B.  If this API is not called and OpenSSL requires a password, it will
+ * supply a default callback which prompts on the user's tty.  This is likely
+ * to be undesired behaviour, so the app should supply a callback using this
+ * function.
  *
  * Returns: Zero on failure, non-zero on success.
  */
@@ -207,45 +208,12 @@ starttls_init_ctx (smtp_session_t session, SSL_CTX *ctx)
      ~/.authenticate/ca
 				the user's hashed CA directory
 
-     Host specific stuff follows the same structure except that its
+     Host specific stuff follows the same structure except that it is
      below ~/.authenticate/host.name
 
-     It probably makes sense to check that the directories and/or files
-     are readable only by the user who owns them.
-
-     This structure will certainly change.  I'm on a voyage of discovery
-     here!  Eventually, this code and the SASL stuff will become a
-     separate library used by libESMTP (libAUTH?).  The general idea is
-     that ~/.authenticate will be used to store authentication
-     information for the user (eventually there might be a
-     ({/usr{/local}}/etc/authenticate for system wide stuff - CA lists
-     and CRLs for example).  The "private" subdirectory is just to
-     separate out private info from others.  There might be a "public"
-     directory too.  Since the CA list is global (I think) I've put them
-     below .authenticate for now.  Within the "private" and "public"
-     directories, certificates and other authentication data are named
-     according to their purpose (hence smtp-starttls.pem).  Symlinks can
-     be used to avoid duplication where authentication tokens are shared
-     for several purposes.  My reasoning here is that libESMTP (or any
-     client layered over the hypothetical libAUTH) will always want the
-     same authentication behaviour for a given service, regardless of
-     the application using it.
-
-     XXX - The above isn't quite enough.  Per-host directories are
-     required, e.g. a different smtp-starttls.pem might be needed for
-     different servers.  This will not affect the trusted CAs though.
-
-     XXX - (this comment belongs in auth-client.c) Ideally, the
-     ~/.authenticate hierarchy will be able to store SASL passwords
-     if required, preferably encrypted.  Then the application would
-     not necessarily have to supply usernames and passwords via the
-     libESMTP API to be able to authenticate to a server.
+     Files and directories must be readable only by their owner.
+     User certificates are presented to the server only on request.
    */
-
-  /* Client certificate policy: if a client certificate is found at
-     ~/.authenticate/private/smtp-starttls.pem, it is presented to the
-     server if it requests it.	The server may use the certificate to
-     perform authentication at its own discretion. */
   if (ctx_password_cb != NULL)
     {
       SSL_CTX_set_default_passwd_cb (ctx, ctx_password_cb);

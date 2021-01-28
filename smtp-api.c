@@ -228,8 +228,8 @@ smtp_enumerate_messages (smtp_session_t session,
  * smtp_start_session() is called again.
  *
  * Return: %NULL if no status information is available, otherwise a pointer to
- *         the status information.  The pointer remains valid until the next
- *         call to libESMTP in the same thread.
+ * the status information.  The pointer remains valid until the next
+ * call to libESMTP in the same thread.
  */
 const smtp_status_t *
 smtp_message_transfer_status (smtp_message_t message)

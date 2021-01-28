@@ -3,7 +3,8 @@ API Reference
 
 This document describes the libESMTP programming interface.
 
-This document is for version 1.0.6.
+This document is for the master branch which is a superset of version 1.0.6,
+adding only the `_full()` variants of the application data API.
 
 The libESMTP API is intended for use as an ESMTP client within a Mail User
 Agent (MUA) or other program that wishes to submit mail to a preconfigured
@@ -27,6 +28,7 @@ If in doubt, consult the source.
    _kdoc/smtp-api
    _kdoc/smtp-etrn
    _kdoc/smtp-auth
+   certificates
    _kdoc/smtp-tls
    _kdoc/message-callbacks
    _kdoc/errors
