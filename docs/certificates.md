@@ -69,6 +69,12 @@ If the server certificate has a subjectAltName field, libESMTP checks that the
 server's domain name matches one of the subjectAltNames.  If a subjectAltName
 is not present, the certificate's commonName is used.
 
+It is expected that the MTA's server certificate will be configured with the
+host's canonic domain name.  Therefore when libESMTP connects to the MTA, it
+retrieves the server's canonic domain name which is used to check the
+certificate. The host's canonic name will differ only if the host name refers
+to a CNAME record in the DNS.
+
 Domain names are compared using the wildcard match described in RFC 2818.
 
 [1]: smtp-tls.html#c.smtp_starttls_set_ctx
