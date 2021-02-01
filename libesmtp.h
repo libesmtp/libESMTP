@@ -80,6 +80,7 @@ smtp_message_t smtp_add_message (smtp_session_t session);
 int smtp_enumerate_messages (smtp_session_t session,
 			     smtp_enumerate_messagecb_t cb, void *arg);
 int smtp_set_server (smtp_session_t session, const char *hostport);
+const char *smtp_get_server_name (smtp_session_t session);
 int smtp_set_hostname (smtp_session_t session, const char *hostname);
 int smtp_set_reverse_path (smtp_message_t message, const char *mailbox);
 smtp_recipient_t smtp_add_recipient (smtp_message_t message,

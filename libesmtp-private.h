@@ -57,6 +57,7 @@ struct smtp_session
 
   /* MTA */
     char *host;				/* Host domain name of SMTP server */
+    char *canon;			/* Canonic host name of SMTP server */
     const char *port;			/* Port number - default to 587 */
 
   /* Application data */

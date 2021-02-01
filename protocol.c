@@ -195,11 +195,7 @@ do_session (smtp_session_t session)
         }
     }
 
-  /* Connect to the SMTP server.  The following code will only work for
-     socket connections at present.  This will eventually change to
-     permit connections on any type of file descriptor, e.g. for LMTP
-     servers or forking an SMTP server which can run the protocol on
-     its standard input. */
+  /* Connect to the SMTP server. */
 
   errno = 0;
   nodename = (session->host == NULL || *session->host == '\0') ? NULL
@@ -207,6 +203,7 @@ do_session (smtp_session_t session)
   /* Use the RFC 3493/Posix resolver interface.  This allows for much
      cleaner code, protocol independence and thread safety. */
   memset (&hints, 0, sizeof hints);
+  hints.ai_flags = AI_CANONNAME;
   hints.ai_family = PF_UNSPEC;
   hints.ai_socktype = SOCK_STREAM;
   err = getaddrinfo (nodename, session->port, &hints, &res);
@@ -215,6 +212,8 @@ do_session (smtp_session_t session)
       set_herror (err);
       return 0;
     }
+
+  session->canon = res->ai_canonname != NULL ? strdup (res->ai_canonname) : NULL;
 
   /* Try to establish an SMTP session with each host in turn until one
      succeeds.  */

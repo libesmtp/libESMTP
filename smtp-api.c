@@ -102,6 +102,10 @@ smtp_set_server (smtp_session_t session, const char *hostport)
 
   SMTPAPI_CHECK_ARGS (session != NULL && hostport != NULL, 0);
 
+  if (session->canon != NULL)
+    free (session->canon);
+  session->canon = NULL;
+
   if (session->host != NULL)
     {
       free (session->host);
@@ -123,6 +127,25 @@ smtp_set_server (smtp_session_t session, const char *hostport)
     session->port = service;
   session->host = host;
   return 1;
+}
+
+/**
+ * smtp_get_server_name() - get submission MTA canonic hostname.
+ * @session: The session.
+ *
+ * Get the canonic host name for the submission MTA.  This is only valid after
+ * smtp_start_session() has been called, for example in the event callback
+ * after a connection has been established. If the canonic name is not
+ * available the host name set in smtp_set_server() is returned instead.
+ *
+ * Return: MTA hostname or NULL.
+ */
+const char *
+smtp_get_server_name (smtp_session_t session)
+{
+  SMTPAPI_CHECK_ARGS (session != NULL, NULL);
+
+  return session->canon != NULL ? session->canon : session->host;
 }
 
 /**
@@ -830,6 +853,8 @@ smtp_destroy_session (smtp_session_t session)
   destroy_starttls_context (session);
 #endif
 
+  if (session->canon != NULL)
+    free (session->canon);
   if (session->host != NULL)
     free (session->host);
   if (session->localhost != NULL)

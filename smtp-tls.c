@@ -97,14 +97,13 @@ static char *
 host_pathname (char buf[], size_t buflen, smtp_session_t session,
 	       const char *tail)
 {
-  const char *home;
+  const char *home, *host;
   int len;
 
-  /* FIXME: in protocol.c, record the canonic name of the host returned
-	    by getaddrinfo.  Use that instead of session->host. */
   home = get_home ();
-  len = snprintf (buf, buflen, "%s/.authenticate/%s/%s",
-  		  home, session->host, tail);
+  /* use the canonic hostname if available */
+  host = session->canon != NULL ? session->canon : session->host;
+  len = snprintf (buf, buflen, "%s/.authenticate/%s/%s", home, host, tail);
   return (len >= 0 && (size_t) len < buflen) ? buf : NULL;
 }
 
@@ -276,8 +275,6 @@ starttls_init_ctx (smtp_session_t session, SSL_CTX *ctx)
     SSL_CTX_load_verify_locations (ctx, cafile, capath);
   else
     SSL_CTX_set_default_verify_paths (ctx);
-
-  /* FIXME: load a source of randomness */
 
   return 1;
 }
@@ -458,9 +455,13 @@ static int
 check_acceptable_security (smtp_session_t session, SSL *ssl)
 {
   X509 *cert;
+  const char *host;
   int bits;
   long vfy_result;
   int ok;
+
+  /* use canonic hostname for validation if available */
+  host = session->canon != NULL ? session->canon : session->host;
 
   /* Check certificate validity.
    */
@@ -525,8 +526,7 @@ check_acceptable_security (smtp_session_t session, SSL *ssl)
 		  size_t ia5len = name->d.ia5->length;
 
 		  hasaltname = 1;
-		  if (strlen (ia5str) == ia5len
-		      && match_domain (session->host, ia5str))
+		  if (strlen (ia5str) == ia5len && match_domain (host, ia5str))
 		    ok = 1;
 		  else
 		    strlcpy (buf, ia5str, sizeof buf);
@@ -557,17 +557,18 @@ check_acceptable_security (smtp_session_t session, SSL *ssl)
 						X509_NAME_get_entry (subj, idx)
 						     )) != NULL)
 		{
-		  unsigned char *str = NULL;
-		  size_t len = ASN1_STRING_to_UTF8 (&str, cn);
+		  unsigned char *ustr = NULL;
+		  const char *str;
+		  size_t len;
 
-		  if (str != NULL)
+		  len = ASN1_STRING_to_UTF8 (&ustr, cn);
+		  if ((str = (const char *) ustr) != NULL)
 		    {
-		      if (strlen ((char *) str) == len
-			  && match_domain (session->host, (char *) str))
+		      if (strlen (str) == len && match_domain (host, str))
 			ok = 1;
 		      else
-			strlcpy (buf, (char *) str, sizeof buf);
-		      OPENSSL_free (str);
+			strlcpy (buf, str, sizeof buf);
+		      OPENSSL_free (ustr);
 		    }
 		}
 	    }
