@@ -79,6 +79,7 @@ conf.set('USE_CHUNKING', get_option('bdat'))
 conf.set('USE_ETRN', get_option('etrn'))
 conf.set('USE_PTHREADS', threaddep.found())
 conf.set('USE_TLS', ssldep.found())
+conf.set('USE_XDG_DIRS', get_option('xdg'))
 conf.set('USE_XUSR', get_option('xusr'))
 
 conf.set_quoted('AUTHPLUGINDIR', get_option('prefix') / auth_plugin_dir)
@@ -202,3 +203,14 @@ endif
 install_headers(['libesmtp.h', 'auth-client.h'])
 pkg.generate(lib, filebase : 'libesmtp-1.0', description : 'SMTP client library')
 
+
+summary({'prefix': get_option('prefix'),
+         'libdir': get_option('libdir'),
+	 'threads': threaddep.found(),
+	 'lwres': lwresdep.found(),
+	 'AUTH modules': get_option('prefix') / auth_plugin_dir,
+	 'Legacy file layout': not get_option('xdg'),
+	 'STARTTLS': ssldep.found(),
+	 'CHUNKING': get_option('bdat'),
+	 'ETRN': get_option('etrn'),
+	 'XUSR': get_option('xusr')})

@@ -82,6 +82,57 @@ get_home (void)
   return getenv ("HOME");
 }
 
+#ifdef USE_XDG_DIRS
+# define XDG	".config"
+# define APP	"libesmtp"
+
+static const char *
+get_config_dir (void)
+{
+  return getenv ("XDG_CONFIG_DIR");
+}
+
+static char *
+user_pathname (char buf[], size_t buflen, const char *tail)
+{
+  const char *home;
+  int len;
+
+  home = get_config_dir ();
+  if (home != NULL)
+    len = snprintf (buf, buflen, "%s/"APP"/%s", home, tail);
+  else
+    {
+      home = get_home ();
+      len = snprintf (buf, buflen, "%s/"XDG"/"APP"/%s", home, tail);
+    }
+  return (len >= 0 && (size_t) len < buflen) ? buf : NULL;
+}
+
+static char *
+host_pathname (char buf[], size_t buflen, smtp_session_t session,
+	       const char *dir, const char *suffix)
+{
+  const char *home, *host;
+  int len;
+
+  /* use the canonic hostname if available */
+  host = session->canon != NULL ? session->canon : session->host;
+
+  home = get_config_dir ();
+  if (home != NULL)
+    len = snprintf (buf, buflen, "%s/"APP"/%s/%s.%s", home, dir, host, suffix);
+  else
+    {
+      home = get_home ();
+      len = snprintf (buf, buflen, "%s/"XDG"/"APP"/%s/%s.%s",
+		      home, dir, host, suffix);
+    }
+  return (len >= 0 && (size_t) len < buflen) ? buf : NULL;
+}
+
+#else
+
 static char *
 user_pathname (char buf[], size_t buflen, const char *tail)
 {
@@ -106,6 +157,8 @@ host_pathname (char buf[], size_t buflen, smtp_session_t session,
   len = snprintf (buf, buflen, "%s/.authenticate/%s/%s", home, host, tail);
   return (len >= 0 && (size_t) len < buflen) ? buf : NULL;
 }
+
+#endif
 
 typedef enum { FILE_PROBLEM, FILE_NOT_PRESENT, FILE_OK } ckf_t;
 
@@ -333,19 +386,18 @@ starttls_create_ssl (smtp_session_t session)
   ssl = SSL_new (session->starttls_ctx);
 
   /* Client certificate policy: if a host specific client certificate
-     is found at ~/.authenticate/host.name/private/smtp-starttls.pem,
-     it is presented to the server if it requests it. */
+     is found it is presented to the server if requested. */
 
-  /* FIXME: when the default client certificate is loaded a passowrd may be
-	    required.  Then the code below might ask for one too.  It
-	    will be annoying when two passwords are needed and only one
-	    is necessary.  Also, the default certificate will only need
-	    the password when the SSL_CTX is created.  A host specific
-	    certificate's password will be needed for every SMTP session
-	    within an application.  This needs a solution.  */
-
+#ifdef USE_XDG_DIRS
+  /* check for client certificate file:
+     ~/<xdg-config>/libesmtp/private/<host>.pem */
+  keyfile = host_pathname (buf, sizeof buf, session, "private", "pem");
+#else
+  /* check for client certificate file:
+     ~/.authenticate/<host>/private/smtp-starttls.pem */
   keyfile = host_pathname (buf, sizeof buf, session,
   			   "private/smtp-starttls.pem");
+#endif
   status = check_file (keyfile);
   if (status == FILE_OK)
     {
