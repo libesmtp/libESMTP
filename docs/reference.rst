@@ -27,6 +27,7 @@ If in doubt, consult the source.
    programflow
    _kdoc/libesmtp
    _kdoc/smtp-api
+   _kdoc/headers
    _kdoc/smtp-etrn
    _kdoc/smtp-auth
    certificates
