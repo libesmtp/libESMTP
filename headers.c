@@ -777,13 +777,62 @@ missing_header (smtp_message_t message, int *len)
 /**
  * DOC: Headers
  *
- * Mail Headers
- * ------------
+ * Message Headers
+ * ---------------
  *
  * libESMTP provides a simple header API.  This is provided for two purposes
  * firstly to ensure that a message conforms to RFC 5322 when transferred to
  * the Mail Submission Agent (MSA) and, secondly, to simplify the application
  * logic where this is convenient.
+ * 
+ * Message headers known to libESMTP are listed below.  When setting arbitrary
+ * headers, names should be prefixed with ``X-`` if non-standard.
+ *
+ * All newly submitted mail should have a unique Message-Id header. If the
+ * message does not provide one and no value is supplied by smtp_set_header()
+ * libESMTP will generate a suitable header unless the header option is changed.
+ * 
+ * List Values
+ * ===========
+ * 
+ * Headers which accept lists are created by calling smtp_set_header() multiple
+ * times for each value.
+ * 
+ * * From
+ * * To
+ * * Cc
+ * * Bcc
+ * * Reply-To
+ * 
+ * Required Headers
+ * ================
+ * 
+ * The following headers are required and are supplied by libESMTP if not
+ * present in the message.
+ * 
+ * * Date
+ * * From
+ * 
+ * Preserved Headers
+ * =================
+ * 
+ * Preserved headers may not be specified using the libESMTP API, however if
+ * present in the message they are copied unchanged. This is required to
+ * correctly process MIME formatted messages, Resent and Received headers.
+ * 
+ * * Content-*
+ * * MIME-*
+ * * Resent-*
+ * * Received
+ * 
+ * Prohibited Headers
+ * ==================
+ * 
+ * Prohibited may not be present in newly submitted messages and are stripped
+ * from the message, if present.
+ * 
+ * * Return-Path
+ * * Original-Recipient
  */
 
 /**
@@ -793,8 +842,51 @@ missing_header (smtp_message_t message, int *len)
  * @...: additional arguments
  *
  * Set a message header to the specified value.  The additional arguments
- * depend on the header, typically this is a string.
+ * and their types depend on the header, detailed below.
  *
+ * +-----------------------------+--------------------------------------------+
+ * | Date                        | struct tm *tm                              |
+ * +                             +--------------------------------------------+
+ * |                             | Message timestamp.                         |
+ * +-----------------------------+--------------------------------------------+
+ * | From                        | const char *name, const char *address      |
+ * +                             +--------------------------------------------+
+ * |                             | Message originator.                        |
+ * +-----------------------------+--------------------------------------------+
+ * | Sender                      | const char *name, const char *address      |
+ * +                             +--------------------------------------------+
+ * |                             | Message sent from address on behalf of     |
+ * |                             | From mailbox.                              |
+ * +-----------------------------+--------------------------------------------+
+ * | To                          | const char *name, const char *address      |
+ * +                             +--------------------------------------------+
+ * |                             | Primary recipient mailbox.                 |
+ * +-----------------------------+--------------------------------------------+
+ * | Cc                          | const char *name, const char *address      |
+ * +                             +--------------------------------------------+
+ * |                             | Carbon-copy mailbox.                       |
+ * +-----------------------------+--------------------------------------------+
+ * | Bcc                         | const char *name, const char *address      |
+ * +                             +--------------------------------------------+
+ * |                             | Blind carbon-copy mailbox.                 |
+ * +-----------------------------+--------------------------------------------+
+ * | Reply-To                    | const char *name, const char *address      |
+ * +                             +--------------------------------------------+
+ * |                             | Reply to mailbox instead of From.          |
+ * +-----------------------------+--------------------------------------------+
+ * | Disposition-Notification-To | const char *name, const char *address      |
+ * +                             +--------------------------------------------+
+ * |                             | Return MDN to specified address.           |
+ * +-----------------------------+--------------------------------------------+
+ * | Message-Id                  | const char *id                             |
+ * |                             |                                            |
+ * +                             +--------------------------------------------+
+ * |                             | Message ID string or NULL.                 |
+ * +-----------------------------+--------------------------------------------+
+ * | \*                          | const char *text                           |
+ * +                             +--------------------------------------------+
+ * |                             | Set arbitrary header. Value may not be NULL|
+ * +-----------------------------+--------------------------------------------+
  *
  */
 int
@@ -864,6 +956,29 @@ smtp_set_header (smtp_message_t message, const char *header, ...)
   return 1;
 }
 
+/**
+ * smtp_set_header_option() - Set a message header
+ * @message: The message
+ * @header: Header name
+ * @option: Header options
+ * @...: additional arguments
+ *
+ * Set a message header option to the specified value.  The additional
+ * arguments depend on the option as follows
+ *
+ * +--------------+-----------+-----------------------------------------+
+ * | Option       | Arguments | Description                             |
+ * +==============+===========+=========================================+
+ * | Hdr_OVERRIDE | int       | non-zero to enable libESMTP to override |
+ * |              |           | header in message.                      |
+ * +--------------+-----------+-----------------------------------------+
+ * | Hdr_PROHIBIT | int       | non-zero to force libESMTP to strip     |
+ * |              |           | header from message.                    |
+ * +--------------+-----------+-----------------------------------------+
+ *
+ * It is not possible to change the header options for required, prohibited
+ * or preserved headers listed in the introduction.
+ */
 int
 smtp_set_header_option (smtp_message_t message, const char *header,
 			enum header_option option, ...)
