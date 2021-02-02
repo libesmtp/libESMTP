@@ -708,8 +708,8 @@ smtp_deliverby_set_mode (smtp_message_t message,
 /**
  * DOC: Core API
  *
- * Core API
- * --------
+ * Callbacks
+ * ---------
  *
  */
 
@@ -781,6 +781,14 @@ smtp_set_monitorcb (smtp_session_t session, smtp_monitorcb_t cb, void *arg,
 }
 
 /**
+ * DOC: Core API
+ *
+ * SMTP Protocol
+ * -------------
+ *
+ */
+
+/**
  * smtp_start_session() - Start an SMTP session.
  * @session: The session to start.
  *
@@ -822,14 +830,26 @@ smtp_start_session (smtp_session_t session)
 }
 
 /**
+ * DOC: Teardown
+ *
+ * Tear Down Session
+ * -----------------
+ *
+ */
+
+/**
  * smtp_destroy_session() - Destroy a libESMTP session.
  * @session: The session.
  *
  * Deallocate all resources associated with the SMTP session.
  *
- * Note that any application data set will not be destroyed.  To do this the
- * application must explicitly enumerate all messages and their recipients, and
- * retrieve the data to be freed.
+ * If application data has been set on any of the libESMTP structures, the
+ * associated destroy callback will be called with the application data as an
+ * argument.
+ *
+ * If the deprecated legacy APIs are used to set application data or a destroy
+ * callback is not provided, the application must explicitly enumerate all
+ * messages and their recipients, and retrieve the data to be freed.
  *
  * Return: always returns 1
  */
@@ -905,6 +925,19 @@ smtp_destroy_session (smtp_session_t session)
   free (session);
   return 1;
 }
+
+/**
+ * DOC: Data
+ *
+ * Application Data
+ * ----------------
+ *
+ * Applications may attach arbitrary data to any of the libESMTP structures.
+ * The _full() variants of the APIs are preferred to the legacy versions as
+ * these will call a destroy callback when the smtp_session_t structure is
+ * destroyed, helping to avoid memory leaks that might have occurred using the
+ * deprecated APIs.
+ */
 
 /**
  * smtp_set_application_data() - Associate data with a session.
@@ -1098,6 +1131,14 @@ smtp_recipient_get_application_data (smtp_recipient_t recipient)
 
   return recipient->application_data;
 }
+
+/**
+ * DOC: Miscellaneous
+ *
+ * Miscellaneous APIs
+ * ------------------
+ *
+ */
 
 /**
  * smtp_version() - Identify libESMTP version.

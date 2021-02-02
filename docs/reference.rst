@@ -24,6 +24,7 @@ If in doubt, consult the source.
    :maxdepth: 2
 
    introduction
+   programflow
    _kdoc/libesmtp
    _kdoc/smtp-api
    _kdoc/smtp-etrn

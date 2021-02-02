@@ -774,6 +774,29 @@ missing_header (smtp_message_t message, int *len)
  * Header API
  ****************************************************************************/
 
+/**
+ * DOC: Headers
+ *
+ * Mail Headers
+ * ------------
+ *
+ * libESMTP provides a simple header API.  This is provided for two purposes
+ * firstly to ensure that a message conforms to RFC 5322 when transferred to
+ * the Mail Submission Agent (MSA) and, secondly, to simplify the application
+ * logic where this is convenient.
+ */
+
+/**
+ * smtp_set_header() - Set a message header
+ * @message: The message
+ * @header: Header name
+ * @...: additional arguments
+ *
+ * Set a message header to the specified value.  The additional arguments
+ * depend on the header, typically this is a string.
+ *
+ *
+ */
 int
 smtp_set_header (smtp_message_t message, const char *header, ...)
 {
