@@ -48,8 +48,8 @@ server during the protocol session.  Similarly a number of functions are
 used to query the status of the transfer after the event.  The entire SMTP
 protocol session is performed by a single function call.
 
-Reference
----------
+Usage
+-----
 
 To use the libESMTP API, include the following header files
 

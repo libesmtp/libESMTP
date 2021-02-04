@@ -58,7 +58,8 @@ CONFIG=${XDG_CONFIG_HOME:-$HOME/.config}/libesmtp
 ```
 were specified to the shell and `$HOST` is the canonic host name of the MTA.
 
-Otherwise libESMTP follows the legacy conventions:
+Otherwise libESMTP follows the legacy conventions below. Please note that
+libESMTP v1.0.6 and earlier do not support the XDG conventions.
 
 File or sub-directory | Description
 ----------------------|------------
