@@ -1,6 +1,6 @@
 project('libESMTP', 'c', version : '1.0.7', default_options: ['c_std=c11'])
 email = 'Brian Stafford <brian.stafford60@gmail.com>'
-website = 'https://www.github.com/briancs/libESMTP/web/'
+website = 'https://libesmtp.github.io/'
 
 pkg = import('pkgconfig')
 cc = meson.get_compiler('c')
@@ -64,6 +64,10 @@ deps = [
 # Solaris 8 strlcpy() return value does not correspond with BSD version
 # libESMTP does not use the return value so this should be sufficient
 have_strlcpy = cc.has_function('strlcpy')
+have_strdup = cc.has_function('strdup')
+have_strncasecmp = cc.has_function('strncasecmp')
+have_strcasecmp = cc.has_function('strcasecmp')
+have_memrchr = cc.has_header_symbol('string.h', 'memrchr')
 
 ################################################################################
 # configuration
@@ -103,10 +107,10 @@ conf.set('LIBESMTP_ENABLE_DEPRECATED_SYMBOLS', get_option('deprecated'))
 conf.set('WORDS_BIGENDIAN', host_machine.endian() == 'big')
 
 # missing.h
-conf.set('HAVE_STRDUP', true)
-conf.set('HAVE_STRNCASECMP', true)
-conf.set('HAVE_STRCASECMP', true)
-conf.set('HAVE_MEMRCHR', false)
+conf.set('HAVE_STRDUP', have_strdup)
+conf.set('HAVE_STRNCASECMP', have_strncasecmp)
+conf.set('HAVE_STRCASECMP', have_strcasecmp)
+conf.set('HAVE_MEMRCHR', have_memrchr)
 conf.set('HAVE_STRLCPY', have_strlcpy)
 
 configure_file(output : 'config.h', configuration : conf)
