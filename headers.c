@@ -498,6 +498,7 @@ static const struct header_actions header_actions[] =
     { "Content-",	PRESERVE, NULL, NULL, NULL, },
     { "MIME-",		PRESERVE, NULL, NULL, NULL, },
     { "Resent-",	PRESERVE, NULL, NULL, NULL, },
+    { "Resent-Reply-To", PROHIBIT, NULL, NULL, NULL, },
     { "Received",	PRESERVE, NULL, NULL, NULL, },
     /* Headers which are optional but which are recommended to be
        present.  Default action is to provide a default unless the
