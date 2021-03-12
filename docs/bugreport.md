@@ -54,11 +54,6 @@ Remember that Unix man pages or other manufacturer specific documentation of C
 library functions describe an implementation and do not constitute a standard.
 
 
-### Library Calls in Nonstandard Places
-If Meson does not search all possible locations for a particular library call,
-that is a bug.
-
-
 ### SMTP Protocol Errors
 If libESMTP sends SMTP protocol commands which differ from those described in
 the appropriate RFCs, or fails to respond correctly to valid SMTP responses
