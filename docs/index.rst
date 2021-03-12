@@ -31,6 +31,7 @@ libESMTP transparently handles many SMTP extensions including authentication.
    bugreport
    faq
    rationale
+   critique
    retrospective
    reference
 
