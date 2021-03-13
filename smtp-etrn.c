@@ -156,7 +156,7 @@ smtp_etrn_node_status (smtp_etrn_node_t node)
  * Associate application defined data with the opaque ETRN structure.
  *
  * Only available when %LIBESMTP_ENABLE_DEPRECATED_SYMBOLS is defined.
- * Use smtp_etrn_set_application_data_full() instead.
+ * Use smtp_etrn_set_application_data_release() instead.
  *
  * Return: Previously set application data or %NULL.
  */
@@ -174,7 +174,7 @@ smtp_etrn_set_application_data (smtp_etrn_node_t node, void *data)
 }
 
 /**
- * smtp_etrn_set_application_data_full() - Associate data with an ETRN node.
+ * smtp_etrn_set_application_data_release() - Associate data with an ETRN node.
  * @node: An &smtp_etrn_node_t returned by smtp_etrn_add_node()
  * @data: Application data
  * @release: function to free/unref data.
@@ -184,8 +184,8 @@ smtp_etrn_set_application_data (smtp_etrn_node_t node, void *data)
  * changed or the session is destroyed.
  */
 void
-smtp_etrn_set_application_data_full (smtp_etrn_node_t node, void *data,
-				     void (*release) (void *))
+smtp_etrn_set_application_data_release (smtp_etrn_node_t node, void *data,
+				        void (*release) (void *))
 {
   SMTPAPI_CHECK_ARGS (node != NULL, /* void */);
 
@@ -332,10 +332,10 @@ smtp_etrn_set_application_data (smtp_etrn_node_t node,
 }
 
 void
-smtp_etrn_set_application_data_full (smtp_etrn_node_t node
+smtp_etrn_set_application_data_release (smtp_etrn_node_t node
 						      __attribute__ ((unused)),
-				     void *data __attribute__ ((unused)),
-				     void (*release) (void *)
+				        void *data __attribute__ ((unused)),
+				        void (*release) (void *)
 						      __attribute__ ((unused)))
 {
 }

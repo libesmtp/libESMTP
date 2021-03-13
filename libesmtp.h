@@ -168,23 +168,23 @@ char *smtp_strerror (int error, char buf[], size_t buflen);
 #ifdef LIBESMTP_ENABLE_DEPRECATED_SYMBOLS
 void *smtp_set_application_data (smtp_session_t session, void *data);
 #endif
-void smtp_set_application_data_full (smtp_session_t session, void *data,
-		    void (*release) (void *));
+void smtp_set_application_data_release (smtp_session_t session, void *data,
+                                        void (*release) (void *));
 void *smtp_get_application_data (smtp_session_t session);
 #ifdef LIBESMTP_ENABLE_DEPRECATED_SYMBOLS
 void *smtp_message_set_application_data (smtp_message_t message, void *data);
 #endif
-void smtp_message_set_application_data_full (smtp_message_t message,
-					     void *data,
-					     void (*release) (void *));
+void smtp_message_set_application_data_release (smtp_message_t message,
+                                                void *data,
+                                                void (*release) (void *));
 void *smtp_message_get_application_data (smtp_message_t message);
 #ifdef LIBESMTP_ENABLE_DEPRECATED_SYMBOLS
 void *smtp_recipient_set_application_data (smtp_recipient_t recipient,
 					   void *data);
 #endif
-void smtp_recipient_set_application_data_full (smtp_recipient_t recipient,
-					       void *data,
-					       void (*release) (void *));
+void smtp_recipient_set_application_data_release (smtp_recipient_t recipient,
+                                                  void *data,
+                                                  void (*release) (void *));
 void *smtp_recipient_get_application_data (smtp_recipient_t recipient);
 
 int smtp_option_require_all_recipients (smtp_session_t session, int state);
@@ -377,8 +377,8 @@ const smtp_status_t *smtp_etrn_node_status (smtp_etrn_node_t node);
 #ifdef LIBESMTP_ENABLE_DEPRECATED_SYMBOLS
 void *smtp_etrn_set_application_data (smtp_etrn_node_t node, void *data);
 #endif
-void smtp_etrn_set_application_data_full (smtp_etrn_node_t node, void *data,
-					  void (*release) (void *));
+void smtp_etrn_set_application_data_release (smtp_etrn_node_t node, void *data,
+                                             void (*release) (void *));
 void *smtp_etrn_get_application_data (smtp_etrn_node_t node);
 
 #ifdef __cplusplus
