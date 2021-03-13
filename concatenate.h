@@ -35,7 +35,8 @@ void cat_free (struct catbuf *catbuf);
 char *cat_shrink (struct catbuf *catbuf, int *len);
 char *cat_buffer (struct catbuf *catbuf, int *len);
 char *concatenate (struct catbuf *catbuf, const char *string, int len);
-char *vconcatenate (struct catbuf *catbuf, ...);
+char *vconcatenate (struct catbuf *catbuf, ...)
+        __attribute__ ((sentinel)) ;
 int cat_printf (struct catbuf *catbuf, const char *format, ...)
 	__attribute__ ((format (printf, 2, 3))) ;
 
