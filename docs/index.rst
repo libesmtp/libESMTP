@@ -28,12 +28,12 @@ libESMTP transparently handles many SMTP extensions including authentication.
 
    libesmtp
    download
-   bugreport
-   faq
    rationale
+   reference
+   bugreport
    critique
    retrospective
-   reference
+   faq
 
 Wiki
 ----

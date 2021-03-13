@@ -1,13 +1,13 @@
-# Critique
+# API Critique
 
-## A Critique of the libESMTP API
+Recently I have been revisiting aspects of libESMTP and considering what may or
+may not be needed to bring the library up to date, since it is more than a
+decade since it has had any development. I felt it might be useful to lay out
+my observations and rationale for any changes.  I will also consider creating
+language bindings since implementing these often gives some clarity on what
+might be missing from a C API.
 
-Recently I have been revisiting aspects of libESMTP and considering what
-may or may not be needed to bring the library up to date, since it is
-more than a decade since it has had any development. I felt it might be
-useful to lay out my observations and rationale for any changes.
-
-I feel that libESMTP has remained free of any significant bit-rot but there
+I feel that libESMTP has remained free of any significant bitrot but there
 is definitely room for improvement.
 
 ----
@@ -52,12 +52,11 @@ are required or prohibited in newly submitted messages.  While libESMTP can
 handle most of this transparently to the application, it proved useful to add
 API calls to provide finer control of this.
 
-The number of calls in the
-API was starting to grow. This had bothered me as it meant that the API would
-be harder to learn and went against the philosophy that sending a mail sould be
-a simple thing to do. Nowadays, this aspect bothers me less than it used to do,
-libESMTP still has a fairly small API by modern standards and each API has a
-specific purpose with few arguments.
+The number of calls in the API was starting to grow. This had bothered me as it
+meant that the API would be harder to learn and went against the philosophy
+that sending a mail sould be a simple thing to do. Nowadays, this aspect
+bothers me less than it used to do, libESMTP still has a fairly small API by
+modern standards and each API has a specific purpose with few arguments.
 
 ### ABI
 
@@ -85,8 +84,9 @@ the naming patterns for their respective API.
 
 I feel that libESMTP's API is easy to use. Each object is logically distinct
 and directly relates to SMTP concepts and each method has a single well defined
-function acting on its object. However ease of use could be better had a more
-consistent naming convention been used as described below.
+function acting on its object.  Basic use cases require only a fraction of the
+full API to implement, in that respect I feel the original design goal is
+achieved.
 
 As originally designed, the libESMTP API created objects and configured them as
 required, however few accessors were provided as it was expected that
@@ -98,22 +98,15 @@ binding for languages whose objects support properties, the lack of accessors
 means properties are difficult to implement. This is discussed below for
 Python.
 
-This deficiency should be addressed in a future release.
-
 ----
 
 ## Naming Conventions
 
 ### Namespace
 
-Since C does not have any concept of namespaces for functions or variables, all
-the API calls are prefixed with `smtp_`.  I thought about using `esmtp_` but
-that seemed too long!  Although not implemented until quite recently, the
-namespace prefix also allowed a linker map file to remove public references to
-internal calls, which do not use the namespace prefix. A further advantage of
-doing this is avoiding unintended conflicts with third-party libraries or
-application code.  The use of undocumented internal APIs can be a major barrier
-to development, especially if significant applications rely on them.
+Since C has no concept of namespaces for functions or variables, all the API
+calls are prefixed with `smtp_`.  I thought about using `esmtp_` but that
+seemed too long!
 
 ### Objects and Methods
 
@@ -131,33 +124,48 @@ nevertheless this would probably have resulted in a more intuitive and more
 easily memorised API.
 
 These deficiencies make a simple mapping of API names to method names in object
-oriented language bindings particularly difficult and non-obvious.  If I were
-ever to rework the API I would follow the more rigorous approach used in
+oriented language bindings particularly difficult and non-obvious.  Had I
+designed the API nowadays, I would follow the more rigorous approach used in
 frameworks like GObject.
+
+## Internal Interfaces
+
+Unfortunately, libESMTP does not hide its internal interfaces from public
+access, it is possible to link against any of its symbols at global scope.  It
+is important to prevent linking against internal interfaces, since there may be
+unintended conflicts with symbols in third-party libraries or application code.
+The use of undocumented internal APIs can be a major barrier to development,
+especially if significant applications rely on them.
+
+Using a consistent prefix for public symbols makes it easy, using wildcards, to
+create a linker map file to remove public references to internal calls, which
+do not use the namespace prefix.  Without a consistent prefix, each publicly
+available symbol must be explicitly listed, this is error prone since it is
+easy to forget or misspell a name and there is no easy way to automatically
+check this.
 
 ----
 
-## User Data
+## Application Data
 
-The user data API is problematic.  The idea was to set an arbitrary pointer to
-data maintained by an application and associated with one of the libESMTP
-objects. I followed a design pattern which set a pointer and returned the old
-pointer which could then be deallocated or passed back to the application.
+The application data API is problematic.  The idea was to set an arbitrary
+pointer to data maintained by an application and associated with one of the
+libESMTP objects. I followed a design pattern which set a pointer and returned
+the old pointer which could then be deallocated or passed back to the
+application.
 
-Unfortunately this approach required an application to iterate all the libESMTP
+Unfortunately this approach requires an application to iterate all the libESMTP
 structures fetching back the pointer and deallocating it prior to destroying
-the libESMTP session.  This process is error prone and subject to memory leaks
-if not executed correctly.
+the libESMTP session.  This significantly complicates use of libESMTP, is error
+prone and subject to memory leaks if not executed correctly.  A better design
+would provide a *release* function to free or otherwise release the application
+data.  libESMTP can guarantee to call this at the correct time, significantly
+easing the application design.
 
-A well designed user data interface is important for many applications and is
-especially so for implementing language bindings, particluarly as neither
-side can control the other's memory management strategy and since weak bindings
-may also be necessary.
-
-Future releases will provide a better API to set user data, which allows an
-application to provide a `destroy` function to release the referenced resource.
-libESMTP can guarantee to call this at the correct time, significantly easing
-the application design.
+A well designed application data interface is important for many applications
+and is especially so for implementing language bindings, particluarly as
+neither side can control the other's memory management strategy and since weak
+bindings may also be necessary.
 
 ----
 
@@ -178,6 +186,23 @@ protocol status on-the-fly.
 
 ----
 
+## Type Safety
+
+Although C is not a strongly typed language the libESMTP API is reasonably
+type-safe. There are, however, two parts of the public API and a few internal
+interfaces that use variadic functions, the event callback and the message
+header API. The latter is discussed further below. Unfortunately these
+interfaces cannot be validated for type-correct arguments either at compile
+time or runtime.
+
+The internal interfaces may be verified by careful code review and static
+analysis, or by the compiler for the printf-like interfaces.  Unfortunately
+this must also be done for every project using libESMTP.  Since the variadic
+functions in the header API have only a few variations, a possible solution is
+simply to provide a variant for each function for each combination of types.
+
+----
+
 ## Callback Design
 
 Ideally callbacks should be function closures, however C does not provide
@@ -195,28 +220,36 @@ compile time or runtime.  This is the main area where the libESMTP API is not
 type-safe.
 
 Ideally the callback mechanism should be redesigned to avoid this. The most
-obvious solution is tp provide a different callback for each event type while
+obvious solution is to provide a different callback for each event type while
 retaining the original API for backward compatibility.
 
 Callbacks other than the event callback do not suffer this issue.
 
 ### Message Callback
 
+I feel that I made my worst design decisions when implementing the message
+callback.
+
 Memory management in the message callback is poor. The first argument to the
-callback is a reference to a pointer which can be used to maintain state for
-the callback. However when libESMTP is finished reading the message if the
-pointer is not NULL, it is passed to 'free()'. This obliges the callback to use
-'malloc()'. This is usually fine but the application must use the malloc that
-pairs with the free libESMTP is linked against; sometimes this can be
+callback is a pointer which can reference any arbitrary state the applicaton
+maintains while reading the message.  However when libESMTP is finished reading
+the message if that pointer is not NULL it is passed to 'free()'. This obliges
+the callback to use 'malloc()' but what if the application wants to reference
+its own private structures?  Furthermore the application must use the malloc
+that pairs with the free libESMTP is linked against; sometimes this can be
 problematic and usually only discovered when the application faults.
 
-Another problem is that the message callback must allocate any state it
-requires on first call so it must check for first call on every call.  Although
-the overhead of doing this is small, it complicates the code and makes it
-harder to read, doubly so since this behaviour was never properly documented.
-This is a pity because libESMTP's internal logic knows both when it is about to
-use the callback for the first time and when it has finished reading the
-message.
+Another problem is that the message callback design means the callback must
+allocate any state it requires on first call and so must check for first call
+on every call.  Although the overhead of doing this is small, it complicates
+the code and makes it harder to read, doubly so since this behaviour was never
+properly documented.  This is a pity because libESMTP's internal logic knows
+both when it is about to use the callback for the first time and when it has
+finished reading the message.
+
+Worse still, one of the arguments in the message callback is set to NULL to
+signal that the input stream should be rewound to the beginning of input; once
+more this strange behaviour is undocumented.
 
 All of these objections could be improved by expanding the message callback
 into three *open*, *read* and *close* phases and eliminating the implicit free.
@@ -225,29 +258,41 @@ The original API can be layered over this interface for backward compatibility.
 ### File and String Reader Callbacks
 
 libESMTP provides two standard callbacks for reading messages from a string or
-a FILE pointer.  Looking back I think the APIs to set these callbacks should
+a FILE pointer.  On reflection, I think the APIs to set these callbacks should
 have been provided as real functions in the library rather than as macros.
+Had they been functions, it would have been possible to remedy the objections
+discussed above in a new message API design and existing applications using
+an updated libESMTP would automatically use the new interface. The macros have
+made this impossible.
+
+----
+
+### Iterators
+
+It is a pity that libESMTP did not implement iterators in its API.
+In the libESMTP API, messages and recipients (and ETRN) may be iterated using
+the 'enumerate' APIs. These take a callback function to process each item.
+
+For example, because C does not provide function closures, a callback function
+has no access to variables within the scope of the calling function.  One way
+to work around this limitation is to put variables from the outer scope in a
+struct and pass a pointer to the struct as the callback argument. It works but
+it is always an ugly hack.
+
+On reflection, a callback based design for iterating structures is really only
+a good approach in languages that provide function closures, particularly those
+that allow anonymous or lambda functions.
+
+Iterators are almost always more convenient and intuitive to use and easier to
+use in language bindings.
 
 ----
 
 ## Language Bindings
 
-Recently I looked into providing language bindings for libESMTP.  It became
-obvious that certain aspects of libESMTP's design makes this more difficult
-than it needs to be.
-
-### Iterators
-
-In the C API, messages and recipients can be iterated using the 'enumerate'
-APIs however these take a callback function to handle each item. This proves
-inconvenient in some cases. For instance in C++ it might make sense to follow
-the STL containers APIs to iterate the messages and recipients.  Without an
-iterator API in libESMTP this is difficult to achieve.
-
-In the specific case of C++, `std::function` could be used for the callback
-allowing use of a lambda function which may be an acceptable alternative,
-however this approach may not be possible or consistent with conventions in
-other languages.
+I think it is useful to consider providing language bindings for libESMTP.
+Doing so, it became obvious that certain aspects of libESMTP's API design makes
+this more difficult than it needs to be.
 
 ### Callbacks
 
@@ -257,15 +302,32 @@ in the process; typically this would have to be implemented as a 'big switch'
 on the event type which selects the correct varargs statements to convert the
 arguments.
 
-If binding to C++, the obvious choice for the callback interface is to use
-`std::function`.  Alternatively either the Boost or libsigc++ signal/slot
-library could be used.
+### Host Language Objects
 
-### OO Bindings
+Because there is typically a one-to-one mapping between the bound language and
+libESMTP's objects, they must be associated with each other. The application
+data APIs may be used to do this. The deficiencies in the application data API
+described above make this more difficult as the bound language's objects may be
+reference counted or must be otherwise released to a garbage collector.
 
-Interfacing the libESMTP objects to the host language equivalents is simple
-enough however, as previously noted, the naming convention means that the
-mapping from API name to method name for each object is not always clear.
+### Names
+
+Interfacing the libESMTP objects to the host language equivalents should be
+simple enough however, as previously noted, the lack of a rigorous naming
+convention means that the mapping from API name to the host language's method
+or property names for each object may not always be clear.
+
+## Python
+
+Python provides a comprehensive C API to integrate C libraries or code into
+applications either directly or via its module system.  I feel that if all the
+issues described are addressed this would be much simpler to implement. In
+particular iterators and accessors, if available, would enable a much more
+Pythonic result.
+
+Interfacing callbacks should not be problematic, even with libESMTP's current
+API, however the glue code would face issues with correctly handling variadic
+callbacks.
 
 For example the sequence
 
@@ -300,7 +362,7 @@ session.set_server ('example.org:587')
 
 message = Message(session)
 message.set_reverse_path("brian@example.org")
-recipient = Recipient('douglas@h2g2.info')
+recipient = Recipient(message, 'douglas@h2g2.info')
 
 # ...
 
@@ -308,48 +370,123 @@ session.start()
 ```
 
 Unfortunately the constructors bear little relation to the C equivalents nor do
-the method API names have a clear mapping. For languages like Python providing
-factory methods might be a good idea, for example
+the method API names have a clear mapping. Providing factory methods might be a
+good idea, for example
 
 ``` python
 message = session.add_message()
 ```
 
-which has the benefit of being closer to the C API and requires fewer imports.
+which has the benefit of being closer to the C API, and therefore more
+intuitive, and requires fewer imports.
 
-As noted above the lack of accessors makes implementing properties difficult
-for languages that support them.  For instance, in Python the reverse path
-mailbox for a message is naturally expressed as a property:
+If libESMTP provided more accessors for some of its internal variables the
+reverse path mailbox for a message could be more naturally expressed as a
+property.  Even without accessors, this would still be possible but would
+require the glue code to shadow the appropriate value which is both wasteful
+and error prone.
 
 ``` python
 message.reverse_path = 'brian@example.org'
 print(message.reverse_path)
 ```
 
+The lack of iterators makes adding Python iterators or generator expressions
+difficult or impossible.  For instance, it should be possible to check
+recipient status something like this:
+
+``` python
+session.start()
+
+for message in session.messages():
+    print('From:', message.reverse_path)
+    for recipient in message.recipients():
+        print('To:', recipient.mailbox, recipient.status)
+```
+
+or even use a comprehension
+
+``` python
+status = {recipient.mailbox: recipient.status for recipient in message.recipients()}
+```
+
+Interfacing a Python *file like* object to a revised message callback
+should be a good test that the design is correct.
+
+
+With these changes the example could be rewritten to be more Pythonic.
+
+``` python
+from libESMTP import Session
+
+session = Session()
+session.server = 'example.org:587'
+
+# ...
+
+message = session.add_message()
+message.reverse_path = 'brian@example.org'
+with open('message.txt','r') as filp:
+    message.fromfile(filp)
+
+recipient = message.add_recipient('douglas@h2g2.info')
+
+# ...
+
+session.start()
+
+for message in session.messages():
+    print('From:', message.reverse_path)
+    for recipient in message.recipients():
+        print('To:', recipient.mailbox, recipient.status)
+```
+
+### C++
+
+While the libESMTP API can be used directly in C++, a proper language binding
+would offer some benefits, especially since C++11 and later are arguably quite
+different to earlier versions of the language.
+
+Following some of the design patterns in the STL would provide a much more
+natural API for modern C++, especially as libESMTP's objects share some
+characteristics with STL containers.
+
+Two STL patterns that come to mind are iterators and callbacks.  libESMTP's
+session and message objects share characteristics of *std::forward_list* an
+should follow their APIs.  Allowing callbacks to use *std::function* values
+would permit use of lambda functions or any compatible object which overrides
+the '()' operator.
+
+Finally a C++ API could be created so that modern memory management practice
+is observed, such as construction in-place and the no naked new or delete rule.
+
 ### Lua
 
 Lua is an interesting case since it is a purely procedural language, however
 its data structure, the table, adds extraordinary flexibility in the choice of
-programming methodology.  Using Lua's C API it would be almost trivial to add a
-one-to-one mapping of C APIs to Lua APIs but this would be a suboptimal
-approach.  Lua tables can act both as an object and a type, via the use of
-metatables.  Therefore Lua conventions are also better served by an OO
-approach but once again the difficulties outlined above become apparent.
+programming methodology. Lua also natively supports iterators.
+
+Using Lua's C API it would be almost trivial to add a one-to-one mapping of C
+APIs to Lua APIs but this would be a suboptimal approach.  Lua tables can act
+both as an object and a type, via the use of metatables.  Therefore Lua
+conventions are also better served by an object oriented approach but once
+again the difficulties outlined above become apparent.
 
 ### GObject
 
-GObject is a framework rather than a language however it is a useful case to
+GObject is a C framework rather than a language however it is a useful case to
 consider. When integrating libESMTP into a GTK+ program, having GObject APIs
 would be of some benefit. For example, making object state available as
 properties, mapping the libESMTP callbacks to GObject's signal mechanism or
-taking advantage of GObject introspection mechanisms and language bindings,
-such as Vala. libESMTP sessions could even be constructed using GBuilder XML
-files.
+taking advantage of GObject reference counting,  introspection mechanisms and
+language bindings, such as Vala. libESMTP sessions could even be constructed
+using GBuilder XML files.
 
 ### Other Languages
 
-Considerations for C++, Python and Lua should be the same as for bindings to
-other languages such as Ruby or D.
+Resolving issues for C++, Python and Lua should simplify writing bindings for
+other languages, such as PHP, Ruby or D, especially if the basic set of
+bindings were provided as a standard part of the libESMTP release.
 
 ----
 
@@ -360,12 +497,12 @@ projects. On reflection I think I got libESMTP mostly right but there are
 deficiencies that are usefully remedied. This critique therefore serves as a
 loose plan for further development.
 
-All the topics above can be resolved by extending the libESMTP API and without
-having to alter the semantics of the existing API. Accessors for the libESMTP
-object state, where missing, are easily added and have no impact on the
-existing API. The event callback can be refactored into a set of type safe
-callbacks.  An improved user data API has already been designed and
-implemented.
+All the topics above can be resolved by extending the libESMTP API to create a
+strict superset and without having to alter the semantics of the existing API.
+Accessors for the libESMTP object state, where missing, are easily added and
+have no impact on the existing API. The event callback can be refactored into a
+set of type safe callbacks.  An improved application data API has already been
+designed and implemented.
 
 Where features are updated, the original APIs can be retained with deprecated
 status. This means the shared library can continue to work with existing
