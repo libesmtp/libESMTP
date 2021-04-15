@@ -65,7 +65,7 @@ struct smtp_etrn_node
   };
 
 /**
- * smtp_etrn_add_node:
+ * smtp_etrn_add_node() - create an ETRN node.
  * @session: The session.
  * @option: The option character.
  * @domain: Request mail for this domain.
@@ -106,7 +106,7 @@ smtp_etrn_add_node (smtp_session_t session, int option, const char *domain)
 }
 
 /**
- * smtp_etrn_enumerate_nodes:
+ * smtp_etrn_enumerate_nodes() - Call function for each ETRN node in session.
  * @session: The session.
  * @cb: Callback function
  * @arg: Argument (closure) passed to callback.
@@ -129,7 +129,7 @@ smtp_etrn_enumerate_nodes (smtp_session_t session,
 }
 
 /**
- * smtp_etrn_node_status:
+ * smtp_etrn_node_status() - Retrieve ETRN status.
  * @node: An &smtp_etrn_node_t returned by smtp_etrn_add_node()
  *
  * Retrieve the ETRN node success/failure status from a previous SMTP session.
@@ -149,7 +149,7 @@ smtp_etrn_node_status (smtp_etrn_node_t node)
 }
 
 /**
- * smtp_etrn_set_application_data:
+ * smtp_etrn_set_application_data() - Associate data with an ETRN node.
  * @node: An &smtp_etrn_node_t returned by smtp_etrn_add_node()
  * @data: Application data to set
  *
@@ -197,7 +197,7 @@ smtp_etrn_set_application_data_release (smtp_etrn_node_t node, void *data,
 }
 
 /**
- * smtp_etrn_get_application_data:
+ * smtp_etrn_get_application_data() - Get data from an ETRN node.
  * @node: An &smtp_etrn_node_t returned by smtp_etrn_add_node()
  *
  * Retrieve application data from the opaque ETRN structure.

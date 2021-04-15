@@ -55,8 +55,7 @@ data, performing line turnaround only as strictly necessary.
 I put considerable effort into compiling strictly ISO-C / Posix / SUS compliant
 code, with maximum pedantic compiler errors enabled, and a zero tolerance
 approach to any compiler warnings. It was painful adjusting to this at first
-but it paid off and I would reccommend anyone to do the same and see it
-through.
+but it paid off and I would recommend anyone to do the same and see it through.
 
 ## Release
 

@@ -3,63 +3,58 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-========
-libESMTP
-========
+================
+libESMTP v 1.1.0
+================
 
-.. note:: This is the official libESMTP repository and documentation,
-    created and maintained by the original libESMTP author.
-
-    See `the following notes <notes.html>`_ for more information.
-
-A Library for Posting Electronic Mail
-=====================================
-
-**libESMTP** is an SMTP client which manages submission of electronic mail via
-a preconfigured Mail Transport Agent (MTA) such as
+**libESMTP** is an SMTP client library which manages submission of electronic
+mail via a preconfigured Mail Transport Agent (MTA) such as
 `Exim <https://www.exim.org/>`_ or `Postfix <http://www.postfix.org/>`_.
+It implements many SMTP extensions including TLS for security and PIPELINING
+for high performance.
 
-libESMTP offloads the developer of the need to handle the complexity of
-negotiating the SMTP protocol by providing a simple API. Additionally
-libESMTP transparently handles many SMTP extensions including authentication.
+.. admonition:: The current version of libESMTP is 1.1.0.
+    :class: attention
+
+    Earlier versions are not recommended.
+
+This is the **official libESMTP repository** and documentation.
+It is maintained by Brian Stafford, the original libESMTP author.
+
+Copyright & Licence
+===================
+
+Copyright © 2001-2021 Brian Stafford
+
+libESMTP is licensed under the
+`GNU Lesser General Public License <https://www.gnu.org/copyleft/lesser.html)>`_.
+The example programs are licensed
+`GNU General Public Licence <https://www.gnu.org/copyleft/gpl.html>`_.
+
+Package Maintainers
+===================
+
+Package maintainers or those who have bug-fixes or other enhancements against
+a legacy tarball are encouraged to
+`fork this repository <https://github.com/libesmtp/libESMTP>`_
+and base their changes against a suitable tag, preferably the current release,
+and make a pull request.
+
+Old Websites
+============
+
+The old libESMTP websites at stafford.uklinux.net and brianstafford.info are
+defunct.  brianstafford.info now belongs to a namesake.
 
 .. toctree::
    :maxdepth: 1
+   :hidden:
 
    libesmtp
    download
-   rationale
+   changes-since-v1.0.6
    reference
    bugreport
-   critique
-   retrospective
    faq
-
-Wiki
-----
-
-The libESMTP wiki is
-`found here <https://github.com/libesmtp/libESMTP/wiki>`_.
-
-Users
------
-
-.. attention:: Projects using libESMTP are currently unknown. Please leave
-    a comment on issue #2 if your project is using libESMTP.  Without this
-    it is impossible to judge whether and how much effort should be invested
-    in libESMTP's future.
-
-Indexes and Tables
-------------------
-
-* :ref:`genindex`
-* :ref:`search`
-
-Copyright & Licence
--------------------
-
-libESMTP is copyright © 2001-2020 Brian Stafford, licensed under the
-`GNU Lesser General Public License <https://www.gnu.org/copyleft/lesser.html)>`_.
-
-The example programs are licensed
-`GNU General Public Licence <https://www.gnu.org/copyleft/gpl.html>`_.
+   essays
+   Wiki <https://github.com/libesmtp/libESMTP/wiki>

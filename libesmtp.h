@@ -216,7 +216,7 @@ const char *_smtp_message_str_cb (void **ctx, int *len, void *arg);
  * @Timeout_DATA2: Timeout for data transfer phase.
  *
  * Timeout flags. In addition %Timeout_OVERRIDE_RFC2822_MINIMUM may
- * be bitwise-ORed with above to override reccommended minimum timeouts.
+ * be bitwise-ORed with above to override recommended minimum timeouts.
  */
 enum rfc2822_timeouts
   {

@@ -67,7 +67,7 @@
  */
 
 /**
- * smtp_auth_set_context:
+ * smtp_auth_set_context() - Set authentication context.
  * @session: The session.
  * @context: The auth context.
  *

@@ -1,17 +1,25 @@
 # Download
 
 LibESMTP is considered stable.  Source code is available from
-[GitHub](https://github.com/libesmtp/libESMTP).
-Clone the repository as follows, however please also refer to
-[the errata](errata.md) for further important information.
+[GitHub](https://github.com/libesmtp/libESMTP).  The current version of
+libESMTP is 1.1.0. Earlier versions are not recommended.  Clone the repository
+as follows:
 
 ``` sh
 $ git clone https://github.com/libesmtp/libESMTP.git
 ```
 
-libESMTP v1.0.6 may be found on the branch `libesmtp-1.0.6`.
+## Users
+
+Please leave a comment on issue #2 if your project uses libESMTP, preferably
+with a link to the project web site. A list of users will be added here at some
+point in the future.  It's always good to know that this work is useful to the
+community; without knowing who uses libESMTP, it is impossible to judge whether
+and how much effort should be invested in its future.
 
 ## Dependencies
+
+libESMTP has the following optional dependencies.
 
 ### OpenSSL
 
@@ -20,24 +28,18 @@ SMTP STARTTLS extension and to build the SASL NTLM authentication module.
 libESMTP may be built without OpenSSL, however most contemporary mail
 submission agents require TLS connections.
 
-### dlopen()
+### ISC Bind 9
 
-libESMTP requires dlopen() to dynamically load authentication modules.
-
-### getaddrinfo()
-
-Most modern resolver libraries provide the getaddrinfo() API defined in
-RFC 2553.  The Lightweight Resolver (lwres), provided by the
-[ISC BIND 9](https://www.isc.org/) library, may be used in preference to the
-standard resolver. BIND 9 also provides getaddrinfo() as part of the standard
-resolver should it be unavailable on the target platform.
+libESMTP supports the Lightweight Resolver (lwres), provided by the [ISC BIND
+9](https://www.isc.org/), which may be used in preference to the standard
+resolver. BIND 9 also provides getaddrinfo() as part of the standard resolver
+should it be unavailable on the target platform's C library.
 
 ## Installation
 
 LibESMTP uses the
 [Meson build system](https://mesonbuild.com/Getting-meson.html).
 Refer to the Meson manual for standard configuration options.
-*Note that the libesmtp-1.0.6 branch still uses autotools.*
 
 Meson supports multiple build system backends.  To build with
 [Ninja](https://ninja-build.org/) do the following:
@@ -55,6 +57,7 @@ As well as the standard meson options, the following are supported:
 
 Option | Values | Description
 -------|--------|------------
+xdg | **true**, false | use XDG directory layout instead of ~/.authenticate
 pthreads | enabled, disabled, **auto** | build with support for Posix threads
 tls | enabled, disabled, **auto** | support the STARTTLS extension and NTLM authentication
 lwres | enabled, **disabled**, auto | use the ISC lightweight resolver
@@ -67,7 +70,7 @@ Options are specified as `-D<option>=<value>`.
 ## Static Analyser
 
 It's not obvious how to use `scan-build` with meson and ninja when the binary
-does not have the default name.  It truns out the `SCANBUILD` environment
+does not have the default name.  It also turns out the `SCANBUILD` environment
 variable must be set to the *absolute* pathname of the binary.
 
 To build with the clang static analyser, assuming the scan-build binary is
@@ -86,4 +89,9 @@ the [Linux Kernel](https://www.kernel.org/) distribution. It may be found in
 the `scripts/` directory.
 
 Change to the `docs/` directory and run `gendoc.sh`.
+
+## Repository
+
+The git repository was rebuilt from released tarballs.  Please refer to the
+[errata](errata.md) for further information.
 

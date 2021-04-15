@@ -1,4 +1,13 @@
-# ![logo](docs/pillarbox.png) libESMTP, version 1.0
+# ![logo](docs/pillarbox.png) libESMTP, version 1.1
+
+## New Version Released
+
+All libESMTP users are encouraged to upgrade from version 1.0.6.
+
+After more than a decade, libESMTP version 1.0.6 is superceded. Despite proving
+robust a little bitrot has occurred, especially regarding OpenSSL support.
+Version 1.1 updates libESMTP without breaking API and ABI compatibility and
+provides a basis for future development.
 
 ## What is libESMTP?
 
@@ -17,4 +26,4 @@ for further information.
 
 LibESMTP is licensed under the GNU Lesser General Public License and the
 example programs are under the GNU General Public Licence.  Please refer
-to COPYING.GPL and COPYING for full details.
+to LICENSE and COPYING.GPL for full details.

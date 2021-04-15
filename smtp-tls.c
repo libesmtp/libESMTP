@@ -211,7 +211,7 @@ check_directory (const char *file)
 /* ^^^^^^^^^^^ */
 
 /**
- * smtp_starttls_set_password_cb:
+ * smtp_starttls_set_password_cb() - Set OpenSSL password callback.
  * @cb: Password callback with signature &smtp_starttls_passwordcb_t.
  * @arg: User data passed to the callback.
  *
@@ -428,7 +428,7 @@ starttls_create_ssl (smtp_session_t session)
 }
 
 /**
- * smtp_starttls_set_ctx:
+ * smtp_starttls_set_ctx() - Set the SSL_CTX for the SMTP session.
  * @session: The session.
  * @ctx: An SSL_CTX initialised by the application.
  *
@@ -452,7 +452,7 @@ smtp_starttls_set_ctx (smtp_session_t session, SSL_CTX *ctx)
 }
 
 /**
- * smtp_starttls_enable:
+ * smtp_starttls_enable() - Enable STARTTLS verb.
  * @session: The session.
  * @how: A &enum starttls_option
  *
@@ -485,7 +485,7 @@ select_starttls (smtp_session_t session)
 	    session promote Starttls_ENABLED to Starttls_REQUIRED.
 	    If this session does not offer STARTTLS, this will force
 	    protocol.c to report the extension as not available and QUIT
-	    as reccommended in RFC 3207.  This requires some form of db
+	    as recommended in RFC 3207.  This requires some form of db
 	    storage to record this for future sessions. */
   /* if (...)
       session->starttls_enabled = Starttls_REQUIRED; */

@@ -799,11 +799,11 @@ missing_header (smtp_message_t message, int *len)
  * Headers which accept lists are created by calling smtp_set_header() multiple
  * times for each value.
  * 
- * * From
- * * To
- * * Cc
- * * Bcc
- * * Reply-To
+ * * From:
+ * * To:
+ * * Cc:
+ * * Bcc:
+ * * Reply-To:
  * 
  * Required Headers
  * ================
@@ -811,8 +811,8 @@ missing_header (smtp_message_t message, int *len)
  * The following headers are required and are supplied by libESMTP if not
  * present in the message.
  * 
- * * Date
- * * From
+ * * Date:
+ * * From:
  * 
  * Preserved Headers
  * =================
@@ -821,10 +821,10 @@ missing_header (smtp_message_t message, int *len)
  * present in the message they are copied unchanged. This is required to
  * correctly process MIME formatted messages, Resent and Received headers.
  * 
- * * Content-*
- * * MIME-*
- * * Resent-*
- * * Received
+ * * Content-\*:
+ * * MIME-\*:
+ * * Resent-\*:
+ * * Received:
  * 
  * Prohibited Headers
  * ==================
@@ -832,8 +832,8 @@ missing_header (smtp_message_t message, int *len)
  * Prohibited may not be present in newly submitted messages and are stripped
  * from the message, if present.
  * 
- * * Return-Path
- * * Original-Recipient
+ * * Return-Path:
+ * * Original-Recipient:
  */
 
 /**
@@ -846,49 +846,50 @@ missing_header (smtp_message_t message, int *len)
  * and their types depend on the header, detailed below.
  *
  * +-----------------------------+--------------------------------------------+
- * | Date                        | struct tm *tm                              |
+ * | Date                        | struct tm \*tm                             |
  * +                             +--------------------------------------------+
  * |                             | Message timestamp.                         |
  * +-----------------------------+--------------------------------------------+
- * | From                        | const char *name, const char *address      |
+ * | From                        | const char \*name, const char \*address    |
  * +                             +--------------------------------------------+
  * |                             | Message originator.                        |
  * +-----------------------------+--------------------------------------------+
- * | Sender                      | const char *name, const char *address      |
+ * | Sender                      | const char \*name, const char \*address    |
  * +                             +--------------------------------------------+
  * |                             | Message sent from address on behalf of     |
  * |                             | From mailbox.                              |
  * +-----------------------------+--------------------------------------------+
- * | To                          | const char *name, const char *address      |
+ * | To                          | const char \*name, const char \*address    |
  * +                             +--------------------------------------------+
  * |                             | Primary recipient mailbox.                 |
  * +-----------------------------+--------------------------------------------+
- * | Cc                          | const char *name, const char *address      |
+ * | Cc                          | const char \*name, const char \*address    |
  * +                             +--------------------------------------------+
  * |                             | Carbon-copy mailbox.                       |
  * +-----------------------------+--------------------------------------------+
- * | Bcc                         | const char *name, const char *address      |
+ * | Bcc                         | const char \*name, const char \*address    |
  * +                             +--------------------------------------------+
  * |                             | Blind carbon-copy mailbox.                 |
  * +-----------------------------+--------------------------------------------+
- * | Reply-To                    | const char *name, const char *address      |
+ * | Reply-To                    | const char \*name, const char \*address    |
  * +                             +--------------------------------------------+
  * |                             | Reply to mailbox instead of From.          |
  * +-----------------------------+--------------------------------------------+
- * | Disposition-Notification-To | const char *name, const char *address      |
+ * | Disposition-Notification-To | const char \*name, const char \*address    |
  * +                             +--------------------------------------------+
  * |                             | Return MDN to specified address.           |
  * +-----------------------------+--------------------------------------------+
- * | Message-Id                  | const char *id                             |
+ * | Message-Id                  | const char \*id                            |
  * |                             |                                            |
  * +                             +--------------------------------------------+
  * |                             | Message ID string or NULL.                 |
  * +-----------------------------+--------------------------------------------+
- * | \*                          | const char *text                           |
+ * | \*                          | const char \*text                          |
  * +                             +--------------------------------------------+
  * |                             | Set arbitrary header. Value may not be NULL|
  * +-----------------------------+--------------------------------------------+
  *
+ * Return: Zero on failure, non-zero on success.
  */
 int
 smtp_set_header (smtp_message_t message, const char *header, ...)
@@ -979,6 +980,8 @@ smtp_set_header (smtp_message_t message, const char *header, ...)
  *
  * It is not possible to change the header options for required, prohibited
  * or preserved headers listed in the introduction.
+ *
+ * Return: Zero on failure, non-zero on success.
  */
 int
 smtp_set_header_option (smtp_message_t message, const char *header,

@@ -275,7 +275,7 @@ smtp_message_transfer_status (smtp_message_t message)
  * the message neither contains a ``From:`` header nor has one been specified
  * using smtp_set_header().
  *
- * It is strongly reccommended that the message supplies a From: header
+ * It is strongly recommended that the message supplies a From: header
  * specifying a single mailbox or a Sender: header and a From: header
  * specifying multiple mailboxes or that the libESMTP header APIs are used to
  * create them.
@@ -353,7 +353,7 @@ smtp_message_reset_status (smtp_message_t message)
  * using smtp_set_header(), one header will be automatically generated using
  * the list of envelope recipients.
  *
- * It is strongly reccommended that the message supplies ``To:``, ``Cc:`` and
+ * It is strongly recommended that the message supplies ``To:``, ``Cc:`` and
  * ``Bcc:`` headers or that the libESMTP header APIs are used to create them.
  *
  * The envelope recipient need not be related to the To/Cc/Bcc recipients, for
@@ -706,7 +706,7 @@ smtp_deliverby_set_mode (smtp_message_t message,
 }
 
 /**
- * DOC: Core API
+ * DOC: Callbacks
  *
  * Callbacks
  * ---------
@@ -781,7 +781,7 @@ smtp_set_monitorcb (smtp_session_t session, smtp_monitorcb_t cb, void *arg,
 }
 
 /**
- * DOC: Core API
+ * DOC: Protocol
  *
  * SMTP Protocol
  * -------------

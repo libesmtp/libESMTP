@@ -1,4 +1,4 @@
-project('libESMTP', 'c', version : '1.0.7', default_options: ['c_std=c11'])
+project('libESMTP', 'c', version : '1.1.0', default_options: ['c_std=c11'])
 email = 'Brian Stafford <brian.stafford60@gmail.com>'
 website = 'https://libesmtp.github.io/'
 
@@ -6,7 +6,22 @@ pkg = import('pkgconfig')
 cc = meson.get_compiler('c')
 
 libesmtp_version = meson.project_version()
-libesmtp_so_version = '7.6.2'
+
+# As a reference point, v1.0.6, the last widely released version, had the
+# libtool style current:revision:age = 7:6:1 where:
+#    current = API version
+#    revision = bug fix
+#    age = number of backward compatible APIs
+# This version introduces APIs but does not change existing APIs, therefore
+# increase current and age and reset revision to zero.
+libesmtp_cra = '8:0:2'
+
+# The .so version number is calculated as C:R:A => .(C-A).A.R
+cra = []
+foreach str : libesmtp_cra.split(':')
+    cra += str.to_int()
+endforeach
+libesmtp_so_version = '@0@.@1@.@2@'.format(cra[0]-cra[2], cra[2], cra[1])
 
 auth_plugin_dir = get_option('libdir') / 'esmtp-plugins-' + libesmtp_so_version
 
@@ -148,6 +163,8 @@ configure_file(input : 'libesmtp.spec.in',
 sources = [
   'api.h',
   'auth-client.c',
+  'auth-client.h',
+  'auth-plugin.h',
   'base64.c',
   'base64.h',
   'concatenate.c',
@@ -176,6 +193,8 @@ sources = [
   'smtp-bdat.c',
   'smtp-etrn.c',
   'smtp-tls.c',
+  'tlsutils.c',
+  'tlsutils.h',
   'tokens.c',
   'tokens.h'
 ]
@@ -211,7 +230,9 @@ install_headers(['libesmtp.h', 'auth-client.h'])
 pkg.generate(lib, filebase : 'libesmtp-1.0', description : 'SMTP client library')
 
 
-summary({'prefix': get_option('prefix'),
+summary({'current:revision:age': libesmtp_cra,
+         'so version': libesmtp_so_version,
+         'prefix': get_option('prefix'),
          'libdir': get_option('libdir'),
 	 'threads': threaddep.found(),
 	 'lwres': lwresdep.found(),

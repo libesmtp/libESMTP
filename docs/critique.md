@@ -130,7 +130,7 @@ frameworks like GObject.
 
 ## Internal Interfaces
 
-Unfortunately, libESMTP does not hide its internal interfaces from public
+Unfortunately, libESMTP did not hide its internal interfaces from public
 access, it is possible to link against any of its symbols at global scope.  It
 is important to prevent linking against internal interfaces, since there may be
 unintended conflicts with symbols in third-party libraries or application code.
@@ -212,18 +212,21 @@ is conventional in many C language APIs.
 
 ### Event Callback Type Safety
 
-Unfortunately the event callback's function is somewhat overloaded, being
-called with different arguments depending on the type of event.  This design
-flaw is compounded by having to use the varargs interface to process the
-callback arguments which is error prone, and cannot be checked either at
-compile time or runtime.  This is the main area where the libESMTP API is not
-type-safe.
+Unfortunately the event callback's function is somewhat overloaded.  Similar
+events often have inconsistent arguments and semantics and the remaining events
+are special cases.
 
-Ideally the callback mechanism should be redesigned to avoid this. The most
-obvious solution is to provide a different callback for each event type while
-retaining the original API for backward compatibility.
+This design flaw is compounded since the varargs macros must be used to process
+the callback arguments which is error prone, and impossible to check either at
+compile time or run time.  Errors introduced writing the event callback might
+only be detected when the application crashes.
 
-Callbacks other than the event callback do not suffer this issue.
+This is particularly evident when trying to implement language bindings --
+translating the event callback into something appropriate to the host language
+becomes significantly more complex than it perhaps need to be, even for a
+closely related language like C++.
+
+Fortunately callbacks other than the event callback do not suffer this issue.
 
 ### Message Callback
 

@@ -283,7 +283,7 @@ do_session (smtp_session_t session)
 	 through the messages and recipients within the session.
 
 	 The protocol functions set a few timeouts as they progress.  The
-	 values set are those reccommended in RFC 5321.
+	 values set are those recommended in RFC 5321.
 
 	 [is it just me, or does everybody find that it's easier to implement
 	  protocols on the server side?]

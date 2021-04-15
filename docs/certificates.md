@@ -32,7 +32,7 @@ necessary to provide a client certificate.
 
 If client certificates are protected with a password, OpenSSL requests
 passwords on the standard input unless a password callback is provided.
-Therefore it is reccommended that all applications set a callback using
+Therefore it is recommended that all applications set a callback using
 `smtp_starttls_set_password_cb()`.  Alternatively an application SSL_CTX can be
 configured for libESMTP to use via `smtp_starttls_set_ctx()`.
 
@@ -42,8 +42,8 @@ configured for libESMTP to use via `smtp_starttls_set_ctx()`.
 Unless an application provides an OpenSSL SSL_CTX using
 `smtp_starttls_set_ctx()` libESMTP initialises one when necessary.
 
-If libESMTP is configured to follow [Open Desktop XDG][3] conventions,
-certificates and private keys are loaded as follows:
+From version 1.1.0, libESMTP follows [Open Desktop XDG][3] file layout
+conventions; certificates and private keys are loaded as follows:
 
 File or sub-directory | Description
 ----------------------|------------
@@ -58,8 +58,9 @@ CONFIG=${XDG_CONFIG_HOME:-$HOME/.config}/libesmtp
 ```
 were specified to the shell and `$HOST` is the canonic host name of the MTA.
 
-Otherwise libESMTP follows the legacy conventions below. Please note that
-libESMTP v1.0.6 and earlier do not support the XDG conventions.
+### Legacy Convention
+
+The deprecated libESMTP legacy file layout convention is as follows:
 
 File or sub-directory | Description
 ----------------------|------------
@@ -73,11 +74,20 @@ where `$CONFIG` is defined as if
 CONFIG=$HOME/.authenticate
 ```
 were specified to the shell and `$HOST` is the canonic host name of the MTA.
-Note that other than the location of `$CONFIG` the legacy and XDG conventions
-differ only in the filenames for host-specific client certificates.
 
-In either configuration if neither the `ca` directory nor `ca.pem` exist, the
-OpenSSL default locations are used instead.
+libESMTP may be configured to follow the legacy convention at compile time.
+Note that other than the location of `$CONFIG` the legacy and XDG conventions
+differ only in the filenames for host-specific client certificates. APIs or
+their semantics are identical for both legacy and XDG layouts.
+
+## OpenSSL Default Paths
+
+If neither the `ca` directory nor `ca.pem` exist, the OpenSSL default locations
+are used instead. This is recommended practice since the host system will
+usually have an up-to-date list of Certificate Authorities installed as part of
+its OpenSSL configuration.
+
+## Certificate Passwords
 
 If the user's certificate is protected by a password, it is requested when the
 SSL_CTX is initialised. It is not necessary to provide a client certificate,
@@ -94,7 +104,7 @@ their real owner; group and other permissions must not be set, that is, `ca`
 must have mode __0700__ or __0500__ and certificate files should be regular
 with mode __0400__ or __0600__.  File status is checked using the `stat()`
 system call so symbolic or hard links may be used to avoid duplication where
-necessary.  It is strongly reccommended that other directories, in particular
+necessary.  It is strongly recommended that other directories, in particular
 `private` should have the mode __0700__ or __0500__.
 
 If permissions and file ownership do not follow these rules, libESMTP ignores

@@ -2,18 +2,15 @@
 
 ## Simple
 
-libESMTP offloads the developer of the need to handle the complexity of
-negotiating the SMTP protocol and its extensions by providing a simple API
-which configures a connection to the mail server (a "session"), adds messages
-to the session and adds recipients addresses to the messages.  A callback
-function is supplied to read the message.  Submission is then performed in a
-single API call.
+libESMTP releives the developer of the need to handle the the SMTP protocol by
+providing a simple high level API. Additionally, libESMTP transparently handles
+many SMTP extensions including authentication and TLS security.
 
 ## Efficient
 
 libESMTP's primary goal is to be efficient.  Because it buffers all network
 traffic and supports the SMTP PIPELINING (RFC 2920) extension when connecting
-to a pipelining SMTP server, libESMTP significantly increases network
+to a pipelining SMTP server, libESMTP significantly improves network
 performance, especially on slow connections or those with high latency.  Even
 without a pipelining server libESMTP offers much better performance than would
 be expected with a simple client.

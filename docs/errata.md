@@ -8,8 +8,8 @@ original.
 The intention was not to provide byte-identical record of released tarballs,
 rather, it was to be able to review how source code changed should the need
 arise. For example, there was a regression in X.509 certificate validation at
-one point.  Consequently only the latest release, v1.0.6, was properly
-validated as buildable.
+one point.  Consequently only the last widely distributed release, v1.0.6, was
+properly validated as buildable.
 
 The majority of differences are minor, most are due to the decision to exclude
 generated files from the repository (autotools pollutes the source with a large
