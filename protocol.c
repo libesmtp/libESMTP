@@ -913,7 +913,7 @@ rsp_helo (siobuf_t conn, smtp_session_t session)
     }
   if (code != 2)
     {
-      if (code != 4 || code != 5)
+      if (!(code == 4 || code == 5))
 	set_error (SMTP_ERR_INVALID_RESPONSE_STATUS);
       session->try_fallback_server = 1;
       session->rsp_state = S_quit;
