@@ -111,19 +111,6 @@ write_uint32 (char *buf, size_t offset, unsigned int value)
 }
 
 static inline unsigned int
-read_uint16 (const char *buf, size_t offset)
-{
-  unsigned16_t i16;
-
-  assert (sizeof i16 == 2);
-  memcpy (&i16, buf + offset, sizeof i16);
-#ifdef WORDS_BIGENDIAN
-  i16 = bswap_16 (i16);
-#endif
-  return i16;
-}
-
-static inline unsigned int
 read_uint32 (const char *buf, size_t offset)
 {
   unsigned32_t i32;
