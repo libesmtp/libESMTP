@@ -73,6 +73,7 @@ typedef void (*smtp_enumerate_messagecb_t) (smtp_message_t message, void *arg);
 typedef void (*smtp_enumerate_recipientcb_t) (smtp_recipient_t recipient,
 					      const char *mailbox, void *arg);
 
+enum { Ver_VERSION, Ver_SO_VERSION, Ver_LT_VERSION };
 int smtp_version (void *buf, size_t len, int what);
 
 smtp_session_t smtp_create_session (void);

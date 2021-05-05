@@ -1144,26 +1144,45 @@ smtp_recipient_get_application_data (smtp_recipient_t recipient)
  * smtp_version() - Identify libESMTP version.
  * @buf: Buffer to receive version string.
  * @len: Length of buffer.
- * @what: Which version information to be retrieved (currently must be 0).
+ * @what: Which version information to be retrieved.
  *
- * Retrieve version information for the libESMTP in use.
+ * Retrieve version information for the libESMTP in use. The version number
+ * depends on the @what parameter.  When @what == Ver_VERSION the libESMTP
+ * version is returned; when @what == Ver_SO_VERSION the .so file version is
+ * returned; when @what == Ver_LT_VERSION the libtool style API version is
+ * returned.
+ *
+ * If the supplied buffer is too small to receive the version number, this
+ * function fails.
  *
  * Return: Zero on failure, non-zero on success.
  */
 int
 smtp_version (void *buf, size_t len, int what)
 {
-  static const char version[] = VERSION;
+  static const char *v;
 
   SMTPAPI_CHECK_ARGS (buf != NULL && len > 0, 0);
-  SMTPAPI_CHECK_ARGS (what == 0, 0);
+  SMTPAPI_CHECK_ARGS (what >= 0 && what < 3, 0);
 
-  if (len < sizeof version)
+  switch (what)
+  {
+  case Ver_VERSION:
+    v = VERSION;
+    break;
+  case Ver_SO_VERSION:
+    v = SO_VERSION;
+    break;
+  case Ver_LT_VERSION:
+    v = LT_VERSION;
+    break;
+  }
+
+  if (strlcpy (buf, v, len) > len)
     {
       set_error (SMTP_ERR_INVAL);
       return 0;
     }
-  memcpy (buf, version, sizeof version);
   return 1;
 }
 
