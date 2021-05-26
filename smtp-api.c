@@ -856,8 +856,8 @@ smtp_start_session (smtp_session_t session)
 int
 smtp_destroy_session (smtp_session_t session)
 {
-  smtp_message_t message;
-  smtp_recipient_t recipient;
+  smtp_message_t message, next_message;
+  smtp_recipient_t recipient, next_recipient;
 
   SMTPAPI_CHECK_ARGS (session != NULL, 0);
 
@@ -883,43 +883,43 @@ smtp_destroy_session (smtp_session_t session)
   if (session->msg_source != NULL)
     msg_source_destroy (session->msg_source);
 
-  while (session->messages != NULL)
+  for (message = session->messages; message != NULL; message = next_message)
     {
-      message = session->messages->next;
+      next_message = message->next;
 
       if (message->application_data != NULL && message->release != NULL)
 	(*message->release) (message->application_data);
 
-      reset_status (&session->messages->message_status);
-      reset_status (&session->messages->reverse_path_status);
-      free (session->messages->reverse_path_mailbox);
+      reset_status (&message->message_status);
+      reset_status (&message->reverse_path_status);
+      free (message->reverse_path_mailbox);
 
-      while (session->messages->recipients != NULL)
+      for (recipient = message->recipients;
+           recipient != NULL;
+      	   recipient = next_recipient)
         {
-	  recipient = session->messages->recipients->next;
+	  next_recipient = message->recipients->next;
 
 	  if (recipient->application_data != NULL && recipient->release != NULL)
 	    (*recipient->release) (recipient->application_data);
 
-	  reset_status (&session->messages->recipients->status);
-	  free (session->messages->recipients->mailbox);
+	  reset_status (&recipient->status);
+	  free (recipient->mailbox);
 
-	  if (session->messages->recipients->dsn_addrtype != NULL)
-	    free (session->messages->recipients->dsn_addrtype);
-	  if (session->messages->recipients->dsn_orcpt != NULL)
-	    free (session->messages->recipients->dsn_orcpt);
+	  if (recipient->dsn_addrtype != NULL)
+	    free (recipient->dsn_addrtype);
+	  if (recipient->dsn_orcpt != NULL)
+	    free (recipient->dsn_orcpt);
 
-	  free (session->messages->recipients);
-	  session->messages->recipients = recipient;
+	  free (recipient);
         }
 
-      destroy_header_table (session->messages);
+      destroy_header_table (message);
 
-      if (session->messages->dsn_envid != NULL)
-	free (session->messages->dsn_envid);
+      if (message->dsn_envid != NULL)
+	free (message->dsn_envid);
 
-      free (session->messages);
-      session->messages = message;
+      free (message);
     }
 
   free (session);
