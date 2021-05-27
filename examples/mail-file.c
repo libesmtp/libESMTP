@@ -76,9 +76,12 @@ void print_recipient_status (smtp_recipient_t recipient,
 int authinteract (auth_client_request_t request, char **result, int fields,
                   void *arg);
 int tlsinteract (char *buf, int buflen, int rwflag, void *arg);
- void event_cb (smtp_session_t session, int event_no, void *arg, ...);
+int handle_invalid_peer_certificate(long vfy_result);
+void event_cb (smtp_session_t session, int event_no, void *arg, ...);
 void usage (void);
 void version (void);
+/* FIXME getpass() is obsolete - previously declared in unistd.h */
+extern char *getpass(const char *prompt);
 
 int
 main (int argc, char **argv)
@@ -377,6 +380,7 @@ monitor_cb (const char *buf, int buflen, int writing, void *arg)
    putc ('\n', fp);
 }
 
+
 /* Callback to request user/password info.  Not thread safe. */
 int
 authinteract (auth_client_request_t request, char **result, int fields,
@@ -425,6 +429,7 @@ tlsinteract (char *buf, int buflen, int rwflag unused, void *arg unused)
   strcpy (buf, pw);
   return len;
 }
+
 int
 handle_invalid_peer_certificate(long vfy_result)
 {
@@ -489,7 +494,7 @@ handle_invalid_peer_certificate(long vfy_result)
   return 1; /* Accept the problem */
 }
 
-void event_cb (smtp_session_t session, int event_no, void *arg,...)
+void event_cb (smtp_session_t session unused, int event_no, void *arg,...)
 {
   va_list alist;
   int *ok;
