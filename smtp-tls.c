@@ -493,13 +493,9 @@ select_starttls (smtp_session_t session)
     return 0;
   if (session->starttls_enabled == Starttls_DISABLED)
     return 0;
-  /* if the session already has a CTX set by smtp_starttls_set_ctx(),
-     skip the following */
+  /* Create a CTX if the application has not already done so. */
   if (session->starttls_ctx == NULL)
-    {
-      session->starttls_ctx = starttls_create_ctx (session);
-      SSL_CTX_up_ref (session->starttls_ctx);
-    }
+    session->starttls_ctx = starttls_create_ctx (session);
   return session->starttls_ctx != NULL;
 }
 

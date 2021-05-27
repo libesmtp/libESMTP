@@ -898,7 +898,7 @@ smtp_destroy_session (smtp_session_t session)
            recipient != NULL;
       	   recipient = next_recipient)
         {
-	  next_recipient = message->recipients->next;
+	  next_recipient = recipient->next;
 
 	  if (recipient->application_data != NULL && recipient->release != NULL)
 	    (*recipient->release) (recipient->application_data);
