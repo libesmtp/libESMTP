@@ -59,3 +59,14 @@ The availability of a reliable, lightweight and thread-safe SMTP client eases
 the task of coding for software authors thus improving the quality of the
 resulting code.  See the [rationale](rationale.md) for development of this
 library.
+
+## QA
+
+While the following steps are not and cannot be an exhaustive QA process,
+libESMTP code is required to compile with zero warnings when built using
+Meson's `--warnlevel 3 --werror` arguments. Warnlevel 3 is augmented with a
+"reasonable" set of extra warnings. The clang/llvm static analyser is used to
+verify code at compile time, again all warnings are eliminated. The valgrind
+tools are used to analyse behaviour at runtime. Where possible all warnings or
+errors are eliminated; occasionally this is not possible if the errors occur
+in dependencies.
