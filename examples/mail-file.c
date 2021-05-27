@@ -1,6 +1,6 @@
 /*
  *  A libESMTP Example Application.
- *  Copyright (C) 2001,2002  Brian Stafford <brian@stafford.uklinux.net>
+ *  Copyright (C) 2001,2002,2021  Brian Stafford <https://libesmtp.github.io/>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published
@@ -13,8 +13,7 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
 /* This program accepts a single file argument followed by a list of
@@ -545,7 +544,7 @@ void event_cb (smtp_session_t session unused, int event_no, void *arg,...)
 void
 usage (void)
 {
-  fputs ("Copyright (C) 2001  Brian Stafford <brian@stafford.uklinux.net>\n"
+  fputs ("Copyright © 2001,2002,2021 Brian Stafford <https://libesmtp.github.io/>\n"
 	 "\n"
 	 "This program is free software; you can redistribute it and/or modify\n"
 	 "it under the terms of the GNU General Public License as published\n"
@@ -558,25 +557,24 @@ usage (void)
 	 "GNU General Public License for more details.\n"
 	 "\n"
 	 "You should have received a copy of the GNU General Public License\n"
-	 "along with this program; if not, write to the Free Software\n"
-	 "Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA\n"
+         "along with this program. If not, see <https://www.gnu.org/licenses/>.\n"
 	 "\n"
          "usage: mail-file [options] file mailbox [mailbox ...]\n"
-         "\t-h,--host=hostname[:service] -- set SMTP host and service (port)\n"
-         "\t-f,--reverse-path=mailbox -- set reverse path\n"
-         "\t-s,--subject=text -- set subject of the message\n"
-         "\t-n,--notify=success|failure|delay|never -- request DSN\n"
-         "\t-d,--mdn -- request MDN\n"
-         "\t-m,--monitor -- watch the protocol session with the server\n"
-         "\t-c,--crlf -- translate line endings from \\n to CR-LF\n"
-         "\t-t,--tls -- use STARTTLS extension if possible\n"
-         "\t-T,--require-tls -- require use of STARTTLS extension\n"
+         "\t-h --host hostname[:service] -- set SMTP host and service (port)\n"
+         "\t-f --reverse-path mailbox -- set reverse path\n"
+         "\t-s --subject text -- set subject of the message\n"
+         "\t-n --notify success|failure|delay|never -- request DSN\n"
+         "\t-d --mdn -- request MDN\n"
+         "\t-m --monitor -- watch the protocol session with the server\n"
+         "\t-c --crlf -- translate line endings from \\n to CR-LF\n"
+         "\t-t --tls -- use STARTTLS extension if possible\n"
+         "\t-T --require-tls -- require use of STARTTLS extension\n"
          "\t   --noauth -- do not attempt to authenticate to the MSA\n"
-         "\t--version -- show version info and exit\n"
-         "\t--help -- this message\n"
+         "\t   --version -- show version info and exit\n"
+         "\t   --help -- this message\n"
          "\n"
          "Specify the file argument as \"-\" to read standard input.\n"
-         "The input must be in RFC 2822 format, that is, it must consist\n"
+         "The input must be in RFC 5322 format, that is it must consist\n"
          "of a sequence of message headers terminated by a blank line and\n"
          "followed by the message body.  Lines must be terminated with the\n"
          "canonic CR-LF sequence unless the --crlf flag is specified.\n"
