@@ -1,21 +1,29 @@
 # Changes since v1.0.6
 
-libESMTP v1.1.0 is an interim release, pending some roadmap items currently
-in development. It is hoped that these changes will simplify future development
-and improve the quality of the associated documentation.
+libESMTP v1.1.0 is an interim release, pending some roadmap items currently in
+development. While libESMTP 1.0.6 has been stable for some time, bit-rot
+inevitably occurs as the state-of-the-art and system conventions change over
+time and therefore libESMTP must be updated.  It is hoped that these updates
+will provide a more modern base for future development and improve the quality
+of the associated documentation.
+
+---
 
 [CVE-2019-19977][3] is fixed.
+
+A linker map is now used to ensure only libESMTP's API symbols are made
+publicly available.  This should prevent the possibility that a libESMTP
+internal symbol collides with an application or other library.  Existing
+interfaces and semantics are unchanged; existing applications should link
+correctly with the new libESMTP binary, however applications which rely on
+internal symbols will no longer link.
 
 libESMTP is updated to use the current [OpenSSL][4] API.  Therefore OpenSSL
 v1.1.0 or later is now required.
 
-The existing libESMTP API is extended, however existing interfaces and
-semantics are unchanged; applications should link correctly with the new
-libESMTP binary.
-
 The GNU autotools build has been completely removed and replaced by [Meson][1].
-Meson builds are easy to maintain and is particularly effective when used in
-conjunction with [Ninja][2] offering dramatically reduced build times.
+Meson builds are easy to maintain and Meson is particularly effective when used
+in conjunction with [Ninja][2] offering dramatically reduced build times.
 
 [Open Desktop XDG][5] conventions are now used when searching for files.
 Currently this affects the name and location of X.509 certificate files.
@@ -38,14 +46,10 @@ The 'getaddrinfo()' replacement implementation has been removed since that
 interface is ubiquitous in modern C and resolver libraries and since the
 replacement was never a complete implementation.
 
-A linker map is now used to ensure only libESMTP's API symbols are made
-publicly available.  This should prevent the possibility that a libESMTP
-internal symbol collides with an application or other library.  Applications
-which rely on internal symbols will no longer link with libESMTP.
-
 ## Summary
 
-* CVE-2019-19977: avoid potential stack overrwrite in NTLM authenticator.
+* CVE-2019-19977: avoid potential stack overflow in NTLM authenticator.
+* Migrate build system to Meson
 * Remove GNU libltdl support, assume dlopen() always available.
 * Use a linker map to restrict public symbols to API only.
 * Add sentinel and 'format printf' attributes to function declarations.

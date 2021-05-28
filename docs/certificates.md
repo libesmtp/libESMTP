@@ -58,6 +58,9 @@ CONFIG=${XDG_CONFIG_HOME:-$HOME/.config}/libesmtp
 ```
 were specified to the shell and `$HOST` is the canonic host name of the MTA.
 
+Use the [`openssl rehash`][4] command to create the hashed CA directory
+symbolic links if required.
+
 ### Legacy Convention
 
 The deprecated libESMTP legacy file layout convention is as follows:
@@ -77,8 +80,8 @@ were specified to the shell and `$HOST` is the canonic host name of the MTA.
 
 libESMTP may be configured to follow the legacy convention at compile time.
 Note that other than the location of `$CONFIG` the legacy and XDG conventions
-differ only in the filenames for host-specific client certificates. APIs or
-their semantics are identical for both legacy and XDG layouts.
+differ in the filenames for host-specific client certificates. APIs and their
+semantics are identical for both legacy and XDG layouts.
 
 ## OpenSSL Default Paths
 
@@ -136,3 +139,4 @@ for host-specific client certificates as described above.
 [1]: smtp-tls.html#c.smtp_starttls_set_ctx
 [2]: smtp-api.html#c.smtp_start_session
 [3]: https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html
+[4]: https://www.openssl.org/docs/man1.1.1/man1/c_rehash.html

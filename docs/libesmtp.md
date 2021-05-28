@@ -2,9 +2,9 @@
 
 ## Simple
 
-libESMTP releives the developer of the need to handle the the SMTP protocol by
-providing a simple high level API. Additionally, libESMTP transparently handles
-many SMTP extensions including authentication and TLS security.
+libESMTP relieves developers of the need to handle the SMTP protocol by
+providing a high level API. Additionally, libESMTP transparently handles many
+SMTP extensions including authentication and TLS security.
 
 ## Efficient
 
@@ -50,10 +50,10 @@ mailing list, an on-line application that mails notifications to users or, of
 course, an email program.
 
 A major difference with clients which are part of a mail transport agent is
-that libESMTP does not perfrom MX resolution and next-hop determination.  This
-is intentional since this is undesirable behaviour in a program that is not an
-MTA, and may even be detrimental if the client is behind a firewall which
-blocks access to port 25 on the Internet.
+that libESMTP does not perfrom MX resolution for next-hop determination.  This
+is intentional since MX lookup is undesirable behaviour in a program that is
+not an MTA, and may even be detrimental if the client is behind a firewall
+which blocks access to port 25 on the Internet.
 
 The availability of a reliable, lightweight and thread-safe SMTP client eases
 the task of coding for software authors thus improving the quality of the

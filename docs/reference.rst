@@ -7,8 +7,7 @@ The libESMTP API is intended for use as an SMTP client within a Mail User
 Agent (MUA) or other program that wishes to submit mail to a preconfigured
 Message Submission Agent (MSA), sometimes known as a *smart host*.
 
-The documentation is believed to be accurate but may not necessarily reflect
-actual behaviour.
+The documentation is believed to be accurate however:
 
   Much of it is apocryphal or, at the very least, wildly inaccurate.
   However, where it is inaccurate, it is *definitively* inaccurate.

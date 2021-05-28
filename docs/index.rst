@@ -21,8 +21,8 @@ for high performance.
 This is the **official libESMTP repository** and documentation.
 It is maintained by Brian Stafford, the original libESMTP author.
 
-Copyright & Licence
-===================
+Licence
+=======
 
 Copyright © 2001-2021 Brian Stafford
 
@@ -56,5 +56,8 @@ defunct.  brianstafford.info now belongs to a namesake.
    reference
    bugreport
    faq
+   users
    essays
+   authors
+   oldfiles
    Wiki <https://github.com/libesmtp/libESMTP/wiki>
