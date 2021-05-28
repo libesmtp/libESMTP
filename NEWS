@@ -1,3 +1,6 @@
+# NEWS
+
+```
 * libESMTP 1.0.3 stable release. 2004-04-20
 
 - This release contains TLS improvements from
@@ -227,3 +230,4 @@ The libESMTP web site will be updated in the near future to set up
 link to projects using libESMTP.  If you would like a mention for your
 project, drop a line to <brian@stafford.uklinux.net> with the details.
 
+```
