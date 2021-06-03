@@ -401,7 +401,9 @@ authinteract (auth_client_request_t request, char **result, int fields,
       else
 	{
 	  tty = open ("/dev/tty", O_RDWR);
-	  write (tty, prompt, n);
+	  if (write (tty, prompt, n) != n)
+	    {
+	    }
 	  n = read (tty, rp, sizeof resp - (rp - resp));
 	  close (tty);
 	  p = rp + n;
