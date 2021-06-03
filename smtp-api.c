@@ -676,18 +676,20 @@ smtp_8bitmime_set_body (smtp_message_t message, enum e8bitmime_body body)
  * Deliver By Extension
  * --------------------
  *
- * # FIXME
  */
 
 
 /**
- * smtp_deliverby_set_mode() - Set delivery tracing and conditions. 
+ * smtp_deliverby_set_mode() - Set delivery tracing and conditions.
  * @message: The message.
- * @time: Deliver ny specified time.
+ * @time: Deliver by specified time.
  * @mode: Delivery mode.
  * @trace: Trace mode.
  *
- * FIXME
+ * If @time is before the earliest time the server can guarantee delivery,
+ * libESMTP will emit a %SMTP_EV_DELIVERBY_EXPIRED event. The application may
+ * optionally adjust latest acceptable the delivery time, otherwise the MAIL
+ * command will be failed by the server.
  *
  * Return: Non zero on success, zero on failure.
  */
