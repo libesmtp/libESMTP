@@ -37,6 +37,10 @@ to source files look more drastic than they actually are, an impression
 somewhat amplified by corrections or updates to RFC numbers to match current
 standards.
 
+The MTA's canonic hostname is used to check certificate validity, this may
+differ from the specified hostname if it references a CNAME record in the DNS.
+The new 'smtp\_get\_server\_name()' API may be used to retrieve this.
+
 The 'application data' interface has been improved. The updated API accepts a
 'release' callback argument which libESMTP will call when necessary.  This
 relieves the application from releasing allocated resources and should
@@ -56,6 +60,7 @@ replacement was never a complete implementation.
 * Remove getaddrinfo() implementation.
 * Use strlcpy() for safer string copies, provide implementation for systems that need it.
 * Update 'application data' APIs
+* Add 'smtp\_get\_server\_name()' API.
 * Collect replacement functions into missing.c
 * Prohibit Resent-Reply-To: header.
 * Use canonic domain name of MTA where known (e.g. due to CNAME record in DNS).
