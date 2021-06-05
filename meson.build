@@ -1,4 +1,4 @@
-project('libESMTP', 'c', version : '1.1.0', default_options: ['c_std=c11'])
+project('libESMTP', 'c', version : '1.1.1', default_options: ['c_std=c11'])
 email = 'Brian Stafford <brian.stafford60@gmail.com>'
 website = 'https://libesmtp.github.io/'
 
@@ -14,7 +14,7 @@ libesmtp_version = meson.project_version()
 #    age = number of backward compatible APIs
 # This version introduces APIs but does not change existing APIs, therefore
 # increase current and age and reset revision to zero.
-libesmtp_cra = '8:0:2'
+libesmtp_cra = '8:1:2'
 
 # The .so version number is calculated as C:R:A => .(C-A).A.R
 cra = []
