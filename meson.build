@@ -208,7 +208,7 @@ vflag = '-Wl,--version-script,@0@/@1@'.format(meson.current_source_dir(), mapfil
 
 lib = library('esmtp', sources,
 	      link_args : vflag, link_depends : mapfile,
-	      soversion : libesmtp_so_version,
+	      version : libesmtp_so_version,
 	      dependencies : deps,
 	      install : true)
 
