@@ -1149,10 +1149,11 @@ smtp_recipient_get_application_data (smtp_recipient_t recipient)
  * @what: Which version information to be retrieved.
  *
  * Retrieve version information for the libESMTP in use. The version number
- * depends on the @what parameter.  When @what == Ver_VERSION the libESMTP
- * version is returned; when @what == Ver_SO_VERSION the .so file version is
- * returned; when @what == Ver_LT_VERSION the libtool style API version is
- * returned.
+ * depends on the @what parameter.
+ *
+ * - Ver_VERSION -- the libESMTP version is returned
+ * - Ver_SO_VERSION -- the .so file version is returned
+ * - Ver_LT_VERSION -- the libtool style API version is returned.
  *
  * If the supplied buffer is too small to receive the version number, this
  * function fails.

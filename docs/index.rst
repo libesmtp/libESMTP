@@ -1,10 +1,11 @@
 API Reference
 =============
 
-This document describes the libESMTP v1.1 programming interface.
+.. admonition:: This document describes the libESMTP v1.1 programming interface.
+    :class: attention
 
-The latest version of this document is always available at
-`libesmtp.github.io <https://libesmtp.github.io>`_.
+    The latest version of this document is always available at
+    `libesmtp.github.io <https://libesmtp.github.io>`_.
 
 The libESMTP API is intended for use as an SMTP client within a Mail User
 Agent (MUA) or other program that wishes to submit mail to a preconfigured
