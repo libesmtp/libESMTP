@@ -336,36 +336,29 @@ static SSL_CTX *
 starttls_create_ctx (smtp_session_t session)
 {
   SSL_CTX *ctx;
-  static SSL_CTX *starttls_ctx;
 
-#ifdef USE_PTHREADS
-  pthread_mutex_lock (&starttls_mutex);
-#endif
-  if (starttls_ctx != NULL)
-    ctx = starttls_ctx;
-  else
+  /* Previous versions attempted to cache the SSL_CTX, however properly caching
+     it is too complicated without a dedicated API.  Simple use cases leak the
+     SSL_CTX.  If an application needs a cached SSL_CTX it should create one of
+     its own and use smtp_starttls_set_ctx() each time it creates a session */
+
+  /* The decision not to support SSL v2 and v3 but instead to use only
+     TLSv1.X is deliberate.  This is in line with the intentions of RFC
+     3207.  Servers typically support SSL as well as TLS because some
+     versions of Netscape do not support TLS.  I am assuming that all
+     currently deployed servers correctly support TLS.	*/
+  ctx = SSL_CTX_new (TLS_client_method ());
+  if (ctx != NULL)
     {
-      /* The decision not to support SSL v2 and v3 but instead to use only
-	 TLSv1.X is deliberate.  This is in line with the intentions of RFC
-	 3207.  Servers typically support SSL as well as TLS because some
-	 versions of Netscape do not support TLS.  I am assuming that all
-	 currently deployed servers correctly support TLS.	*/
-      ctx = SSL_CTX_new (TLS_client_method ());
-      if (ctx != NULL)
-	{
-	  SSL_CTX_set_min_proto_version (ctx, TLS1_VERSION);
+      SSL_CTX_set_min_proto_version (ctx, TLS1_VERSION);
 
-	  if (!starttls_init_ctx (session, ctx))
-	    {
-	      SSL_CTX_free (ctx);
-	      ctx = NULL;
-	    }
-	}
-      starttls_ctx = ctx;
+      if (!starttls_init_ctx (session, ctx))
+        {
+          SSL_CTX_free (ctx);
+          ctx = NULL;
+        }
     }
-#ifdef USE_PTHREADS
-  pthread_mutex_unlock (&starttls_mutex);
-#endif
+
   return ctx;
 }
 
