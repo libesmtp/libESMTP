@@ -404,6 +404,7 @@ starttls_create_ssl (smtp_session_t session)
       if (!SSL_use_certificate_file (ssl, keyfile, SSL_FILETYPE_PEM))
 	{
 	  /* FIXME: set an error code */
+          SSL_free (ssl);
 	  return NULL;
 	}
       if (!SSL_use_PrivateKey_file (ssl, keyfile, SSL_FILETYPE_PEM))
@@ -413,7 +414,10 @@ starttls_create_ssl (smtp_session_t session)
 	    (*session->event_cb) (session, SMTP_EV_NO_CLIENT_CERTIFICATE,
 				  session->event_cb_arg, &ok);
 	  if (!ok)
-	    return NULL;
+            {
+              SSL_free (ssl);
+              return NULL;
+            }
 	}
     }
   else if (status == FILE_PROBLEM)
@@ -421,6 +425,7 @@ starttls_create_ssl (smtp_session_t session)
       if (session->event_cb != NULL)
 	(*session->event_cb) (session, SMTP_EV_UNUSABLE_CLIENT_CERTIFICATE,
 			      session->event_cb_arg, NULL);
+      SSL_free (ssl);
       return NULL;
     }
 
