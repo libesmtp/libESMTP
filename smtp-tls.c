@@ -458,6 +458,29 @@ smtp_starttls_set_ctx (smtp_session_t session, SSL_CTX *ctx)
 }
 
 /**
+ * smtp_starttls_get_ctx() - Return the SSL_CTX for the SMTP session.
+ * @session: The session.
+ *
+ * Return the SSL_CTX that will be used for the SMTP session. Note that
+ * ownership of the SSL_CTX is not transferred and SSL_CTX will be freed when
+ * the smtp_session_t is destroyed. If an application wishes to save the
+ * SSL_CTX, for example for use in a subsequent SMTP session or other TLS
+ * protocols, it must call SSL_CTX_up_ref() on the returned SSL_CTX and
+ * SSL_CTX_free() when it has finished using it.
+ *
+ * Returns: An SSL_CTX or %NULL on failure.
+ */
+SSL_CTX *
+smtp_starttls_get_ctx (smtp_session_t session)
+{
+  SMTPAPI_CHECK_ARGS (session != NULL, 0);
+
+  if (session->starttls_ctx == NULL)
+    session->starttls_ctx = starttls_create_ctx (session);
+  return session->starttls_ctx;
+}
+
+/**
  * smtp_starttls_enable() - Enable STARTTLS verb.
  * @session: The session.
  * @how: A &enum starttls_option
