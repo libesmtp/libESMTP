@@ -336,36 +336,29 @@ static SSL_CTX *
 starttls_create_ctx (smtp_session_t session)
 {
   SSL_CTX *ctx;
-  static SSL_CTX *starttls_ctx;
 
-#ifdef USE_PTHREADS
-  pthread_mutex_lock (&starttls_mutex);
-#endif
-  if (starttls_ctx != NULL)
-    ctx = starttls_ctx;
-  else
+  /* Previous versions attempted to cache the SSL_CTX, however properly caching
+     it is too complicated without a dedicated API.  Simple use cases leak the
+     SSL_CTX.  If an application needs a cached SSL_CTX it should create one of
+     its own and use smtp_starttls_set_ctx() each time it creates a session */
+
+  /* The decision not to support SSL v2 and v3 but instead to use only
+     TLSv1.X is deliberate.  This is in line with the intentions of RFC
+     3207.  Servers typically support SSL as well as TLS because some
+     versions of Netscape do not support TLS.  I am assuming that all
+     currently deployed servers correctly support TLS.	*/
+  ctx = SSL_CTX_new (TLS_client_method ());
+  if (ctx != NULL)
     {
-      /* The decision not to support SSL v2 and v3 but instead to use only
-	 TLSv1.X is deliberate.  This is in line with the intentions of RFC
-	 3207.  Servers typically support SSL as well as TLS because some
-	 versions of Netscape do not support TLS.  I am assuming that all
-	 currently deployed servers correctly support TLS.	*/
-      ctx = SSL_CTX_new (TLS_client_method ());
-      if (ctx != NULL)
-	{
-	  SSL_CTX_set_min_proto_version (ctx, TLS1_VERSION);
+      SSL_CTX_set_min_proto_version (ctx, TLS1_VERSION);
 
-	  if (!starttls_init_ctx (session, ctx))
-	    {
-	      SSL_CTX_free (ctx);
-	      ctx = NULL;
-	    }
-	}
-      starttls_ctx = ctx;
+      if (!starttls_init_ctx (session, ctx))
+        {
+          SSL_CTX_free (ctx);
+          ctx = NULL;
+        }
     }
-#ifdef USE_PTHREADS
-  pthread_mutex_unlock (&starttls_mutex);
-#endif
+
   return ctx;
 }
 
@@ -404,6 +397,7 @@ starttls_create_ssl (smtp_session_t session)
       if (!SSL_use_certificate_file (ssl, keyfile, SSL_FILETYPE_PEM))
 	{
 	  /* FIXME: set an error code */
+          SSL_free (ssl);
 	  return NULL;
 	}
       if (!SSL_use_PrivateKey_file (ssl, keyfile, SSL_FILETYPE_PEM))
@@ -413,7 +407,10 @@ starttls_create_ssl (smtp_session_t session)
 	    (*session->event_cb) (session, SMTP_EV_NO_CLIENT_CERTIFICATE,
 				  session->event_cb_arg, &ok);
 	  if (!ok)
-	    return NULL;
+            {
+              SSL_free (ssl);
+              return NULL;
+            }
 	}
     }
   else if (status == FILE_PROBLEM)
@@ -421,6 +418,7 @@ starttls_create_ssl (smtp_session_t session)
       if (session->event_cb != NULL)
 	(*session->event_cb) (session, SMTP_EV_UNUSABLE_CLIENT_CERTIFICATE,
 			      session->event_cb_arg, NULL);
+      SSL_free (ssl);
       return NULL;
     }
 
@@ -432,12 +430,17 @@ starttls_create_ssl (smtp_session_t session)
  * @session: The session.
  * @ctx: An SSL_CTX initialised by the application.
  *
- * Use an SSL_CTX created and initialised by the application.  The SSL_CTX
- * must be created by the application which is assumed to have also initialised
- * the OpenSSL library.
+ * Use an SSL_CTX created and initialised by the application. The SSL_CTX is up
+ * referenced by libESMTP and subsequently freed when the session is destroyed.
+ * This means that it is valid for an application to create an SSL_CTX and
+ * immediately free it after passing it to this call.
  *
- * If not used, or @ctx is %NULL, OpenSSL is automatically initialised before
- * calling any of the OpenSSL API functions.
+ * This call is useful if an application must support older versions of SSL or
+ * TLS than are supported by libESMTP, or if it wishes to impose stricter
+ * conditions on the TLS version to be used for the session.
+ *
+ * If this call is not used, or @ctx is %NULL, OpenSSL is automatically
+ * initialised before calling any of the OpenSSL API functions.
  *
  * Returns: Zero on failure, non-zero on success.
  */
@@ -446,7 +449,10 @@ smtp_starttls_set_ctx (smtp_session_t session, SSL_CTX *ctx)
 {
   SMTPAPI_CHECK_ARGS (session != NULL, 0);
 
-  SSL_CTX_up_ref (ctx);
+  if (session->starttls_ctx != NULL)
+    SSL_CTX_free (session->starttls_ctx);
+  if (ctx != NULL)
+    SSL_CTX_up_ref (ctx);
   session->starttls_ctx = ctx;
   return 1;
 }

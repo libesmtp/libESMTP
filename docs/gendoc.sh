@@ -14,4 +14,4 @@ do
 	base=${file##*/}
 	kernel-doc -rst $SRC/${file} > $DST/${base%.*}.rst
 done
-sphinx-build . _build
+sphinx-build -b devhelp . _devhelp
