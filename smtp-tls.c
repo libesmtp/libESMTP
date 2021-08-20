@@ -430,12 +430,17 @@ starttls_create_ssl (smtp_session_t session)
  * @session: The session.
  * @ctx: An SSL_CTX initialised by the application.
  *
- * Use an SSL_CTX created and initialised by the application.  The SSL_CTX
- * must be created by the application which is assumed to have also initialised
- * the OpenSSL library.
+ * Use an SSL_CTX created and initialised by the application. The SSL_CTX is up
+ * referenced by libESMTP and subsequently freed when the session is destroyed.
+ * This means that it is valid for an application to create an SSL_CTX and
+ * immediately free it after passing it to this call.
  *
- * If not used, or @ctx is %NULL, OpenSSL is automatically initialised before
- * calling any of the OpenSSL API functions.
+ * This call is useful if an application must support older versions of SSL or
+ * TLS than are supported by libESMTP, or if it wishes to impose stricter
+ * conditions on the TLS version to be used for the session.
+ *
+ * If this call is not used, or @ctx is %NULL, OpenSSL is automatically
+ * initialised before calling any of the OpenSSL API functions.
  *
  * Returns: Zero on failure, non-zero on success.
  */
@@ -444,7 +449,10 @@ smtp_starttls_set_ctx (smtp_session_t session, SSL_CTX *ctx)
 {
   SMTPAPI_CHECK_ARGS (session != NULL, 0);
 
-  SSL_CTX_up_ref (ctx);
+  if (session->starttls_ctx != NULL)
+    SSL_CTX_free (session->starttls_ctx);
+  if (ctx != NULL)
+    SSL_CTX_up_ref (ctx);
   session->starttls_ctx = ctx;
   return 1;
 }
