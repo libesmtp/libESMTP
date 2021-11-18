@@ -278,11 +278,10 @@ smtp_strerror (int error, char buf[], size_t buflen)
   SMTPAPI_CHECK_ARGS (buf != NULL && buflen > 0, NULL);
 
   if (error < 0)
-#if HAVE_WORKING_STRERROR_R
+#if HAVE_GNU_STRERROR_R
     return strerror_r (-error, buf, buflen);
 #elif HAVE_STRERROR_R
     {
-      /* Assume the broken OSF1 strerror_r which returns an int. */
       int n = strerror_r (-error, buf, buflen);
 
       return n >= 0 ? buf : NULL;

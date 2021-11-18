@@ -80,7 +80,7 @@ void event_cb (smtp_session_t session, int event_no, void *arg, ...);
 void usage (void);
 void version (void);
 /* FIXME getpass() is obsolete - previously declared in unistd.h */
-extern char *getpass(const char *prompt);
+//extern char *getpass(const char *prompt);
 
 int
 main (int argc, char **argv)

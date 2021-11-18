@@ -28,9 +28,7 @@ auth_plugin_dir = get_option('libdir') / 'esmtp-plugins-' + libesmtp_so_version
 ################################################################################
 # legacy defines
 ################################################################################
-cflags = [
-  '-D_POSIX_C_SOURCE=200809L',
-]
+cflags = []
 
 cflags_warnings = [
     '-Walloc-zero',
@@ -85,13 +83,31 @@ have_strlcpy = cc.has_function('strlcpy')
 have_strdup = cc.has_function('strdup')
 have_strncasecmp = cc.has_function('strncasecmp')
 have_strcasecmp = cc.has_function('strcasecmp')
-have_memrchr = cc.has_header_symbol('string.h', 'memrchr')
+have_memrchr = cc.has_header_symbol('string.h', 'memrchr',
+                                    args: '-D_GNU_SOURCE')
+have_localtime_r = cc.has_function('localtime_r')
+have_gmtoff = cc.has_member('struct tm', 'tm_gmtoff',
+                            args: '-D_GNU_SOURCE',
+                            prefix: '#include <time.h>')
+have_timezone = cc.has_header_symbol('time.h', 'timezone',
+                                     args: '-D_XOPEN_SOURCE=700')
+
+
 
 ################################################################################
 # configuration
 # XXX WARNING use of #if SYMBOL vs #ifdef SYMBOL somewhat haphazard
 ################################################################################
 conf = configuration_data()
+gnu_source = have_memrchr or have_gmtoff
+xopen_source = have_timezone
+if gnu_source
+    conf.set('_GNU_SOURCE', true)
+elif xopen_source
+    conf.set('_XOPEN_SOURCE', 700)
+else
+    conf.set('_POSIX_C_SOURCE', '200809L')
+endif
 conf.set('SIZEOF_UNSIGNED_INT', cc.sizeof('unsigned int'))
 conf.set('SIZEOF_UNSIGNED_LONG', cc.sizeof('unsigned long'))
 conf.set('SIZEOF_UNSIGNED_SHORT', cc.sizeof('unsigned short'))
@@ -112,13 +128,14 @@ conf.set_quoted('VERSION', libesmtp_version)
 conf.set('HAVE_GETHOSTNAME', 1, description : 'POSIX.1-2001, POSIX.1-2008.')
 conf.set('HAVE_GETTIMEOFDAY', true, description : 'POSIX.1-2001, obsolete POSIX.1-2008.')
 conf.set('HAVE_LIBCRYPTO', ssldep.found().to_int())
-conf.set('HAVE_LOCALTIME_R', 1, description : 'SUSV2')
 conf.set('HAVE_LWRES_NETDB_H', lwresdep.found().to_int())
-conf.set('HAVE_STRERROR_R', 1)
-conf.set('HAVE_WORKING_STRERROR_R', 0)
-conf.set('HAVE_STRUCT_TM_TM_ZONE', 0)
+conf.set10('HAVE_STRERROR_R', not gnu_source)
+conf.set10('HAVE_GNU_STRERROR_R', gnu_source)
 conf.set('HAVE_UNAME', 1)
-conf.set('HAVE_STRFTIME', 1)
+
+conf.set10('HAVE_LOCALTIME_R', have_localtime_r)
+conf.set10('HAVE_TIMEZONE', have_timezone)
+conf.set10('HAVE_STRUCT_TM_TM_ZONE', have_gmtoff)
 
 conf.set('LIBESMTP_ENABLE_DEPRECATED_SYMBOLS', true)
 
