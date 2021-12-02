@@ -1,9 +1,9 @@
 /*
- *  This file is part of libESMTP, a library for submission of RFC 2822
+ *  This file is part of libESMTP, a library for submission of RFC 5322
  *  formatted electronic mail messages using the SMTP protocol described
- *  in RFC 2821.
+ *  in RFC 5321.
  *
- *  Copyright (C) 2001,2002  Brian Stafford  <brian@stafford.uklinux.net>
+ *  Copyright (C) 2001-2021  Brian Stafford  <brian.stafford60@gmail.com>
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
@@ -21,75 +21,38 @@
  */
 
 #include <config.h>
-
 #include <stdio.h>
-#include <sys/types.h>
+#include <time.h>
 
 #include <missing.h> /* declarations for missing library functions */
 
-#if TM_IN_SYS_TIME
-# include <sys/time.h>
-# if TIME_WITH_SYS_TIME
-#  include <time.h>
-# endif
-#else
-# include <time.h>
-#endif
-
 #include "rfc2822date.h"
 
-#if HAVE_STRFTIME
-
-char *
-rfc2822date (char buf[], size_t buflen, time_t *timedate)
-{
-#if HAVE_LOCALTIME_R
-  struct tm tmbuf, *tm;
-
-  tm = localtime_r (timedate, &tmbuf);
+#if HAVE_STRUCT_TM_TM_ZONE
+#  define gmt_offset(tm, td)  (tm)->tm_gmtoff
+#elif HAVE_TIMEZONE
+#  define gmt_offset(tm, td)  timezone
 #else
-  struct tm *tm;
+/* Calculate seconds in the current day from the struct tm.  Leap seconds are
+   ignored, tm must be normalised and the time zone is ignored.  If called with
+   a struct tm filled in by localtime() the result will be wrong by the number
+   of seconds the current timezone is offset from GMT!  */
+static int
+gmt_offset (struct tm *tm, time_t *timedate)
+{
+  long gmtoff;
 
-  tm = localtime (timedate);
-#endif
-  strftime (buf, buflen, "%a, %d %b %Y %T %z", tm);
-  return buf;
+  gmtoff = (tm->tm_hour * 60 + tm->tm_min) * 60 + tm->tm_sec;
+  gmtoff -= *timedate % 86400L;
+  return gmtoff;
 }
+#endif
 
-#else
-
-#if !HAVE_STRUCT_TM_TM_ZONE
-/* Calculate seconds since 1970 from the struct tm.  Leap seconds are
-   ignored, tm must be normalised and the time zone is ignored.
-   If called with a struct tm filled in by localtime() the result
-   will be wrong by the number of seconds the current timezone is
-   offset from GMT!  */
-
-#define EPOCH 1970
-
-static time_t
-libesmtp_mktime (struct tm *tm)
+#if !HAVE_LOCALTIME_R
+static struct tm *
+localtime_r (const time_t *tmbuf, struct tm *timedate __attribute__ ((unused)))
 {
-  time_t when;
-  int day, year;
-  static const int days[] =
-    {
-      0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334,
-    };
-
-  year = tm->tm_year + 1900;
-  day = days[tm->tm_mon] + tm->tm_mday - 1;
-
-  /* adjust for leap years paying attention to January and February */
-  day += (year - (EPOCH - (EPOCH % 4))) / 4;
-  day -= (year - (EPOCH - (EPOCH % 100))) / 100;
-  day += (year - (EPOCH - (EPOCH % 400))) / 400;
-  if (tm->tm_mon < 2 && (year % 4 == 0) && (year % 100 != 0 || year / 400 == 0))
-    day -= 1;
-
-  when = ((year - EPOCH) * 365 + day) * 24 + tm->tm_hour;
-  when = (when * 60 + tm->tm_min) * 60 + tm->tm_sec;
-  return when;
+  return localtime (tmbuf);
 }
 #endif
 
@@ -102,31 +65,28 @@ static const char *months[] =
 char *
 rfc2822date (char buf[], size_t buflen, time_t *timedate)
 {
-  struct tm *tm;
-#if HAVE_LOCALTIME_R
-  struct tm tmbuf;
-#endif
+  struct tm tmbuf, *tm;
   int dir, minutes;
-#if !HAVE_STRUCT_TM_TM_ZONE
-  time_t gmtoff;
-#endif
 
-#if HAVE_LOCALTIME_R
   tm = localtime_r (timedate, &tmbuf);
-#else
-  tm = localtime (timedate);
-#endif
-#if HAVE_STRUCT_TM_TM_ZONE
-  minutes = tm->tm_gmtoff / 60;
-#else
-  gmtoff = libesmtp_mktime (tm);
-  gmtoff -= *timedate;
-  minutes = gmtoff / 60;
-#endif
 
-  dir = (minutes > 0) ? '+' : '-';
-  if (minutes < 0)
-    minutes = -minutes;
+  /* It's not clear from the description of tm_isdst whether a value less than
+     zero means that whether daylight saving (summer) time is in effect could
+     not be determined or whether the offset from UTC is unknown.  Some
+     implementations of strftime(3) assume the latter so we do the same */
+  if (tm->tm_isdst >= 0)
+    {
+      minutes = gmt_offset (tm, timedate) / 60;
+      dir = (minutes >= 0) ? '+' : '-';
+      if (minutes < 0)
+	minutes = -minutes;
+    }
+  else
+    {
+      /* RFC 5322 - zone = "-0000" means timezone could not be determined */
+      dir = '-';
+      minutes = 0;
+    }
   snprintf (buf, buflen, "%s, %d %s %d %02d:%02d:%02d %c%02d%02d",
 	    days[tm->tm_wday],
 	    tm->tm_mday, months[tm->tm_mon], tm->tm_year + 1900,
@@ -134,5 +94,3 @@ rfc2822date (char buf[], size_t buflen, time_t *timedate)
 	    dir, minutes / 60, minutes % 60);
   return buf;
 }
-
-#endif
