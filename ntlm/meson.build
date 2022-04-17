@@ -5,7 +5,7 @@ sasl_ntlm_sources = [
   'ntlmstruct.c',
 ]
 
-ntlm_deps = [ ssldep, ]
+ntlm_deps = [ ntlmdep, ]
 
 sasl_ntlm = shared_module('ntlm', sasl_ntlm_sources,
 			  name_prefix : 'sasl-',

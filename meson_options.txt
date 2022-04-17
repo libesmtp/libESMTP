@@ -5,3 +5,4 @@ option('lwres', type : 'feature', value : 'disabled', description : 'use lwres l
 option('bdat', type : 'boolean', value : 'true', description : 'enable SMTP BDAT extension')
 option('etrn', type : 'boolean', value : 'true', description : 'enable SMTP ETRN extension')
 option('xusr', type : 'boolean', value : 'true', description : 'enable sendmail XUSR extension')
+option('ntlm', type : 'feature', value : 'disabled', description : 'build with support for NTLM authentication')
