@@ -522,6 +522,19 @@ select_starttls (smtp_session_t session)
     return 0;
   if (session->starttls_enabled == Starttls_DISABLED)
     return 0;
+  /* Disable PIPELINING (PIPELINING will be re-enabled, if supported, after
+     TLS starts and the EHLO command is reissued).
+     This is part of a strategy to avoid a vulnerability where a malicious
+     server might pipeline responses to spoof data that should be received
+     encrypted.
+     By not expecting pipelined responses cmd_starttls() can safely check
+     for an empty receive buffer before issuing the STARTTLS verb and
+     rsp_starttls() can safely check for no further data after reading the
+     STARTTLS response line. If either check fails the protocol is aborted
+     since the server is assumed to be malicious.
+     Note that disabling PIPELINING does not and cannot affect server behaviour
+     however is does alter libESMTP's strategy for flushing buffers etc. */
+  session->extensions &= ~EXT_STARTTLS;
   /* Create a CTX if the application has not already done so. */
   if (session->starttls_ctx == NULL)
     session->starttls_ctx = starttls_create_ctx (session);
@@ -663,6 +676,13 @@ check_acceptable_security (smtp_session_t session, SSL *ssl)
 void
 cmd_starttls (siobuf_t conn, smtp_session_t session)
 {
+  /* There should be no pending data to be received before issuing the
+     STARTTLS verb. Abort the protocol otherwise. */
+  if (sio_poll (conn, 1, 0, 1) != 0)
+    {
+      session->rsp_state = -1;
+      return;
+    }
   sio_write (conn, "STARTTLS\r\n", -1);
   session->cmd_state = -1;
 }
@@ -676,6 +696,13 @@ rsp_starttls (siobuf_t conn, smtp_session_t session)
   char buf[256];
 
   code = read_smtp_response (conn, session, &session->mta_status, NULL);
+  /* There should be no further data to be received after reading the
+     response to the STARTTLS verb. Abort the protocol otherwise. */
+  if (sio_poll (conn, 1, 0, 1) != 0)
+    {
+      session->rsp_state = -1;
+      return;
+    }
   if (code < 0)
     {
       session->rsp_state = S_quit;
