@@ -3,7 +3,7 @@
  *  formatted electronic mail messages using the SMTP protocol described
  *  in RFC 2821.
  *
- *  Copyright (C) 2001-2004  Brian Stafford  <brian@stafford.uklinux.net>
+ *  Copyright (C) 2001-2022 Brian Stafford  <brian.stafford60@gmail.com>
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
@@ -676,10 +676,16 @@ check_acceptable_security (smtp_session_t session, SSL *ssl)
 void
 cmd_starttls (siobuf_t conn, smtp_session_t session)
 {
+  int quit_now;
+
   /* There should be no pending data to be received before issuing the
      STARTTLS verb. Abort the protocol otherwise. */
   if (sio_poll (conn, 1, 0, 1) != 0)
     {
+      quit_now = 1;	/* ignore it anyway */
+      if (session->event_cb != NULL)
+	(*session->event_cb) (session, SMTP_EV_SYNTAXWARNING,
+			      session->event_cb_arg, &quit_now);
       session->rsp_state = -1;
       return;
     }
@@ -694,12 +700,17 @@ rsp_starttls (siobuf_t conn, smtp_session_t session)
   SSL *ssl;
   X509 *cert;
   char buf[256];
+  int quit_now;
 
   code = read_smtp_response (conn, session, &session->mta_status, NULL);
   /* There should be no further data to be received after reading the
      response to the STARTTLS verb. Abort the protocol otherwise. */
   if (sio_poll (conn, 1, 0, 1) != 0)
     {
+      quit_now = 1;	/* ignore it anyway */
+      if (session->event_cb != NULL)
+	(*session->event_cb) (session, SMTP_EV_SYNTAXWARNING,
+			      session->event_cb_arg, &quit_now);
       session->rsp_state = -1;
       return;
     }
