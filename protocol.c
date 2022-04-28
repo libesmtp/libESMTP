@@ -492,8 +492,16 @@ read_smtp_response (siobuf_t conn, smtp_session_t session,
 	}
       want_enhanced = 0;
     }
-  while (isspace (*p))
+  while (*p == ' ')
     p++;
+
+  /* Check that the line is correctly terminated. */
+  nul = strchr (p, '\0');
+  if (nul == NULL || nul == p || nul[-1] != '\n')
+    {
+      set_error (SMTP_ERR_UNTERMINATED_RESPONSE);
+      return -1;
+    }
 
   /* p points to the remainder of the line.  This is the text of the
      server message */
@@ -539,7 +547,7 @@ read_smtp_response (siobuf_t conn, smtp_session_t session,
 	}
 
       /* Skip whitespace but don't wander over the CRLF */
-      while (isspace (*p) && isprint (*p))
+      while (*p == ' ')
 	p++;
 
       /* Check that the line is correctly terminated. */
