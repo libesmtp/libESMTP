@@ -12,8 +12,6 @@ libesmtp_version = meson.project_version()
 #    current = API version
 #    revision = bug fix
 #    age = number of backward compatible APIs
-# This version introduces APIs but does not change existing APIs, therefore
-# increase current and age and reset revision to zero.
 libesmtp_cra = '8:1:2'
 
 # The .so version number is calculated as C:R:A => .(C-A).A.R
@@ -60,8 +58,8 @@ add_project_arguments(cc.get_supported_arguments(cflags), language: 'c')
 # dependencies
 ################################################################################
 dldep = cc.find_library('dl')
-ssldep = dependency('openssl', version : '>=1.1.0', required : get_option('tls'))
-ntlmdep = dependency('openssl', version : '>=1.1.0', required : get_option('ntlm'))
+ssldep = dependency('openssl', version : '>=1.1.1', required : get_option('tls'))
+ntlmdep = dependency('openssl', version : '>=1.1.1', required : get_option('ntlm'))
 threaddep = dependency('threads', required : get_option('pthreads'))
 
 #XXX add test for libbind9.so
