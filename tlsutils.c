@@ -21,10 +21,24 @@
  */
 
 #include <config.h>
-#include <ctype.h>
 #include <string.h>
 #include "tlsutils.h"
 #include "missing.h"
+
+/* alphanumeric test specifically restricted to ASCII subset */
+static int
+ascii_alnum (int c)
+{
+  return (c >= '0' && c <= '9')
+	  || (c >= 'A' && c <= 'Z')
+	  || (c >= 'a' && c <= 'z');
+}
+
+static int
+ascii_tolower (int c)
+{
+  return c >= 'A' && c <= 'Z' ? c - 'A' + 'a' : c;
+}
 
 static int
 match_component (const char *dom, const char *edom,
@@ -38,7 +52,7 @@ match_component (const char *dom, const char *edom,
   if (eref == ref + 1 && *ref == '*')
     while (dom < edom)
       {
-	if (!(isalnum (*dom) || *dom == '-'))
+	if (!(ascii_alnum (*dom) || *dom == '-'))
 	  return 0;
 	dom++;
       }
@@ -47,10 +61,10 @@ match_component (const char *dom, const char *edom,
       while (dom < edom && ref < eref)
 	{
 	  /* check for valid domainname character */
-	  if (!(isalnum (*dom) || *dom == '-'))
+	  if (!(ascii_alnum (*dom) || *dom == '-'))
 	    return 0;
 	  /* compare the domain name case-insensitively */
-	  if (!(*dom == *ref || tolower (*dom) == tolower (*ref)))
+	  if (!(*dom == *ref || ascii_tolower (*dom) == ascii_tolower (*ref)))
 	    return 0;
 	  ref++, dom++;
 	}
