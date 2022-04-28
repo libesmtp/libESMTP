@@ -343,6 +343,7 @@ int smtp_starttls_enable (smtp_session_t session, enum starttls_option how);
    defines the symbol tested. */
 #ifdef SSL_SESSION_ASN1_VERSION
 int smtp_starttls_set_ctx (smtp_session_t session, SSL_CTX *ctx);
+SSL_CTX *smtp_starttls_get_ctx (smtp_session_t session);
 #endif
 
 /**

@@ -3,7 +3,7 @@
  *  formatted electronic mail messages using the SMTP protocol described
  *  in RFC 2821.
  *
- *  Copyright (C) 2001-2004  Brian Stafford  <brian@stafford.uklinux.net>
+ *  Copyright (C) 2001-2022 Brian Stafford  <brian.stafford60@gmail.com>
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
@@ -458,6 +458,29 @@ smtp_starttls_set_ctx (smtp_session_t session, SSL_CTX *ctx)
 }
 
 /**
+ * smtp_starttls_get_ctx() - Return the SSL_CTX for the SMTP session.
+ * @session: The session.
+ *
+ * Return the SSL_CTX that will be used for the SMTP session. Note that
+ * ownership of the SSL_CTX is not transferred and SSL_CTX will be freed when
+ * the smtp_session_t is destroyed. If an application wishes to save the
+ * SSL_CTX, for example for use in a subsequent SMTP session or other TLS
+ * protocols, it must call SSL_CTX_up_ref() on the returned SSL_CTX and
+ * SSL_CTX_free() when it has finished using it.
+ *
+ * Returns: An SSL_CTX or %NULL on failure.
+ */
+SSL_CTX *
+smtp_starttls_get_ctx (smtp_session_t session)
+{
+  SMTPAPI_CHECK_ARGS (session != NULL, 0);
+
+  if (session->starttls_ctx == NULL)
+    session->starttls_ctx = starttls_create_ctx (session);
+  return session->starttls_ctx;
+}
+
+/**
  * smtp_starttls_enable() - Enable STARTTLS verb.
  * @session: The session.
  * @how: A &enum starttls_option
@@ -499,6 +522,19 @@ select_starttls (smtp_session_t session)
     return 0;
   if (session->starttls_enabled == Starttls_DISABLED)
     return 0;
+  /* Disable PIPELINING (PIPELINING will be re-enabled, if supported, after
+     TLS starts and the EHLO command is reissued).
+     This is part of a strategy to avoid a vulnerability where a malicious
+     server might pipeline responses to spoof data that should be received
+     encrypted.
+     By not expecting pipelined responses cmd_starttls() can safely check
+     for an empty receive buffer before issuing the STARTTLS verb and
+     rsp_starttls() can safely check for no further data after reading the
+     STARTTLS response line. If either check fails the protocol is aborted
+     since the server is assumed to be malicious.
+     Note that disabling PIPELINING does not and cannot affect server behaviour
+     however is does alter libESMTP's strategy for flushing buffers etc. */
+  session->extensions &= ~EXT_STARTTLS;
   /* Create a CTX if the application has not already done so. */
   if (session->starttls_ctx == NULL)
     session->starttls_ctx = starttls_create_ctx (session);
@@ -640,6 +676,19 @@ check_acceptable_security (smtp_session_t session, SSL *ssl)
 void
 cmd_starttls (siobuf_t conn, smtp_session_t session)
 {
+  int quit_now;
+
+  /* There should be no pending data to be received before issuing the
+     STARTTLS verb. Abort the protocol otherwise. */
+  if (sio_poll (conn, 1, 0, 1) != 0)
+    {
+      quit_now = 1;	/* ignore it anyway */
+      if (session->event_cb != NULL)
+	(*session->event_cb) (session, SMTP_EV_SYNTAXWARNING,
+			      session->event_cb_arg, &quit_now);
+      session->rsp_state = -1;
+      return;
+    }
   sio_write (conn, "STARTTLS\r\n", -1);
   session->cmd_state = -1;
 }
@@ -651,8 +700,20 @@ rsp_starttls (siobuf_t conn, smtp_session_t session)
   SSL *ssl;
   X509 *cert;
   char buf[256];
+  int quit_now;
 
   code = read_smtp_response (conn, session, &session->mta_status, NULL);
+  /* There should be no further data to be received after reading the
+     response to the STARTTLS verb. Abort the protocol otherwise. */
+  if (sio_poll (conn, 1, 0, 1) != 0)
+    {
+      quit_now = 1;	/* ignore it anyway */
+      if (session->event_cb != NULL)
+	(*session->event_cb) (session, SMTP_EV_SYNTAXWARNING,
+			      session->event_cb_arg, &quit_now);
+      session->rsp_state = -1;
+      return;
+    }
   if (code < 0)
     {
       session->rsp_state = S_quit;

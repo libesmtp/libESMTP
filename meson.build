@@ -61,6 +61,7 @@ add_project_arguments(cc.get_supported_arguments(cflags), language: 'c')
 ################################################################################
 dldep = cc.find_library('dl')
 ssldep = dependency('openssl', version : '>=1.1.0', required : get_option('tls'))
+ntlmdep = dependency('openssl', version : '>=1.1.0', required : get_option('ntlm'))
 threaddep = dependency('threads', required : get_option('pthreads'))
 
 #XXX add test for libbind9.so
@@ -69,6 +70,7 @@ lwresdep = cc.find_library('lwres', required : get_option('lwres'))
 deps = [
   dldep,
   ssldep,
+  ntlmdep,
   threaddep,
   lwresdep,
 ]
@@ -130,7 +132,7 @@ conf.set('HAVE_GETTIMEOFDAY', true, description : 'POSIX.1-2001, obsolete POSIX.
 conf.set('HAVE_LIBCRYPTO', ssldep.found().to_int())
 conf.set('HAVE_LWRES_NETDB_H', lwresdep.found().to_int())
 conf.set10('HAVE_STRERROR_R', not gnu_source)
-conf.set10('HAVE_WORKING_STRERROR_R', gnu_source)
+conf.set10('HAVE_GNU_STRERROR_R', gnu_source)
 conf.set('HAVE_UNAME', 1)
 
 conf.set10('HAVE_LOCALTIME_R', have_localtime_r)
@@ -237,8 +239,12 @@ include_dir = include_directories('.')
 subdir('login')
 subdir('plain')
 subdir('crammd5')
-if ssldep.found()
-  subdir('ntlm')
+if ntlmdep.found()
+  if cc.has_header('openssl/md4.h') and cc.has_function('MD4_Init', dependencies : ntlmdep)
+    subdir('ntlm')
+  else
+    error('MD4 is not supported in current openssl, unable to build NTLM plugin')
+  endif
 endif
 
 ################################################################################
@@ -264,4 +270,5 @@ summary({'current:revision:age': libesmtp_cra,
 	 'STARTTLS': ssldep.found(),
 	 'CHUNKING': get_option('bdat'),
 	 'ETRN': get_option('etrn'),
-	 'XUSR': get_option('xusr')})
+	 'XUSR': get_option('xusr'),
+	 'NTLM': ntlmdep.found()})
