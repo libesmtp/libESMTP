@@ -637,9 +637,11 @@ sio_printf (struct siobuf *sio, const char *format, ...)
   va_start (alist, format);
   len = vsnprintf (buf, sizeof buf, format, alist);
   va_end (alist);
-  if (len >= (int) sizeof buf - 1)
-    len = sizeof buf - 1;
   if (len > 0)
-    sio_write (sio, buf, len);
+    {
+      if ((size_t) len >= sizeof buf)
+	len = sizeof buf - 1;
+      sio_write (sio, buf, len);
+    }
   return len;
 }
