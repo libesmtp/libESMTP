@@ -9,6 +9,7 @@ auth-client.c headers.c
 "
 
 mkdir -p $DST
+rm $DST/*.rst
 for file in $SOURCES
 do
 	base=${file##*/}
