@@ -6,12 +6,13 @@ PIPELINING.
 
 ---
 
-[CVE-2022-xxxxx][3] is fixed.
-An SMTP server, or man-in-the-middle, might attempt to pipeline plain text
-after the response to a STARTTLS request in an attempt to inject malicious data
-into libESMTP's receive buffer.
+## Security related changes
 
-libESMTP 1.1.1 mitigates against this by disabling PIPELINING support if the
+Mitigate [CVE-2022-xxxxx][3].  An SMTP server, or man-in-the-middle, might
+attempt to pipeline plain text after the response to a STARTTLS request in an
+attempt to inject malicious data into libESMTP's receive buffer.
+
+libESMTP 1.1.1 defends against this by disabling PIPELINING support if the
 server also supports STARTTLS and checking the receive buffer is empty both
 before issuing a STARTTLS and after reading the response code.  If these
 conditions are met the TLS upgrade takes place, otherwise libESMTP fails the
@@ -23,9 +24,20 @@ text portion of the response is checked for characters outside the range of
 printable ASCII, SP and TAB.
 
 
+Remove support for invalid AUTH= syntax in EHLO response. This was originally
+added 20 years ago to support a broken server deployed by Yahoo! I assume it
+is fixed by now.
+
+
 libESMTP is updated to require [OpenSSL v1.1.1][4] or later. Note that v1.1.1n
 should be considered the minimum acceptable release however, at the time of
 writing, some distributions still supply v1.1.1l.
+
+
+## Other changes
+
+Avoid locale dependencies in ctype macros or functions. These functions are
+replaces with ASCII-specific versions as required.
 
 
 Updated semantics of the smtp\_starttls\_set\_ctx() API to avoid a potential
@@ -49,7 +61,10 @@ The libESMTP `.so` version number is now formatted correctly.
 
 
 Website content is removed from the libESMTP repo and is now maintained as a
-separate project.  The API reference remains part of libESMTP.
+separate project.  The API reference remains part of libESMTP and may be
+built for Devhelp.
+
+Various documentation updates and additions.
 
 
 ## Summary
@@ -57,12 +72,14 @@ separate project.  The API reference remains part of libESMTP.
 * Check receive buffer empty before and after STARTTLS negotiation.
 * Stricter response parsing.
 * Require OpenSSL v1.1.1.
+* Avoid locale dependencies.
 * Update smtp\_starttls_set_ctx(), add smtp\_starttls\_get\_ctx() API calls.
 * Fix potential memory leak of the SSL_CTX in smtp-tls.c.
 * Add separate meson option to enable 'ntlm' support.
 * Fix incorrect GMT (UTC) timezone offset when zero or unknown.
 * Fix incorrect SONAME version.
 * Website content split to separate project, but retaining API reference.
+* Improved documentation.
 
 [3]: https://nvd.nist.gov/vuln/detail/CVE-2022-xxxxx
 [4]: https://www.openssl.org/

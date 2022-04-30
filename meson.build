@@ -112,7 +112,6 @@ conf.set('SIZEOF_UNSIGNED_INT', cc.sizeof('unsigned int'))
 conf.set('SIZEOF_UNSIGNED_LONG', cc.sizeof('unsigned long'))
 conf.set('SIZEOF_UNSIGNED_SHORT', cc.sizeof('unsigned short'))
 
-conf.set('AUTH_ID_HACK', true)
 conf.set('USE_CHUNKING', get_option('bdat'))
 conf.set('USE_ETRN', get_option('etrn'))
 conf.set('USE_PTHREADS', threaddep.found())

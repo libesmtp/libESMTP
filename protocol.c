@@ -816,14 +816,6 @@ cb_ehlo (smtp_session_t session, char *buf)
       session->extensions |= EXT_AUTH;
       set_auth_mechanisms (session, p);
     }
-#ifdef AUTH_ID_HACK
-  else if (strncasecmp (token, "AUTH=", 5) == 0) /* non-standard syntax */
-    {
-      session->extensions |= EXT_AUTH;
-      set_auth_mechanisms (session, token + 5);
-      set_auth_mechanisms (session, p);
-    }
-#endif
   else if (strcasecmp (token, "STARTTLS") == 0)		/* RFC 3207 */
     session->extensions |= EXT_STARTTLS;
   else if (strcasecmp (token, "SIZE") == 0)		/* RFC 1870 */
