@@ -103,7 +103,7 @@ plugin_name (const char *str)
   strcpy (buf, prefix);
   p = buf + sizeof prefix - 1;
   while (*str != '\0')
-    *p++ = tolower (*str++);
+    *p++ = tolower ((unsigned char) *str++);
   strcpy (p, DLEXT);
   return buf;
 }

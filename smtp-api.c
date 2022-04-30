@@ -25,7 +25,6 @@
 #include <stdarg.h>
 #include <string.h>
 #include <stdlib.h>
-#include <ctype.h>
 
 #include <missing.h> /* declarations for missing library functions */
 

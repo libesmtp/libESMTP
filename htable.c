@@ -93,11 +93,7 @@ hashi (const char *string, int length)
   assert (string != NULL);
 
   for (h1 = 0; length-- > 0; h1 = shuffle[h1 ^ c])
-    {
-      c = *string++;
-      if (isupper (c))
-	c = tolower (c);
-    }
+    c = tolower ((unsigned char) *string++);
   return h1;
 }
 

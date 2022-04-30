@@ -3,7 +3,7 @@
  *  formatted electronic mail messages using the SMTP protocol described
  *  in RFC 2821.
  *
- *  Copyright (C) 2002  Brian Stafford  <brian@stafford.uklinux.net>
+ *  Copyright (C) 2002-2022  Brian Stafford  <brian.stafford60@gmail.com>
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
@@ -36,6 +36,7 @@
 #endif
 #if !defined(HAVE_STRCASECMP) || !defined(HAVE_STRNCASECMP)
 #  include <ctype.h>
+#  define lower((c)) tolower ((unsigned char) (c))
 #endif
 
 #ifndef HAVE_STRDUP
@@ -57,7 +58,7 @@ strcasecmp (const char *a, const char *b)
 {
   register int n;
 
-  while (*a == *b || (n = tolower (*a) - tolower (*b)) == 0)
+  while (*a == *b || (n = lower (*a) - lower (*b)) == 0)
     {
       if (*a == '\0')
         return 0;
@@ -75,7 +76,7 @@ strncasecmp (const char *a, const char *b, size_t len)
 
   if (len < 1)
     return 0;
-  while (*a == *b || (n = tolower (*a) - tolower (*b)) == 0)
+  while (*a == *b || (n = lower (*a) - lower (*b)) == 0)
     {
       if (*a == '\0' || --len < 1)
         return 0;

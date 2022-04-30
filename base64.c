@@ -26,9 +26,10 @@
 
 /* Routines to encode and decode base64 text.
  */
-#include <ctype.h>
 #include <string.h>
 #include "base64.h"
+
+#define space(c)    (strchr (" \t\n\r\f\v", (c)) != NULL)
 
 /* RFC 2045 section 6.8 */
 
@@ -70,10 +71,10 @@ b64_decode (void *dst, int dstlen, const char *src, int srclen)
 
   /* Remove leading and trailing white space */
   for (p = (const unsigned char *) src;
-       srclen > 0 && isspace (*p);
+       srclen > 0 && space (*p);
        p++, srclen--)
     ;
-  for (q = p + srclen - 1; q >= p && isspace (*q); q--, srclen--)
+  for (q = p + srclen - 1; q >= p && space (*q); q--, srclen--)
     ;
 
   /* Length MUST be a multiple of 4 */
