@@ -1,0 +1,118 @@
+/* This is not a real C source, it is used for documentation only */
+
+/**
+ * DOC: TLS Events
+ *
+ * TLS Event Callback
+ * ==================
+ *
+ * TLS event callbacks are called by libESMTP when initialising or negotiating
+ * a TLS secure connection.
+ *
+ * The callback function signature varies depending on the event type described
+ * below.
+ */
+
+/**
+ * weak_cipher() - SMTP_EV_WEAK_CIPHER event
+ * @session: The session.
+ * @event_no: Equal to %SMTP_EV_WEAK_CIPHER
+ * @arg: application data (closure) specified to smtp_set_eventcb().
+ * @bits: Bits in cipher key
+ * @ok: Set zero to quit SMTP session, non-zero to continue.
+ *
+ * Report that a weak cipher was negotiated. By default a key of 40 bits or
+ * less is considered weak and libESMTP will reject the connection. This cannot
+ * be the case when TLS is used, however an application may supply an SSL_CTX
+ * supporting legacy SSL versions.
+ */
+void weak_cipher (smtp_session_t session, int event_no, void *arg,
+                  int bits, int *ok);
+
+/**
+ * starttls_ok() - SMTP_EV_STARTTLS_OK event
+ * @session: The session.
+ * @event_no: Equal to %SMTP_EV_STARTTLS_OK
+ * @arg: application data (closure) specified to smtp_set_eventcb().
+ * @ssl: The OpenSSL TLS context.
+ * @cipher: Name of negotiated cipher.
+ * @bits: cipher key size in bits.
+ *
+ * Report a successful TLS connection and the cipher details.  The OpenSSL
+ * context is passed so that the application may query further information.
+ */
+void starttls_ok (smtp_session_t session, int event_no, void *arg,
+                  SSL *ssl, const char *cipher, int bits);
+
+/**
+ * invalid_peer_certificate() - SMTP_EV_INVALID_PEER_CERTIFICATE event
+ * @session: The session.
+ * @event_no: Equal to %SMTP_EV_INVALID_PEER_CERTIFICATE
+ * @arg: application data (closure) specified to smtp_set_eventcb().
+ * @verify: Return value from SSL_get_verify_result().
+ * @ok: Set zero to quit SMTP session, non-zero to continue.
+ * @ssl: The OpenSSL TLS context.
+ *
+ * Report an invalid peer certificate. The TLS context, @ssl, and @verify
+ * provide information on the reason for the invalid certificate. By default
+ * libESMTP will reject the connection.
+ */
+void invalid_peer_certificate (smtp_session_t session, int event_no, void *arg,
+                               long verify, int *ok, SSL *ssl);
+
+/**
+ * no_peer_certificate() - SMTP_EV_NO_PEER_CERTIFICATE event
+ * @session: The session.
+ * @event_no: Equal to %SMTP_EV_NO_PEER_CERTIFICATE
+ * @arg: application data (closure) specified to smtp_set_eventcb().
+ * @ok: Set zero to quit SMTP session, non-zero to continue.
+ *
+ * Report that peer did not present a certficate. By default libESMTP will
+ * reject the connection.
+ */
+void no_peer_certificate (smtp_session_t session, int event_no, void *arg,
+                          int *ok);
+
+/**
+ * wrong_peer_certificate() - SMTP_EV_WRONG_PEER_CERTIFICATE event
+ * @session: The session.
+ * @event_no: Equal to %SMTP_EV_WRONG_PEER_CERTIFICATE
+ * @arg: application data (closure) specified to smtp_set_eventcb().
+ * @ok: Set zero to quit SMTP session, non-zero to continue.
+ * @domain: Certificate domain.
+ * @ssl: The OpenSSL TLS context.
+ *
+ * Report that the server certificate is not valid for the domain name used to
+ * connect to the peer. The actual domain is provided in @domain which may
+ * contain wildcards. By default libESMTP will reject the connection.
+ */
+void wrong_peer_certificate (smtp_session_t session, int event_no, void *arg,
+                             int *ok, const char *domain, SSL *ssl);
+
+/**
+ * no_client_certificate() - SMTP_EV_NO_CLIENT_CERTIFICATE event
+ * @session: The session.
+ * @event_no: Equal to %SMTP_EV_NO_CLIENT_CERTIFICATE
+ * @arg: application data (closure) specified to smtp_set_eventcb().
+ * @ok: Set zero to quit SMTP session, non-zero to continue.
+ *
+ * Report that a private key could not be found for a certificate libESMTP
+ * has attempted to load when initialising an OpenSSL TLS context. By default
+ * libESMTP will not continue to set up the TLS connection.  Note that this
+ * is different to not providing a client certificate at all.
+ */
+void no_client_certificate (smtp_session_t session, int event_no, void *arg,
+                            int *ok);
+
+/**
+ * unusable_client_certificate() - SMTP_EV_UNUSABLE_CLIENT_CERTIFICATE event
+ * @session: The session.
+ * @event_no: Equal to %SMTP_EV_UNUSABLE_CLIENT_CERTIFICATE
+ * @arg: application data (closure) specified to smtp_set_eventcb().
+ * @null: always %NULL
+ *
+ * Report a file error when attempting to load a client certificate.
+ * libESMTP will not make TLS connections until the error is corrected.
+ */
+void unusable_client_certificate (smtp_session_t session, int event_no,
+                                  void *arg, void *null);

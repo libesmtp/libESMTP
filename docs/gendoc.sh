@@ -15,4 +15,8 @@ do
 	base=${file##*/}
 	kernel-doc -rst $SRC/${file} > $DST/${base%.*}.rst
 done
-sphinx-build -b devhelp . _devhelp
+for file in events.doc tlsevents.doc
+do
+	kernel-doc -rst ${file} > $DST/${file%.*}.rst
+done
+sphinx-build -b devhelp -E -a . _devhelp

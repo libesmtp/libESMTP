@@ -18,6 +18,11 @@ conditions are met the TLS upgrade takes place, otherwise libESMTP fails the
 session.
 
 
+Stricter parsing of SMTP response lines. Reject malformed status codes. The
+text portion of the response is checked for characters outside the range of
+printable ASCII, SP and TAB.
+
+
 libESMTP is updated to require [OpenSSL v1.1.1][4] or later. Note that v1.1.1n
 should be considered the minimum acceptable release however, at the time of
 writing, some distributions still supply v1.1.1l.
@@ -50,6 +55,7 @@ separate project.  The API reference remains part of libESMTP.
 ## Summary
 
 * Check receive buffer empty before and after STARTTLS negotiation.
+* Stricter response parsing.
 * Require OpenSSL v1.1.1.
 * Update smtp\_starttls_set_ctx(), add smtp\_starttls\_get\_ctx() API calls.
 * Fix potential memory leak of the SSL_CTX in smtp-tls.c.

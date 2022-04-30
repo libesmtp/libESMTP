@@ -1,0 +1,171 @@
+typedef void *smtp_session_t;
+
+/* This is not a real C source, it is used for documentation only */
+
+/**
+ * DOC: Events
+ *
+ * Event Callback
+ * ==============
+ *
+ * The event callback is called by libESMTP as the SMTP protocol progresses.
+ * Some are informational whereas others may be used to alter certain default
+ * actions.
+ *
+ * The callback function signature varies depending on the event type described
+ * below.
+ */
+
+/**
+ * ev_connect_cb() - SMTP_EV_CONNECT event
+ * @session: The session.
+ * @event_no: Equal to %SMTP_EV_CONNECT
+ * @arg: application data (closure) specified to smtp_set_eventcb().
+ *
+ * The smtp_session has successfully connected to the submission MTA.
+ */
+void ev_connect_cb (smtp_session_t session, int event_no, void *arg);
+
+/**
+ * ev_disconnect_cb() - SMTP_EV_DISCONNECT event
+ * @session: The session.
+ * @event_no: Equal to %SMTP_EV_DISCONNECT
+ * @arg: application data (closure) specified to smtp_set_eventcb().
+ *
+ * The smtp_session has successfully disconnected from the submission MTA.  In
+ * certain circumstances libESMTP may try connecting to an alternative MTA if
+ * the session was rejected. This may happen if multiple A or AAAA records are
+ * specified to load balance across multiple servers and an MTA is experiencing
+ * excessive load.
+ */
+void ev_disconnect_cb (smtp_session_t session, int event_no, void *arg);
+
+/**
+ * ev_syntaxwarning_cb() - SMTP_EV_SYNTAXWARNING event
+ * @session: The session.
+ * @event_no: Equal to %SMTP_EV_SYNTAXWARNING
+ * @arg: application data (closure) specified to smtp_set_eventcb().
+ * @quit: Set non-zero to quit SMTP session, zero to continue.
+ *
+ * Issued if the MTA breaks SMTP protocol compliance.  Currently only reported
+ * if libESMTP is expecting enhanced status codes but does not find them in the
+ * server response. By default libESMTP will continue the session but the
+ * application can set @quit to non-zero to quite the session.
+ */
+void ev_syntaxwarning_cb (smtp_session_t session, int event_no, void *arg,
+                       int *quit);
+
+/**
+ * ev_extna_cb() - SMTP_EXTNA_<EXT> extension not available event
+ * @session: The session.
+ * @event_no: One of %SMTP_EV_EXTNA_DSN, %SMTP_EV_EXTNA_CHUNKING or %SMTP_EV_EXTNA_ETRN
+ * @arg: application data (closure) specified to smtp_set_eventcb().
+ * @quit: Set non-zero to quit SMTP session, zero to continue.
+ *
+ * Issued if a requested SMTP extension is not supported by the MTA.
+ * @event_no is one of SMTP_EV_EXTNA_DSN, SMTP_EV_EXTNA_CHUNKING or
+ * SMTP_EV_EXTNA_ETRN.  The value pointed to by @quit may be used to determine
+ * whether the default action is to quit the protocol, and may be set to
+ * change this, non-zero means the protocol session will quit.
+ */
+void ev_extna_cb (smtp_session_t session, int event_no, void *arg, int *quit);
+
+/**
+ * ev_extna_2_cb() - SMTP_EXTNA_<EXT> extension not available event
+ * @session: The session.
+ * @event_no: %SMTP_EXTNA_<EXT>
+ * @event_no: One of %SMTP_EV_EXTNA_BINARYMIME or %SMTP_EV_EXTNA_8BITMIME.
+ * @arg: application data (closure) specified to smtp_set_eventcb().
+ *
+ * Issued if a requested SMTP extension is not supported by the MTA.
+ * It is not possible to change default behavious in these cases since
+ * the message requires an eight-bit-clean transport which is not available
+ * unless one of these extensions are supported.
+ *
+ * If @event_no is SMTP_EV_EXTNA_STARTTLS, the application has required the
+ * use of a TLS connection but this is not supported by the MTA.
+ */
+void ev_extna_2_cb (smtp_session_t session, int event_no, void *arg);
+
+/**
+ * deliverby_expired() - SMTP_EV_DELIVERBY_EXPIRED event
+ * @session: The session.
+ * @event_no: Equal to %SMTP_EV_DELIVERBY_EXPIRED
+ * @arg: application data (closure) specified to smtp_set_eventcb().
+ * @expiry_difference: difference in seconds between server and requested expiry
+ * @adjust: set deliver by time to server minimum plus @adjust seconds.
+ *
+ * Report that mail cannot be delivered by the requested time. Adjust can
+ * be used to request a later deliver by time if set greater than zero.
+ */
+void deliverby_expired (smtp_session_t session, int event_no, void *arg,
+                        long expiry_difference, int *adjust);
+
+/**
+ * mailstatus() - SMTP_EV_MAILSTATUS event
+ * @session: The session.
+ * @event_no: Equal to %SMTP_EV_MAILSTATUS
+ * @arg: application data (closure) specified to smtp_set_eventcb().
+ * @mailbox: The reverse path mailbox.
+ * @message: The @smtp_message_t
+ *
+ * Report MTA status for the MAIL FROM:<> command. The actual status code
+ * may be retrieved with smtp_reverse_path_status().
+ */
+void mailstatus (smtp_session_t session, int event_no, void *arg,
+                 const char *mailbox, smtp_message_t message);
+
+/**
+ * rcptstatus() -  SMTP_EV_RCPTSTATUS event
+ * @session: The session.
+ * @event_no: Equal to %SMTP_EV_RCPTSTATUS
+ * @arg: application data (closure) specified to smtp_set_eventcb().
+ * @mailbox: The reverse path mailbox.
+ * @recipient: The @smtp_recipient_t
+ *
+ * Report MTA status for the RCPT TO:<> command. The actual status code
+ * may be retrieved with smtp_recipient_status().
+ */
+void rcptstatus (smtp_session_t session, int event_no, void *arg,
+                 const char *mailbox, smtp_recipient_t recipient);
+
+/**
+ * messagedata() - SMTP_EV_MESSAGEDATA event
+ * @session: The session.
+ * @event_no: Equal to %SMTP_EV_MESSAGEDATA
+ * @arg: application data (closure) specified to smtp_set_eventcb().
+ * @message: the @smtp_message_t.
+ * @len: octets transferred.
+ *
+ * Report progress of message transfer to application. This event is emitted
+ * multiple times as the transfer progresses with @len set to the octet count
+ * transferred so far.
+ */
+void messagedata (smtp_session_t session, int event_no, void *arg,
+                  smtp_message_t message, int len);
+
+/**
+ * messagesent() - SMTP_EV_MESSAGESENT event
+ * @session: The session.
+ * @event_no: Equal to %SMTP_EV_MESSAGESENT
+ * @arg: application data (closure) specified to smtp_set_eventcb().
+ * @message: the @smtp_message_t.
+ *
+ * Report completion of the message transfer. The associated ststus code from
+ * the MTA may be retrieved using smtp_message_transfer_status().
+ */
+void messagesent (smtp_session_t session, int event_no, void *arg,
+                  smtp_message_t message);
+
+/**
+ * etrnstatus() - SMTP_EV_ETRNSTATUS event
+ * @session: The session.
+ * @event_no: Equal to %SMTP_EV_ETRNSTATUS
+ * @arg: application data (closure) specified to smtp_set_eventcb().
+ * @option: the ETRN option character.
+ * @domain: the ETRN domain name.
+ *
+ * Report ETRN status.
+ */
+void etrnstatus (smtp_session_t session, int event_no, void *arg,
+                 int option, const char *domain);

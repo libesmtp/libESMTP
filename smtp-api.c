@@ -761,11 +761,18 @@ smtp_set_eventcb (smtp_session_t session, smtp_eventcb_t cb, void *arg)
  * @arg: application data (closure) passed to the callback.
  * @headers: non-zero to view headers.
  *
- * Set callback to be monitor the SMTP session.  The monitor function is called
- * to with the text of the protocol exchange and is flagged as being from the
- * server or the client.  Because the message body is potentially large it is
- * excluded from the monitor.  However, @headers is non-zero the message
- * headers are monitored.
+ * The monitor callback may be used to observe progress of the SMTP protocol.
+ * See also &typedef smtp_monitorcb_t.
+ *
+ * Lines of text transmitted to or received from the MTA are reported via the
+ * callback.  libESMTP does not monitor the message body as this is typically
+ * quite verbose and may contain binary data.  It is also of limited value
+ * diagnosing connection or protocol issues.  However the @headers parameter
+ * may be used to specify that message headers should also be monitored.
+ *
+ * Lines are reported in the order processed by libESMTP.  If the MTA supports
+ * PIPELINING, response lines may not be matched up with the corresponding SMTP
+ * commands.
  *
  * Return: Non zero on success, zero on failure.
  */

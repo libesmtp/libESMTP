@@ -31,6 +31,8 @@ The documentation is believed to be accurate however:
    _kdoc/auth-client
    _kdoc/message-callbacks
    _kdoc/headers
+   _kdoc/events
+   _kdoc/tlsevents
    _kdoc/smtp-etrn
    _kdoc/errors
    licence
