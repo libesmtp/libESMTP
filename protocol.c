@@ -54,6 +54,9 @@
 #include "headers.h"
 #include "protocol.h"
 
+#define digit(c)        ((c) >= '0' && (c) <= '9')
+#define digitnz(c)      ((c) >= '1' && (c) <= '9')
+
 struct protocol_states
   {
     void (*cmd) (siobuf_t conn, smtp_session_t session);
@@ -400,16 +403,50 @@ do_session (smtp_session_t session)
  * Response parser.
  *****************************************************************************/
 
+/* RFC 3643 requires that fields in the enhanced status code do not permit
+   leading zeroes, however zero is a valid value. Take care to parse this
+   case correctly. */
+static int
+status_strtol (char *p, char **ep)
+{
+  if (digitnz (*p))
+    return strtol (p, ep, 10);
+  if (*p++ == '0' && !digit (*p))
+    {
+      *ep = p;
+      return 0;
+    }
+  return -1;
+}
+
 static int
 parse_status_triplet (char *p, char **ep, struct smtp_status *triplet)
 {
-  triplet->enh_class = strtol (p, &p, 10);
+  int cls, subject, detail;
+
+  /* RFC 3463 section 2.
+     class = "2"/"4"/"5"
+   */
+  if (strchr ("245", *p) == NULL)
+    return 0;
+  cls = *p++ - '0';
+
+  /* subject = 1*3digit */
   if (*p++ != '.')
     return 0;
-  triplet->enh_subject = strtol (p, &p, 10);
-  if (*p++ != '.')
+  subject = status_strtol (p, &p);
+  if (subject < 0 || subject > 999 || *p++ != '.')
     return 0;
-  triplet->enh_detail = strtol (p, &p, 10);
+
+  /* detail = 1*3digit */
+  detail = status_strtol (p, &p);
+  if (detail < 0 || detail > 999)
+    return 0;
+
+  /* only fill in triplet when all fields validated */
+  triplet->enh_class = cls;
+  triplet->enh_subject = subject;
+  triplet->enh_detail = detail;
   *ep = p;
   return 1;
 }
@@ -430,6 +467,26 @@ reset_status (struct smtp_status *status)
   if (status->text != NULL)
     free ((void *) status->text);
   memset (status, 0, sizeof (struct smtp_status));
+}
+
+/* Sanitise SMTP response lines.  Characters after the status codes should
+   comply with RFC 5321 section 4.2
+     textstring = 1*(%d09 / %d32-126) ; HT, SP, Printable US-ASCII
+   Invalid characters are replaced with ?. Note that CR is considered
+   invalid unless followed by a LF */
+static void
+sanitise (char *buf, size_t len)
+{
+  size_t i;
+  int c;
+
+  for (i = 0; i < len - 1; i++)
+    {
+      c = buf[i];
+      if (!((c >= 0x20 && c <= 0x7F) || c == '\t')
+          && !(c == '\r' && i + 1 < len && buf[i + 1] == '\n'))
+        buf[i] = '?';
+    }
 }
 
 /* All SMTP responses have standard syntax.  This function could be
@@ -464,12 +521,18 @@ read_smtp_response (siobuf_t conn, smtp_session_t session,
       set_error (SMTP_ERR_DROPPED_CONNECTION);
       return -1;
     }
-  status->code = strtol (p, &p, 10);
-  if (!(*p == ' ' || *p == '-'))
+  if (!digitnz (*p))
     {
       set_error (SMTP_ERR_INVALID_RESPONSE_SYNTAX);
       return -1;
     }
+  code = strtol (p, &p, 10);
+  if (!(*p == ' ' || *p == '-') || !(code >= 100 && code <= 999))
+    {
+      set_error (SMTP_ERR_INVALID_RESPONSE_SYNTAX);
+      return -1;
+    }
+  status->code = code;
   more = *p++ == '-';
 
   /* RFC 2034 states that only 2xx, 4xx and 5xx responses are accompanied
@@ -503,6 +566,9 @@ read_smtp_response (siobuf_t conn, smtp_session_t session,
       return -1;
     }
 
+  /* Ensure no invalid characters in the response line */
+  sanitise (p, nul - p);
+
   /* p points to the remainder of the line.  This is the text of the
      server message */
   cat_init (&text, 128);
@@ -516,6 +582,11 @@ read_smtp_response (siobuf_t conn, smtp_session_t session,
 	  set_error (SMTP_ERR_DROPPED_CONNECTION);
 	  return -1;
 	}
+      if (!digitnz (*p))
+        {
+          set_error (SMTP_ERR_INVALID_RESPONSE_SYNTAX);
+          return -1;
+        }
       code = strtol (p, &p, 10);
       if (code != status->code)
 	{
@@ -558,6 +629,9 @@ read_smtp_response (siobuf_t conn, smtp_session_t session,
 	  set_error (SMTP_ERR_UNTERMINATED_RESPONSE);
 	  return -1;
         }
+
+      /* Ensure no invalid characters in the response line */
+      sanitise (p, nul - p);
 
       /* `p' points to the remainder of the line.  Either process with the
          callback or concatenate with the first line. */
