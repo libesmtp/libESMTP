@@ -151,6 +151,10 @@ conf.set('HAVE_STRCASECMP', have_strcasecmp)
 conf.set('HAVE_MEMRCHR', have_memrchr)
 conf.set('HAVE_STRLCPY', have_strlcpy)
 
+if target_machine.system() == 'darwin'
+  conf.set_quoted('DLEXT', '.dylib')
+endif
+
 configure_file(output : 'config.h', configuration : conf)
 
 ################################################################################
