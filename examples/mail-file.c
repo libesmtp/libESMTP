@@ -22,7 +22,7 @@
    Error checking is minimal to non-existent, this is just a quick
    and dirty program to give a feel for using libESMTP.
  */
-#define _XOPEN_SOURCE 500
+#define _XOPEN_SOURCE 600L
 
 #include <stdio.h>
 #include <stdlib.h>
