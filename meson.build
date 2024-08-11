@@ -222,11 +222,25 @@ if ssldep.found()
   sources += [ 'tlsutils.h', 'tlsutils.c' ]
 endif
 
-mapfile = 'libesmtp.map'
-vflag = '-Wl,--version-script,@0@/@1@'.format(meson.current_source_dir(), mapfile)
+gnu_map_file = 'libesmtp.map'
+darwin_map_file = 'libesmtp.darwin.map'
+
+libesmtp_gnu_sym_path = join_paths(meson.current_source_dir(), gnu_map_file)
+libesmtp_gnu_sym_ldflag = '-Wl,--version-script=' + libesmtp_gnu_sym_path
+libesmtp_darwin_sym_path = join_paths(meson.current_source_dir(), darwin_map_file)
+# On FreeBSD, -Wl,--version-script only works with -shared
+if cc.links('', name: '-Wl,--version-script', args: ['-shared', libesmtp_gnu_sym_ldflag])
+    # GNU ld
+    link_args = [libesmtp_gnu_sym_ldflag]
+elif host_machine.system() == 'darwin' and cc.has_multi_link_arguments('-Wl,-exported_symbols_list', libesmtp_darwin_sym_path)
+    # Clang on Darwin
+    link_args = ['-Wl,-exported_symbols_list', libesmtp_darwin_sym_path]
+else
+    error('Linker doesn\'t support --version-script or -exported_symbols_list')
+endif
 
 lib = library('esmtp', sources,
-	      link_args : vflag, link_depends : mapfile,
+	      link_args : link_args, link_depends : [gnu_map_file, darwin_map_file],
 	      version : libesmtp_so_version,
 	      dependencies : deps,
 	      install : true)
