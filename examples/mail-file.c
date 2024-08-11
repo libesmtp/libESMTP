@@ -34,6 +34,7 @@
 #include <signal.h>
 #include <errno.h>
 #include <stdarg.h>
+#include <termios.h>
 
 #include <openssl/ssl.h>
 #include <auth-client.h>
@@ -79,8 +80,7 @@ int handle_invalid_peer_certificate(long vfy_result);
 void event_cb (smtp_session_t session, int event_no, void *arg, ...);
 void usage (void);
 void version (void);
-/* FIXME getpass() is obsolete - previously declared in unistd.h */
-//extern char *getpass(const char *prompt);
+ssize_t my_getpass (int tty, void *buf, size_t nbyte);
 
 int
 main (int argc, char **argv)
@@ -397,7 +397,20 @@ authinteract (auth_client_request_t request, char **result, int fields,
 		    (request[i].flags & AUTH_CLEARTEXT) ? " (not encrypted)"
 		    					: "");
       if (request[i].flags & AUTH_PASS)
-	result[i] = getpass (prompt);
+        {
+	  tty = open ("/dev/tty", O_RDWR);
+	  if (write (tty, prompt, n) != n)
+	    {
+	    }
+	  n = my_getpass (tty, rp, sizeof resp - (rp - resp));
+	  close (tty);
+	  p = rp + n;
+	  while (isspace (p[-1]))
+	    p--;
+	  *p++ = '\0';
+	  result[i] = rp;
+	  rp = p;
+        }
       else
 	{
 	  tty = open ("/dev/tty", O_RDWR);
@@ -421,13 +434,17 @@ int
 tlsinteract (char *buf, int buflen, int rwflag unused, void *arg unused)
 {
   char *pw;
-  int len;
+  int len, n;
+  int tty;
+  char prompt[64];
+  
+  n = snprintf(prompt, sizeof(prompt), "%s: ", "certificate password");
 
-  pw = getpass ("certificate password");
-  len = strlen (pw);
-  if (len + 1 > buflen)
-    return 0;
-  strcpy (buf, pw);
+  tty = open ("/dev/tty", O_RDWR);
+  if (write (tty, prompt, n) != n)
+    {
+    }
+  len = my_getpass(tty, buf, buflen);
   return len;
 }
 
@@ -591,4 +608,31 @@ version (void)
 
   smtp_version (buf, sizeof buf, 0);
   printf ("libESMTP version %s\n", buf);
+}
+
+ssize_t
+my_getpass (int tty, void *buf, size_t nbyte)
+{
+  struct termios old, new;
+  ssize_t nread;
+
+  /* Turn echoing off and fail if we can't. */
+  if (tcgetattr (tty, &old) != 0)
+    return -1;
+  new = old;
+  new.c_lflag &= ~ECHO;
+  if (tcsetattr (tty, TCSAFLUSH, &new) != 0)
+    return -1;
+
+  FILE *stream = fdopen(tty, "r");
+  if (stream == NULL)
+    return -1;
+
+  /* Read the passphrase */
+  nread = read(tty, buf, nbyte);
+
+  /* Restore terminal. */
+  (void) tcsetattr (tty, TCSAFLUSH, &old);
+
+  return nread;
 }
