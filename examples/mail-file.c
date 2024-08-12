@@ -389,7 +389,6 @@ authinteract (auth_client_request_t request, char **result, int fields,
   static char resp[512];
   char *p, *rp;
   int i, n, tty;
-
   rp = resp;
   for (i = 0; i < fields; i++)
     {
@@ -433,7 +432,6 @@ authinteract (auth_client_request_t request, char **result, int fields,
 int
 tlsinteract (char *buf, int buflen, int rwflag unused, void *arg unused)
 {
-  char *pw;
   int len, n;
   int tty;
   char prompt[64];

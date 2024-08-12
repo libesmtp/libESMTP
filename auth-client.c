@@ -89,6 +89,19 @@ struct auth_context
 # define PLUGIN_DIR
 #endif
 
+#ifdef STATIC_AUTH_PLAIN
+extern struct auth_client_plugin sasl_client_plain;
+#endif
+#ifdef STATIC_AUTH_LOGIN
+extern struct auth_client_plugin sasl_client_login;
+#endif
+#ifdef STATIC_AUTH_NTLM
+extern struct auth_client_plugin sasl_client_ntlm;
+#endif
+#ifdef STATIC_AUTH_CRAMMD5
+extern struct auth_client_plugin sasl_client_crammd5;
+#endif
+
 static char *
 plugin_name (const char *str)
 {
@@ -177,6 +190,18 @@ load_client_plugin (const char *name)
 void
 auth_client_init (void)
 {
+#ifdef STATIC_AUTH_PLAIN
+    append_plugin(NULL, &sasl_client_plain);
+#endif
+#ifdef STATIC_AUTH_LOGIN
+    append_plugin(NULL, &sasl_client_login);
+#endif
+#ifdef STATIC_AUTH_NTLM
+    append_plugin(NULL, &sasl_client_ntlm);
+#endif
+#ifdef STATIC_AUTH_CRAMMD5
+    append_plugin(NULL, &sasl_client_crammd5);
+#endif
 }
 
 /**

@@ -39,7 +39,13 @@ static const char *crammd5_response (void *ctx,
 				     const char *challenge, int *len,
 				     auth_interact_t interact, void *arg);
 
-const struct auth_client_plugin sasl_client =
+const struct auth_client_plugin
+#ifdef STATIC_AUTH_CRAMMD5
+        sasl_client_crammd5
+#else
+        sasl_client
+#endif
+        =
   {
   /* Plugin information */
     "CRAM-MD5",

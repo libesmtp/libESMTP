@@ -37,7 +37,13 @@ static void plain_destroy (void *ctx);
 static const char *plain_response (void *ctx, const char *challenge, int *len,
 				   auth_interact_t interact, void *arg);
 
-const struct auth_client_plugin sasl_client =
+const struct auth_client_plugin
+#ifdef STATIC_AUTH_PLAIN
+        sasl_client_plain
+#else
+        sasl_client
+#endif
+        =
   {
   /* Plugin information */
     "PLAIN",

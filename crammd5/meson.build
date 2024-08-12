@@ -1,24 +1,30 @@
 sasl_crammd5_sources = [
-  'client-crammd5.c',
-  'hmacmd5.c',
-  'hmacmd5.h',
+    'client-crammd5.c',
+    'hmacmd5.c',
+    'hmacmd5.h',
 ]
 
-crammd5_deps = [ ]
+crammd5_deps = []
 
 if conf.get('USE_TLS')
-  crammd5_deps += ssldep
+    crammd5_deps += ssldep
 else
-  sasl_crammd5_sources += [
-    'md5.c',
-    'md5.h',
-  ]
+    sasl_crammd5_sources += [
+        'md5.c',
+        'md5.h',
+    ]
 endif
 
-sasl_crammd5 = shared_module('crammd5', sasl_crammd5_sources,
-			     name_prefix : 'sasl-',
-			     dependencies : crammd5_deps,
-			     include_directories: [ include_dir, ],
-			     install : true,
-			     install_dir: auth_plugin_dir)
-clients += sasl_crammd5
+if static_auths.contains('crammd5')
+    foreach source : crammd5_login_sources
+        sources += 'crammd5' / source
+    endforeach
+else
+    sasl_crammd5 = shared_module('crammd5', sasl_crammd5_sources,
+                                 name_prefix : 'sasl-',
+                                 dependencies : crammd5_deps,
+                                 include_directories : [include_dir, ],
+                                 install : true,
+                                 install_dir : auth_plugin_dir)
+    clients += sasl_crammd5
+endif

@@ -6,3 +6,4 @@ option('bdat', type : 'boolean', value : 'true', description : 'enable SMTP BDAT
 option('etrn', type : 'boolean', value : 'true', description : 'enable SMTP ETRN extension')
 option('xusr', type : 'boolean', value : 'true', description : 'enable sendmail XUSR extension')
 option('ntlm', type : 'feature', value : 'disabled', description : 'build with support for NTLM authentication')
+option('staticauth', type : 'array', value : [], choices : ['all', 'plain', 'login', 'ntlm', 'crammd5'], description : 'bundle authentication methods statically')
