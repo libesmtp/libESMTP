@@ -170,7 +170,7 @@ print_message_id (smtp_message_t message, struct rfc2822_header *header)
     {
 #ifdef HAVE_GETTIMEOFDAY
       if (gettimeofday (&tv, NULL) != -1) /* This shouldn't fail ... */
-	snprintf (buf, sizeof buf, "%ld.%ld.%d@%s", tv.tv_sec, tv.tv_usec,
+	snprintf (buf, sizeof buf, "%ld.%ld.%d@%s", tv.tv_sec, (long)tv.tv_usec,
 		  getpid (), message->session->localhost);
       else /* ... but if it does fall back to using time() */
 #endif
