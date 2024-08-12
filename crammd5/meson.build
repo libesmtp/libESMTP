@@ -16,7 +16,7 @@ else
 endif
 
 if static_auths.contains('crammd5')
-    foreach source : crammd5_login_sources
+    foreach source : sasl_crammd5_sources
         sources += 'crammd5' / source
     endforeach
 else

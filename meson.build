@@ -114,12 +114,12 @@ endif
 static_auths = get_option('staticauth')
 if static_auths.contains('all')
     static_auths = ['login', 'plain', 'crammd5']
-    if ntlmdeps.found()
+    if ntlmdep.found()
         static_auths += 'ntlm'
     endif
 endif
 
-if static_auths.contains('ntlm') and not ntlmdeps.found()
+if static_auths.contains('ntlm') and not ntlmdep.found()
     error('NTLM depencies not found, cannot embed NTLM authentication statically')
 endif
 
