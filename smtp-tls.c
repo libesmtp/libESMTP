@@ -275,7 +275,7 @@ starttls_init_ctx (smtp_session_t session, SSL_CTX *ctx)
   status = check_file (keyfile);
   if (status == FILE_OK)
     {
-      if (!SSL_CTX_use_certificate_file (ctx, keyfile, SSL_FILETYPE_PEM))
+      if (!SSL_CTX_use_certificate_chain_file (ctx, keyfile))
 	{
 	  /* FIXME: set an error code */
 	  return 0;
@@ -394,7 +394,7 @@ starttls_create_ssl (smtp_session_t session)
   status = check_file (keyfile);
   if (status == FILE_OK)
     {
-      if (!SSL_use_certificate_file (ssl, keyfile, SSL_FILETYPE_PEM))
+      if (!SSL_use_certificate_chain_file (ssl, keyfile))
 	{
 	  /* FIXME: set an error code */
           SSL_free (ssl);
