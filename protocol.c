@@ -54,6 +54,8 @@
 #include "headers.h"
 #include "protocol.h"
 
+#define FQDN_MAX_LEN 253
+
 struct protocol_states
   {
     void (*cmd) (siobuf_t conn, smtp_session_t session);
@@ -135,6 +137,25 @@ do_session (smtp_session_t session)
   int nresp, status, want_flush, fast;
   char *nodename;
 
+  if (session->localhost == NULL)
+    {
+      FILE *f = fopen ("/etc/mailname", "r");
+      // If the file is open..
+      if (f)
+        {
+          char buf [FQDN_MAX_LEN+1+1]; // Plus newline plus terminator.
+          // Read a single line.
+          if (fgets (buf, sizeof buf, f))
+          {
+            // If a newline was included then replace it with a terminator.
+            char *pnl = strchr (buf, '\n');
+            if (pnl)
+              *pnl = '\0';
+            session->localhost = strdup (buf);
+          }
+          fclose (f);
+        }
+    }
 #if HAVE_UNAME
   if (session->localhost == NULL)
     {
