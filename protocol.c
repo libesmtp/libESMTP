@@ -26,6 +26,7 @@
 
 #include <config.h>
 
+#include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
 #include <strings.h>
@@ -53,6 +54,8 @@
 #include "tokens.h"
 #include "headers.h"
 #include "protocol.h"
+
+#define FQDN_MAX_LEN 253
 
 struct protocol_states
   {
@@ -125,6 +128,43 @@ set_first_message (smtp_session_t session)
  * The main protocol engine.
  *****************************************************************************/
 
+/* Indicates whether the specified `hostname` is a FQDN (Such
+   as"myhost.example.com"), or unqualified (Such as "myhost").  */
+static bool
+is_fqdn (const char *hostname)
+{
+  return strrchr (hostname, '.') != NULL;
+}
+
+/* Provides the canonical name of `hostname`.  Returns 0 on success, or a
+   non-zero error code, in which case `canonical_name` will be undefined.
+   On success, `canonical_name` will refer to a new string that must be
+   `free`d.  */
+static int
+get_canonical_name (const char *hostname, char **canonical_name)
+{
+  int err;
+  char *service = NULL;
+  struct addrinfo hints;
+  struct addrinfo *ai;
+
+  memset (&hints, 0, sizeof hints);
+  hints.ai_family = PF_UNSPEC;
+  hints.ai_socktype = SOCK_STREAM;
+  hints.ai_flags = AI_CANONNAME;
+  err = getaddrinfo (hostname, service, &hints, &ai);
+  if (err == 0)
+    {
+      *canonical_name = strdup (ai->ai_canonname);
+      if (canonical_name == NULL)
+        {
+	  err = (ENOMEM);
+        }
+      freeaddrinfo (ai);
+    }
+  return err;
+}
+
 int
 do_session (smtp_session_t session)
 {
@@ -135,6 +175,25 @@ do_session (smtp_session_t session)
   int nresp, status, want_flush, fast;
   char *nodename;
 
+  if (session->localhost == NULL)
+    {
+      FILE *f = fopen ("/etc/mailname", "r");
+      // If the file is open..
+      if (f)
+        {
+          char buf [FQDN_MAX_LEN+1+1]; // Plus newline plus terminator.
+          // Read a single line.
+          if (fgets (buf, sizeof buf, f))
+          {
+            // If a newline was included then replace it with a terminator.
+            char *pnl = strchr (buf, '\n');
+            if (pnl)
+              *pnl = '\0';
+            session->localhost = strdup (buf);
+          }
+          fclose (f);
+        }
+    }
 #if HAVE_UNAME
   if (session->localhost == NULL)
     {
@@ -170,6 +229,32 @@ do_session (smtp_session_t session)
         }
     }
 #endif
+
+  /* If session->localhost is not a FQDN and LIBESMTP_EHLO_FDQN is set then
+     either use LIBESMTP_EHLO_FDQN if it looks like a FQDN or convert the
+     unqualified hostname to its FQDN.  */
+  char *env_ehlo_fqdn = getenv ("LIBESMTP_EHLO_FQDN");
+  if (! is_fqdn (session->localhost)  &&  env_ehlo_fqdn != NULL)
+    {
+      if (is_fqdn (env_ehlo_fqdn))
+        {
+	  session->localhost = strdup (env_ehlo_fqdn);
+	  if (session->localhost == NULL)
+	    {
+	      set_errno (ENOMEM);
+	      return 0;
+	    }
+        }
+      else
+        {
+          err = get_canonical_name (session->localhost, &session->localhost);
+          if (err != 0)
+            {
+              set_errno (err);
+              return 0;
+            }
+        }
+    }
 
   /* Initialise the current message and recipient variables in the
      session.  This returns zero if there is no work to do.  */
