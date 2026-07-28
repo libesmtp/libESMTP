@@ -599,8 +599,8 @@ check_acceptable_security (smtp_session_t session, SSL *ssl)
 
 	      if (name->type == GEN_DNS)
 		{
-		  const char *ia5str = (const char *) name->d.ia5->data;
-		  size_t ia5len = name->d.ia5->length;
+		  const char *ia5str = (const char *) ASN1_STRING_get0_data(name->d.ia5);
+		  size_t ia5len = ASN1_STRING_length(name->d.ia5);
 
 		  hasaltname = 1;
 		  if (strlen (ia5str) == ia5len && match_domain (host, ia5str))
