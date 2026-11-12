@@ -230,7 +230,14 @@ if ssldep.found()
 endif
 
 mapfile = 'libesmtp.map'
-vflag = '-Wl,--version-script,@0@/@1@'.format(meson.current_source_dir(), mapfile)
+if host_machine.system() == 'darwin'
+  # ld64 has no --version-script; export the same symbols as libesmtp.map
+  vflag = ['-Wl,-exported_symbol,_smtp_*',
+	   '-Wl,-exported_symbol,__smtp_*',
+	   '-Wl,-exported_symbol,_auth_*']
+else
+  vflag = '-Wl,--version-script,@0@/@1@'.format(meson.current_source_dir(), mapfile)
+endif
 
 lib = library('esmtp', sources,
 	      link_args : vflag, link_depends : mapfile,
