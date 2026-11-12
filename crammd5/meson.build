@@ -15,7 +15,7 @@ else
   ]
 endif
 
-sasl_crammd5 = shared_module('crammd5', sasl_crammd5_sources,
+sasl_crammd5 = shared_module('cram-md5', sasl_crammd5_sources,
 			     name_prefix : 'sasl-',
 			     dependencies : crammd5_deps,
 			     include_directories: [ include_dir, ],
