@@ -130,6 +130,10 @@ conf.set('USE_XDG_DIRS', get_option('xdg'))
 conf.set('USE_XUSR', get_option('xusr'))
 
 conf.set_quoted('AUTHPLUGINDIR', get_option('prefix') / auth_plugin_dir)
+if host_machine.system() == 'darwin'
+  # shared_module() uses the .dylib suffix on macOS
+  conf.set_quoted('DLEXT', '.dylib')
+endif
 conf.set_quoted('LT_VERSION', libesmtp_cra)
 conf.set_quoted('SO_VERSION', libesmtp_so_version)
 conf.set_quoted('VERSION', libesmtp_version)
