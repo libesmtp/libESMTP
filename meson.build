@@ -103,6 +103,13 @@ have_timezone = cc.has_header_symbol('time.h', 'timezone',
 conf = configuration_data()
 gnu_source = have_memrchr or have_gmtoff
 xopen_source = have_timezone
+
+# Defining _GNU_SOURCE does not imply the GNU strerror_r(), e.g. on macOS or
+# musl it still returns int.  Dereferencing an int is a hard error.
+gnu_strerror_r = gnu_source and cc.compiles('''
+#include <string.h>
+int main (void) { char buf[64]; return *strerror_r (0, buf, sizeof buf); }
+''', args: '-D_GNU_SOURCE', name: 'strerror_r() returns char *')
 if gnu_source
     conf.set('_GNU_SOURCE', true)
 elif xopen_source
@@ -131,8 +138,8 @@ conf.set('HAVE_GETHOSTNAME', 1, description : 'POSIX.1-2001, POSIX.1-2008.')
 conf.set('HAVE_GETTIMEOFDAY', true, description : 'POSIX.1-2001, obsolete POSIX.1-2008.')
 conf.set('HAVE_LIBCRYPTO', ssldep.found().to_int())
 conf.set('HAVE_LWRES_NETDB_H', lwresdep.found().to_int())
-conf.set10('HAVE_STRERROR_R', not gnu_source)
-conf.set10('HAVE_GNU_STRERROR_R', gnu_source)
+conf.set10('HAVE_STRERROR_R', not gnu_strerror_r)
+conf.set10('HAVE_GNU_STRERROR_R', gnu_strerror_r)
 conf.set('HAVE_UNAME', 1)
 
 conf.set10('HAVE_LOCALTIME_R', have_localtime_r)
