@@ -23,6 +23,8 @@
    and dirty program to give a feel for using libESMTP.
  */
 #define _XOPEN_SOURCE 500
+/* snprintf() and getpass() are hidden by _XOPEN_SOURCE 500 on macOS */
+#define _DARWIN_C_SOURCE
 
 #include <stdio.h>
 #include <stdlib.h>
